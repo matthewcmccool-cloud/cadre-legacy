@@ -1,7 +1,3 @@
-// lib/airtable.ts
-// Airtable API client for fetching jobs, companies, and filters
-// Updated to match actual VL Clone schema
-
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 
@@ -65,8 +61,8 @@ async function fetchAirtable(
   });
 
   if (!response.ok) {
-    console.error(`Airtable error: ${response.status}`);
-    throw new Error(`Airtable error: ${response.status}`);
+    console.error('Airtable error:', response.status);
+    throw new Error('Airtable error: ' + response.status);
   }
 
   const data: AirtableResponse = await response.json();
@@ -81,14 +77,12 @@ export interface Job {
   investors: string[];
   location: string;
   remoteFirst: boolean;
-  function: string;
+  functionName: string;
   industry: string;
   datePosted: string;
   jobUrl: string;
   applyUrl: string;
-  description: string;
   salary: string;
-  keywords: string;
 }
 
 export interface FilterOptions {
@@ -99,31 +93,29 @@ export interface FilterOptions {
 }
 
 export async function getJobs(filters?: {
-  function?: string;
+  functionName?: string;
   location?: string;
-  investor?: string;
-  industry?: string;
   remoteOnly?: boolean;
   search?: string;
 }): Promise<Job[]> {
   const formulaParts: string[] = [];
   
   if (filters?.remoteOnly) {
-    formulaParts.push("{Remote First} = 1");
+    formulaParts.push('{Remote First} = 1');
   }
   
   if (filters?.search) {
-    const searchTerm = filters.search.replace(/'/g, "\\'");
-    formulaParts.push(`OR(FIND(LOWER('${searchTerm}'), LOWER({Title})), FIND(LOWER('${searchTerm}'), LOWER(ARRAYJOIN({Company}))))`);
+    const s = filters.search.replace(/'/g, "\\'");
+    formulaParts.push('OR(FIND(LOWER(\'' + s + '\'), LOWER({Title})), FIND(LOWER(\'' + s + '\'), LOWER(ARRAYJOIN({Company}))))');
   }
 
   if (filters?.location) {
     const loc = filters.location.replace(/'/g, "\\'");
-    formulaParts.push(`FIND('${loc}', {Country})`);
+    formulaParts.push('FIND(\'' + loc + '\', {Country})');
   }
   
   const filterByFormula = formulaParts.length > 0 
-    ? `AND(${formulaParts.join(', ')})` 
+    ? 'AND(' + formulaParts.join(', ') + ')' 
     : '';
 
   const records = await fetchAirtable(TABLES.jobs, {
@@ -141,8 +133,6 @@ export async function getJobs(filters?: {
       'Job URL',
       'Apply URL',
       'Salary',
-      'Matched Keyword',
-      'Job Description',
       'Investors',
       'Company Industry',
     ],
@@ -171,7 +161,7 @@ export async function getJobs(filters?: {
       : 'Unknown';
 
     const functionIds = record.fields['Function'] || [];
-    const functionName = functionIds.length > 0 
+    const funcName = functionIds.length > 0 
       ? functionMap.get(functionIds[0]) || ''
       : '';
 
@@ -183,17 +173,15 @@ export async function getJobs(filters?: {
       jobId: record.fields['Job ID'] || '',
       title: record.fields['Title'] || '',
       company: companyName,
-      investors: Array.isArray(investors) ? investors : [investors].filter(Boolean),
+      investors: Array.isArray(investors) ? investors : [],
       location: record.fields['Country'] || '',
       remoteFirst: record.fields['Remote First'] || false,
-      function: functionName,
-      industry: Array.isArray(industries) ? industries[0] || '' : industries || '',
+      functionName: funcName,
+      industry: Array.isArray(industries) ? industries[0] || '' : '',
       datePosted: record.fields['Date Posted'] || '',
       jobUrl: record.fields['Job URL'] || '',
       applyUrl: record.fields['Apply URL'] || record.fields['Job URL'] || '',
-      description: record.fields['Job Description'] || '',
       salary: record.fields['Salary'] || '',
-      keywords: record.fields['Matched Keyword'] || '',
     };
   });
 }
@@ -232,48 +220,5 @@ export async function getFilterOptions(): Promise<FilterOptions> {
   });
   const locations = Array.from(locationSet).sort();
 
-  return {
-    functions,
-    locations,
-    investors,
-    industries,
-  };
-}
-
-export async function getJobById(id: string): Promise<Job | null> {
-  try {
-    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(TABLES.jobs)}/${id}`;
-    
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      next: { revalidate: 300 },
-    });
-
-    if (!response.ok) return null;
-
-    const record: AirtableRecord = await response.json();
-    
-    return {
-      id: record.id,
-      jobId: record.fields['Job ID'] || '',
-      title: record.fields['Title'] || '',
-      company: '',
-      investors: record.fields['Investors'] || [],
-      location: record.fields['Country'] || '',
-      remoteFirst: record.fields['Remote First'] || false,
-      function: '',
-      industry: '',
-      datePosted: record.fields['Date Posted'] || '',
-      jobUrl: record.fields['Job URL'] || '',
-      applyUrl: record.fields['Apply URL'] || record.fields['Job URL'] || '',
-      description: record.fields['Job Description'] || '',
-      salary: record.fields['Salary'] || '',
-      keywords: record.fields['Matched Keyword'] || '',
-    };
-  } catch {
-    return null;
-  }
+  return { functions, locations, investors, industries };
 }
