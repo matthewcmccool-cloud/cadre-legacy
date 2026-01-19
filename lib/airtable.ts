@@ -1,5 +1,3 @@
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 
 const TABLES = {
   jobs: 'Job Listings',
@@ -29,8 +27,13 @@ async function fetchAirtable(
     fields?: string[];
   } = {}
 ): Promise<AirtableRecord[]> {
-  const params = new URLSearchParams();
-  
+  const params = new URLSearchParams()
+      const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
+  const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
+
+  if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
+    throw new Error('Missing Airtable environment variables');
+  }  
   if (options.filterByFormula) {
     params.append('filterByFormula', options.filterByFormula);
   }
