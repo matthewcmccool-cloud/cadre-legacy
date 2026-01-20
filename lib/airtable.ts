@@ -136,11 +136,6 @@ export async function getJobs(filters?: {
     formulaParts.push('FIND(\'' + loc + '\', {Location})');
   }
 
-  if (filters?.company) {
-    const comp = filters.company.replace(/'/g, "\\\'" );
-    formulaParts.push('FIND(\'' + comp + '\', ARRAYJOIN({Company}))');
-  }
-
   const filterByFormula = formulaParts.length > 0
     ? 'AND(' + formulaParts.join(', ') + ')'
     : '';
@@ -193,6 +188,15 @@ export async function getJobs(filters?: {
     investorMap.set(r.id, r.fields['Company'] || '');
   });
 
+  // Fetch industry records to map IDs to names
+  const industryRecords = await fetchAirtable(TABLES.industries, {
+    fields: ['Industry Name'],
+  });
+  const industryMap = new Map<string, string>();
+  industryRecords.records.forEach(r => {
+    industryMap.set(r.id, r.fields['Industry Name'] || '');
+  });
+
   // Map all records to jobs
   let jobs = allRecords.map(record => {
     const companyIds = record.fields['Company'] || [];
@@ -210,7 +214,10 @@ export async function getJobs(filters?: {
       ? investorIds.map(id => investorMap.get(id) || '').filter(Boolean) 
       : [];
     
-    const industries = record.fields['Company Industry (Loopup)'] || [];
+    const industryIds = record.fields['Company Industry (Loopup)'] || [];
+    const industryName = Array.isArray(industryIds) && industryIds.length > 0
+      ? industryMap.get(industryIds[0]) || ''
+      : '';
 
     // Parse location from Raw JSON - look for city/country info
     let location = '';
@@ -251,7 +258,7 @@ export async function getJobs(filters?: {
       location,
       remoteFirst,
       functionName: funcName,
-      industry: Array.isArray(industries) ? industries[0] || '' : '',
+      industry: industryName,
       datePosted: record.fields['Date Posted'] || '',
       jobUrl: record.fields['Job URL'] || '',
       applyUrl: record.fields['Apply URL'] || record.fields['Job URL'] || '',
