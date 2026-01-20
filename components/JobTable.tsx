@@ -51,13 +51,13 @@ export default function JobTable({ jobs }: JobTableProps) {
       <table className="w-full">
         <thead>
           <tr className="border-b-2 border-gray-100">
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Date</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Job Title</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Function</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Company</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Industry</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Investors</th>
-            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Location</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">DATE</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">JOB TITLE</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">FUNCTION</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">COMPANY</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">INDUSTRY</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">INVESTORS</th>
+            <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">LOCATION</th>
           </tr>
         </thead>
         <tbody>
@@ -82,13 +82,19 @@ export default function JobTable({ jobs }: JobTableProps) {
               <td className="py-4 px-4">
                 <button
                   onClick={() => handleCompanyClick(job.company)}
-                  className="text-gray-700 hover:underline text-left"
+                  className="inline-flex px-2 py-1 border border-gray-200 rounded-md hover:bg-gray-100 cursor-pointer text-sm"
                 >
                   {job.company}
                 </button>
               </td>
-              <td className="py-4 px-4 text-sm text-gray-600">
-                {job.industry || '-'}
+              <td className="py-4 px-4">
+                {job.industry ? (
+                  <span className="inline-flex px-2 py-1 border border-gray-200 rounded-md text-sm text-gray-600">
+                    {job.industry}
+                  </span>
+                ) : (
+                  <span className="text-gray-300">-</span>
+                )}
               </td>
               <td className="py-4 px-4">
                 {job.investors.length > 0 ? (
@@ -97,24 +103,32 @@ export default function JobTable({ jobs }: JobTableProps) {
                       <button
                         key={i}
                         onClick={() => handleInvestorClick(inv)}
-                        className="text-sm text-gray-600 hover:underline"
+                        className="inline-flex px-2 py-1 border border-gray-200 rounded-md hover:bg-gray-100 cursor-pointer text-sm"
                       >
-                        {inv}{i < Math.min(job.investors.length - 1, 1) ? ',' : ''}
+                        {inv}{i < Math.min(job.investors.length - 1, 1) ? '' : ''}
                       </button>
                     ))}
                     {job.investors.length > 2 && (
-                      <span className="text-sm text-gray-400">+{job.investors.length - 2}</span>
+                      <span className="inline-flex px-2 py-1 text-sm text-gray-400">+{job.investors.length - 2}</span>
                     )}
                   </div>
                 ) : (
                   <span className="text-gray-300">-</span>
                 )}
               </td>
-              <td className="py-4 px-4 text-sm text-gray-600">
+              <td className="py-4 px-4">
                 {job.location ? (
-                  job.remoteFirst ? `${job.location} (Remote)` : job.location
+                  <span className="inline-flex px-2 py-1 border border-gray-200 rounded-md text-sm text-gray-600">
+                    {job.remoteFirst ? `${job.location} (Remote)` : job.location}
+                  </span>
                 ) : (
-                  job.remoteFirst ? 'Remote' : '-'
+                  job.remoteFirst ? (
+                    <span className="inline-flex px-2 py-1 border border-gray-200 rounded-md text-sm text-gray-600">
+                      Remote
+                    </span>
+                  ) : (
+                    <span className="text-gray-300">-</span>
+                  )
                 )}
               </td>
             </tr>
