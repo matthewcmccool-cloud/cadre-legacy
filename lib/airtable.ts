@@ -180,11 +180,7 @@ export async function getJobs(filters?: {
     const investors = record.fields['Investors'] || [];
     const industries = record.fields['Company Industry (Loopup)'] || [];
 
-    return {
-      id: record.id,
-      jobId: record.fields['Job ID'] || '',
-      title: record.fields['Title'] || '',
-          // Parse location from Raw JSON
+        // Parse location from Raw JSON
     let location = record.fields['Location'] || '';
     if (!location && record.fields['Raw JSON']) {
       try {
@@ -194,6 +190,12 @@ export async function getJobs(filters?: {
         // Ignore parse errors
       }
     }
+
+
+    return {
+      id: record.id,
+      jobId: record.fields['Job ID'] || '',
+      title: record.fields['Title'] || '',
 
       company: companyName,
       investors:Array.isArray(investors) ? investors.map(id => investorMap.get(id) || '').filter(Boolean) : [],
