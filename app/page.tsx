@@ -14,13 +14,14 @@ interface PageProps {
     search?: string;
     company?: string;
     investor?: string;
+    industry?: string;
     page?: string;
   };
 }
 
 export default async function Home({ searchParams }: PageProps) {
   const currentPage = parseInt(searchParams.page || '1', 10);
-  
+
   const [jobsResult, filterOptions] = await Promise.all([
     getJobs({
       functionName: searchParams.functionName,
@@ -29,17 +30,18 @@ export default async function Home({ searchParams }: PageProps) {
       search: searchParams.search,
       company: searchParams.company,
       investor: searchParams.investor,
+      industry: searchParams.industry,
       page: currentPage,
     }),
     getFilterOptions(),
   ]);
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#262626]">
       <Header />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <p className="text-gray-500 text-lg mb-8">
+        <p className="text-[#A0A0A0] text-lg mb-8">
           The career graph for tech talent. Find jobs at 250+ venture-backed companies.
         </p>
 
@@ -49,11 +51,11 @@ export default async function Home({ searchParams }: PageProps) {
         />
 
         <div className="mt-8 mb-4 flex justify-between items-center">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-[#A0A0A0]">
             {jobsResult.totalCount} {jobsResult.totalCount === 1 ? 'job' : 'jobs'} found
           </p>
           {jobsResult.totalPages > 1 && (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[#A0A0A0]">
               Page {jobsResult.page} of {jobsResult.totalPages}
             </p>
           )}
@@ -69,8 +71,8 @@ export default async function Home({ searchParams }: PageProps) {
           />
         )}
 
-        <footer className="mt-16 pt-8 border-t border-gray-100">
-          <p className="text-sm text-gray-400">
+        <footer className="mt-16 pt-8 border-t border-[#3A3A3A]">
+          <p className="text-sm text-[#A0A0A0]">
             Updated daily. Data sourced from company career pages.
           </p>
         </footer>
