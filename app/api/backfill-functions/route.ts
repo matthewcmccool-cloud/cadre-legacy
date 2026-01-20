@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+// Prevent static generation - run at request time only
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 
@@ -113,8 +117,10 @@ export async function GET() {
       details: [] as { jobId: string; title: string; matchedFunction: string; success: boolean }[],
     };
 
-    // Process each job without a function
-    for (const job of jobsWithoutFunction) {
+    // Process each job without a function (limit to first 20 for safety)
+    const jobsToProcess = jobsWithoutFunction.slice(0, 20);
+    
+    for (const job of jobsToProcess) {
       const matchedFunc = matchTitleToFunction(job.title, functions);
       
       if (matchedFunc) {
@@ -144,12 +150,13 @@ export async function GET() {
       summary: {
         totalJobs: results.totalJobs,
         jobsWithoutFunction: results.jobsWithoutFunction,
+        processedInThisBatch: jobsToProcess.length,
         matched: results.matched,
         updated: results.updated,
         failed: results.failed,
       },
       functions: functions.map(f => ({ name: f.functionName, keywordCount: f.keywords.length })),
-      details: results.details.slice(0, 50), // Limit details to first 50
+      details: results.details,
     });
   } catch (error) {
     console.error('Backfill error:', error);
