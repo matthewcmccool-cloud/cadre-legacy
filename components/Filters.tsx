@@ -9,6 +9,8 @@ interface FiltersProps {
     functionName?: string;
     location?: string;
     remote?: string;
+    industry?: string;
+    investor?: string;
   };
 }
 
@@ -30,7 +32,9 @@ export default function Filters({ options, currentFilters }: FiltersProps) {
     router.push('/');
   };
 
-  const hasActiveFilters = currentFilters.functionName || currentFilters.location || currentFilters.remote;
+  const hasActiveFilters = currentFilters.functionName || currentFilters.location || currentFilters.remote || currentFilters.industry || currentFilters.investor;
+
+  const selectClasses = "px-4 py-2 bg-[#333333] border border-[#3A3A3A] rounded-md text-sm text-[#F9F9F9] focus:outline-none focus:border-[#525252] hover:bg-[#404040] cursor-pointer transition-colors";
 
   return (
     <div className="space-y-4">
@@ -38,7 +42,7 @@ export default function Filters({ options, currentFilters }: FiltersProps) {
         <select
           value={currentFilters.functionName || ''}
           onChange={(e) => updateFilter('functionName', e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+          className={selectClasses}
         >
           <option value="">All Functions</option>
           {options.functions.map(fn => (
@@ -49,7 +53,7 @@ export default function Filters({ options, currentFilters }: FiltersProps) {
         <select
           value={currentFilters.location || ''}
           onChange={(e) => updateFilter('location', e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-gray-400"
+          className={selectClasses}
         >
           <option value="">All Locations</option>
           {options.locations.map(loc => (
@@ -57,12 +61,34 @@ export default function Filters({ options, currentFilters }: FiltersProps) {
           ))}
         </select>
 
+        <select
+          value={currentFilters.industry || ''}
+          onChange={(e) => updateFilter('industry', e.target.value)}
+          className={selectClasses}
+        >
+          <option value="">All Industries</option>
+          {options.industries.map(ind => (
+            <option key={ind} value={ind}>{ind}</option>
+          ))}
+        </select>
+
+        <select
+          value={currentFilters.investor || ''}
+          onChange={(e) => updateFilter('investor', e.target.value)}
+          className={selectClasses}
+        >
+          <option value="">All Investors</option>
+          {options.investors.map(inv => (
+            <option key={inv} value={inv}>{inv}</option>
+          ))}
+        </select>
+
         <button
           onClick={() => updateFilter('remote', currentFilters.remote ? '' : 'true')}
-          className={`px-4 py-2 border rounded-lg text-sm ${
-            currentFilters.remote 
-              ? 'bg-gray-900 text-white border-gray-900' 
-              : 'border-gray-200 hover:border-gray-400'
+          className={`px-4 py-2 border rounded-md text-sm transition-colors ${
+            currentFilters.remote
+              ? 'bg-[#F9F9F9] text-[#262626] border-[#F9F9F9]'
+              : 'bg-[#333333] border-[#3A3A3A] text-[#F9F9F9] hover:bg-[#404040]'
           }`}
         >
           Remote Only
@@ -71,7 +97,7 @@ export default function Filters({ options, currentFilters }: FiltersProps) {
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="text-sm text-gray-500 hover:text-gray-700 underline"
+            className="text-sm text-[#A0A0A0] hover:text-[#F9F9F9] underline transition-colors"
           >
             Clear all
           </button>
