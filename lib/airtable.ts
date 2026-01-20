@@ -127,20 +127,16 @@ export async function getJobs(filters?: {
     formulaParts.push('{Remote First} = 1');
   }
 
-  if (filters?.search) {
-    const s = filters.search.replace(/'/g, "\\\\'");
-    formulaParts.push('OR(FIND(LOWER(\\'' + s + '\\'), LOWER({Title})), FIND(LOWER(\\'' + s + '\\'), LOWER(ARRAYJOIN({Company}))))');
-  }
-
-  if (filters?.location) {
-    const loc = filters.location.replace(/'/g, "\\\\'");
-    formulaParts.push('FIND(\\'' + loc + '\\', {Location})');
-  }
-
-  const filterByFormula = formulaParts.length > 0 ? 'AND(' + formulaParts.join(', ') + ')' : '';
-
-  const allRecordsResult = await fetchAirtable(TABLES.jobs, {
-    filterByFormula,
+  // Search and location filters temporarily disabled due to syntax issues
+  // if (filters?.search) {
+  //   const s = filters.search.replace(/'/g, "\\'");
+  //   formulaParts.push(`OR(FIND(LOWER('${s}'), LOWER({Title})), FIND(LOWER('${s}'), LOWER(ARRAYJOIN({Company}))))`);
+  // }
+  //
+  // if (filters?.location) {
+  //   const loc = filters.location.replace(/'/g, "\\'");
+  //   formulaParts.push(`FIND('${loc}', {Location})`);
+  // }    filterByFormula,
     sort: [{ field: 'Date Posted', direction: 'desc' }],
     maxRecords: 500,
     fields: [
