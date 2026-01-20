@@ -127,16 +127,6 @@ export async function getJobs(filters?: {
     formulaParts.push('{Remote First} = 1');
   }
 
-  // Search and location filters temporarily disabled due to syntax issues
-  // if (filters?.search) {
-  //   const s = filters.search.replace(/'/g, "\\'");
-  //   formulaParts.push(`OR(FIND(LOWER('${s}'), LOWER({Title})), FIND(LOWER('${s}'), LOWER(ARRAYJOIN({Company}))))`);
-  // }
-  //
-  // if (filters?.location) {
-  //   const loc = filters.location.replace(/'/g, "\\'");
-  //   formulaParts.push(`FIND('${loc}', {Location})`);
-    // }
     filterByFormula,
     sort: [{ field: 'Date Posted', direction: 'desc' }],
     maxRecords: 500,
