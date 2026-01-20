@@ -56,13 +56,43 @@ Respond with ONLY the category name, nothing else. Match the spelling exactly.`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'sonar',
+          model: 'llama-3.1-sonar-small-128k-online',
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 50,
         }),
       });
       
-      const aiData = await aiRes.json();
+      // Get raw response text for debugging
+      const responseText = await aiRes.text();
+      
+      // Try to parse as JSON
+      let aiData;
+      try {
+        aiData = JSON.parse(responseText);
+      } catch (parseError) {
+        results.push({ 
+          id: job.id, 
+          title, 
+          status: 'error', 
+          error: 'Invalid JSON response',
+          httpStatus: aiRes.status,
+          rawResponse: responseText.substring(0, 500) 
+        });
+        continue;
+      }
+      
+      // Check for API error response
+      if (aiData.error) {
+        results.push({ 
+          id: job.id, 
+          title, 
+          status: 'error', 
+          error: aiData.error.message || aiData.error,
+          httpStatus: aiRes.status
+        });
+        continue;
+      }
+      
       const functionGuess = aiData.choices?.[0]?.message?.content?.trim();
       
       // Find matching function
