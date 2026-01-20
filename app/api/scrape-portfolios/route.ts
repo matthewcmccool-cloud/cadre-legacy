@@ -48,8 +48,7 @@ async function fetchInvestors(): Promise<Investor[]> {
   do {
     const params = new URLSearchParams();
     if (offset) params.append('offset', offset);
-    params.append('filterByFormula', 'NOT({Portfolio URL} = \'\'));
-
+      params.append('filterByFormula', "NOT({Portfolio URL} = '')");
     const response = await fetch(`${url}?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${AIRTABLE_API_KEY}`,
