@@ -91,9 +91,8 @@ export default function JobTable({ jobs }: JobTableProps) {
                 >
                 {job.companyUrl && getDomain(job.companyUrl) && (
                   <img 
-                    src={`https://logo.clearbit.com/${getDomain(job.companyUrl)}`}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
+                    src={`https://www.google.com/s2/favicons?domain=${getDomain(job.companyUrl)}&sz=128`}
+                    onError={(e) => {                      const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                     }}
                     className="w-5 h-5 rounded mr-2"

@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from 'react';
 
 // Types
 type FieldType = 'function' | 'industry' | 'investor' | 'location' | 'remote';
-type OperatorType = 'is' | 'is_not' | 'contains' | 'is_empty' | 'is_not_empty';
+type OperatorType = 'is' | 'is_not' | 'contains';
 type ConnectorType = 'and' | 'or';
 
 interface FilterCondition {
@@ -40,8 +40,8 @@ const operators: { value: OperatorType; label: string }[] = [
   { value: 'is', label: 'is' },
   { value: 'is_not', label: 'is not' },
   { value: 'contains', label: 'contains' },
-  { value: 'is_empty', label: 'is empty' },
-  { value: 'is_not_empty', label: 'is not empty' },
+  
+  
 ];
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -131,7 +131,7 @@ export default function QueryBuilder({ options, currentFilters }: QueryBuilderPr
     const params = new URLSearchParams();
     
     newConditions.forEach(cond => {
-      if (cond.operator === 'is_empty' || cond.operator === 'is_not_empty') return;
+      
       if (cond.value.length === 0) return;
       
       const paramMap: Record<FieldType, string> = {
@@ -246,7 +246,7 @@ export default function QueryBuilder({ options, currentFilters }: QueryBuilderPr
 
 
                 {/* Value Input */}
-                {condition.operator !== 'is_empty' && condition.operator !== 'is_not_empty' && (
+                {(
                   <div className="relative">
                     {condition.field === 'remote' ? (
                       <select
