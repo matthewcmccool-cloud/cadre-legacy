@@ -76,9 +76,7 @@ export default function JobTable({ jobs }: JobTableProps) {
               </td>
               <td className="py-4 px-4">
                 <Link
-                  href={job.applyUrl || job.jobUrl || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                href={`/jobs/${job.id}`}
                   className="font-medium text-[#F9F9F9] hover:underline"
                 >
                   {job.title}
