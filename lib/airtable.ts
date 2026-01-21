@@ -284,12 +284,12 @@ export async function getJobs(filters?: {
     );
   }
 
-  // Multi-select filter: investor (OR logic within, comma-separated)
+  // 285 (OR logic within, comma-separated)
   if (filters?.investor) {
     const selectedInvestors = filters.investor.split(',').map(inv => inv.trim().toLowerCase());
     jobs = jobs.filter(job =>
       job.investors.some(inv =>
-        selectedInvestors.some(selected => inv.toLowerCase().includes(selected))
+        selectedInvestors.some(selected => inv.toLowerCase() === selected)
       )
     );
   }
