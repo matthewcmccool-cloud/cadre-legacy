@@ -101,15 +101,13 @@ export interface FilterOptions {
   industries: string[];
 }
 
-84
-  sResult {
+export interface JobsResult {
   jobs: Job[];
   totalCount: number;
   page: number;
   pageSize: number;
   totalPages: number;
 }
-
 export async function getJobs(filters?: {
   functionName?: string;
   industry?: string;
