@@ -102,10 +102,19 @@ const parseUrlToConditions = (filters: QueryBuilderProps['currentFilters']): Fil
 export default function QueryBuilder({ options, currentFilters }: QueryBuilderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [conditions, setConditions] = useState<FilterCondition[]>(() => 
-    parseUrlToConditions(currentFilters)
-  );
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [conditions, setConditions] = useState<FilterCondition[]>(() => {
+    const urlConditions = parseUrlToConditions(currentFilters);
+    if (urlConditions.length === 0) {
+      return [{
+        id: generateId(),
+        connector: 'and',
+        field: 'function',
+        operator: 'is',
+        value: [],
+      }];
+    }
+    return urlConditions;
+  });  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
