@@ -1,6 +1,6 @@
 import { getJobs, getFilterOptions } from '@/lib/airtable';
 import JobTable from '@/components/JobTable';
-import Filters from '@/components/Filters';
+import QueryBuilder from '@/components/QueryBuilder';
 import Header from '@/components/Header';
 import Pagination from '@/components/Pagination';
 
@@ -45,7 +45,7 @@ export default async function Home({ searchParams }: PageProps) {
           The career graph for tech talent. Find jobs at 250+ venture-backed companies.
         </p>
 
-        <Filters
+        <QueryBuilder
           options={filterOptions}
           currentFilters={searchParams}
         />
