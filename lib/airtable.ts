@@ -110,12 +110,12 @@ export interface JobsResult {
 
 export async function getJobs(filters?: {
   functionName?: string;
+  industry?: string;
+  investor?: string;
   location?: string;
   remoteOnly?: boolean;
   search?: string;
   company?: string;
-  investor?: string;
-  industry?: string;
   page?: number;
 }): Promise<JobsResult> {
   const pageSize = 25;
@@ -127,7 +127,19 @@ export async function getJobs(filters?: {
     formulaParts.push('{Remote First} = 1');
   }
 
-    const filterByFormula = formulaParts.length > 0 ? `AND(${formulaParts.join(',')})` : undefined;
+  if (filters?.search) {
+    const s = filters.search.replace(/'/g, "\\'" );
+    formulaParts.push('OR(FIND(LOWER(\'' + s + '\'), LOWER({Title})), FIND(LOWER(\'' + s + '\'), LOWER(ARRAYJOIN({Company}))))');
+  }
+
+  if (filters?.location) {
+    const loc = filters.location.replace(/'/g, "\\'" );
+    formulaParts.push('FIND(\'' + loc + '\', {Location})');
+  }
+
+  const filterByFormula = formulaParts.length > 0
+    ? 'AND(' + formulaParts.join(', ') + ')'
+    : '';
 
     const allRecordsResult = await fetchAirtable(TABLES.jobs, { 
           filterByFormula,
@@ -224,7 +236,7 @@ export async function getJobs(filters?: {
       }
     }
 
-    // If no location found from Raw JSON, show 'Remote' if remote-first job, otherwise try Location field
+    // Fallback to Location field if Raw JSON didn't have location
     if (!location) {
       const airtableLocation = record.fields['Location'] as string || '';
       // Only use Airtable Location field if it's a real city (not Remote/Hybrid)
@@ -252,17 +264,29 @@ export async function getJobs(filters?: {
     };
   });
 
-  // Filter by function if specified
+  // Multi-select filter: functionName (OR logic within, comma-separated)
   if (filters?.functionName) {
+    const selectedFunctions = filters.functionName.split(',').map(f => f.trim().toLowerCase());
     jobs = jobs.filter(job =>
-      job.functionName.toLowerCase().includes(filters.functionName!.toLowerCase())
+      selectedFunctions.some(fn => job.functionName.toLowerCase() === fn)
     );
   }
 
-  // Filter by investor if specified
-  if (filters?.investor) {
+  // Multi-select filter: industry (OR logic within, comma-separated)
+  if (filters?.industry) {
+    const selectedIndustries = filters.industry.split(',').map(i => i.trim().toLowerCase());
     jobs = jobs.filter(job =>
-      job.investors.some(inv => inv.toLowerCase().includes(filters.investor!.toLowerCase()))
+      selectedIndustries.some(ind => job.industry.toLowerCase() === ind)
+    );
+  }
+
+  // Multi-select filter: investor (OR logic within, comma-separated)
+  if (filters?.investor) {
+    const selectedInvestors = filters.investor.split(',').map(inv => inv.trim().toLowerCase());
+    jobs = jobs.filter(job =>
+      job.investors.some(inv =>
+        selectedInvestors.some(selected => inv.toLowerCase().includes(selected))
+      )
     );
   }
 
@@ -283,6 +307,7 @@ export async function getJobs(filters?: {
   const totalCount = jobs.length;
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  // Paginate
   const startIndex = (page - 1) * pageSize;
   const paginatedJobs = jobs.slice(startIndex, startIndex + pageSize);
 

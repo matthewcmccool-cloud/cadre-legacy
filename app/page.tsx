@@ -9,6 +9,7 @@ export const revalidate = 0;
 interface PageProps {
   searchParams: {
     functionName?: string;
+    industry?: string;
     location?: string;
     remote?: string;
     search?: string;
@@ -25,6 +26,7 @@ export default async function Home({ searchParams }: PageProps) {
   const [jobsResult, filterOptions] = await Promise.all([
     getJobs({
       functionName: searchParams.functionName,
+      industry: searchParams.industry,
       location: searchParams.location,
       remoteOnly: searchParams.remote === 'true',
       search: searchParams.search,
@@ -63,19 +65,11 @@ export default async function Home({ searchParams }: PageProps) {
 
         <JobTable jobs={jobsResult.jobs} />
 
-        {jobsResult.totalPages > 1 && (
-          <Pagination
-            currentPage={jobsResult.page}
-            totalPages={jobsResult.totalPages}
-            searchParams={searchParams}
-          />
-        )}
-
-        <footer className="mt-16 pt-8 border-t border-[#3A3A3A]">
-          <p className="text-sm text-[#A0A0A0]">
-            Updated daily. Data sourced from company career pages.
-          </p>
-        </footer>
+        <Pagination
+          currentPage={jobsResult.page}
+          totalPages={jobsResult.totalPages}
+          totalCount={jobsResult.totalCount}
+        />
       </div>
     </main>
   );
