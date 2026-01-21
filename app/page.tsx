@@ -66,7 +66,7 @@ export default async function Home({ searchParams }: PageProps) {
         <Pagination
           currentPage={jobsResult.page}
           totalPages={jobsResult.totalPages}
-          totalCount={jobsResult.totalCount}
+          searchParams={searchParams}
         />
       </div>
     </main>
