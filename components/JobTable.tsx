@@ -93,6 +93,8 @@ export default function JobTable({ jobs }: JobTableProps) {
                   <img 
                     src={`https://logo.clearbit.com/${getDomain(job.companyUrl)}`}
                     onError={(e) => {
+                {/* DEBUG */}
+                {console.log('Logo Debug:', job.company, job.companyUrl, getDomain(job.companyUrl))}
                       const target = e.target as HTMLImageElement;
                       target.style.display = 'none';
                     }}
