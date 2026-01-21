@@ -246,7 +246,7 @@ export default function QueryBuilder({ options, currentFilters }: QueryBuilderPr
 
 
                 {/* Value Input */}
-                {condition.operator !== 'is_empty' && condition.operator !== 'is_not_empty' && (
+                {(
                   <div className="relative">
                     {condition.field === 'remote' ? (
                       <select
