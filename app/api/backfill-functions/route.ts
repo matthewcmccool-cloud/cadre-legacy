@@ -11,7 +11,7 @@ const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 const FUNCTION_TABLE_ID = 'tbl94EXkSIEmhqyYy';
 const JOB_LISTINGS_TABLE_ID = 'tbl4HJr9bYCMOn2Ry';
 
-const BATCH_SIZE = 15;
+const BATCH_SIZE = 500;
 const RATE_LIMIT_DELAY = 1000;
 
 // Delay helper to avoid rate limits
