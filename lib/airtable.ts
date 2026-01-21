@@ -141,9 +141,8 @@ export async function getJobs(filters?: {
     ? 'AND(' + formulaParts.join(', ') + ')'
     : '';
 
-  // Fetch all records to get total count and for pagination
-  const allRecordsResult = await fetchAirtable(TABLES.jobs, {
-    filterByFormula,
+    const allRecordsResult = await fetchAirtable(TABLES.jobs, { 
+          filterByFormula,
     sort: [{ field: 'Date Posted', direction: 'desc' }],
     maxRecords: 500,
     fields: [
@@ -189,7 +188,6 @@ export async function getJobs(filters?: {
     investorMap.set(r.id, r.fields['Company'] || '');
   });
 
-  // Fetch industry records to map IDs to names
   const industryRecords = await fetchAirtable(TABLES.industries, {
     fields: ['Industry Name'],
   });
@@ -198,7 +196,6 @@ export async function getJobs(filters?: {
     industryMap.set(r.id, r.fields['Industry Name'] || '');
   });
 
-  // Map all records to jobs
   let jobs = allRecords.map(record => {
     const companyIds = record.fields['Company'] || [];
     const companyName = companyIds.length > 0 ? companyMap.get(companyIds[0]) || 'Unknown' : 'Unknown';
@@ -216,14 +213,12 @@ export async function getJobs(filters?: {
       ? industryMap.get(industryIds[0]) || ''
       : '';
 
-    // Parse location from Raw JSON - look for city/country info
     let location = '';
     const remoteFirst = record.fields['Remote First'] || false;
 
     if (record.fields['Raw JSON']) {
       try {
         const rawData = JSON.parse(record.fields['Raw JSON'] as string);
-        // Try different location structures
         if (rawData?.offices && rawData.offices.length > 0) {
           const office = rawData.offices[0];
           location = office?.location || office?.name || '';
@@ -243,7 +238,13 @@ export async function getJobs(filters?: {
 
     // Fallback to Location field if Raw JSON didn't have location
     if (!location) {
-      location = record.fields['Location'] || '';
+      const airtableLocation = record.fields['Location'] as string || '';
+      // Only use Airtable Location field if it's a real city (not Remote/Hybrid)
+      if (airtableLocation && !['remote', 'hybrid', 'on-site', 'onsite'].includes(airtableLocation.toLowerCase())) {
+        location = airtableLocation;
+      } else if (remoteFirst) {
+        location = 'Remote';
+      }
     }
 
     return {
@@ -289,10 +290,17 @@ export async function getJobs(filters?: {
     );
   }
 
-  // Filter by company if specified (after mapping to get company names)
+  // Filter by company if specified
   if (filters?.company) {
     jobs = jobs.filter(job =>
       job.company.toLowerCase().includes(filters.company!.toLowerCase())
+    );
+  }
+
+  // Filter by industry if specified
+  if (filters?.industry) {
+    jobs = jobs.filter(job =>
+      job.industry.toLowerCase().includes(filters.industry!.toLowerCase())
     );
   }
 
@@ -344,6 +352,7 @@ export async function getFilterOptions(): Promise<FilterOptions> {
     const country = r.fields['Location'];
     if (country) locationSet.add(country);
   });
+
   const locations = Array.from(locationSet).sort();
 
   return { functions, locations, investors, industries };

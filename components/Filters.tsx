@@ -11,6 +11,8 @@ interface FiltersProps {
     industry?: string;
     investor?: string;
     remote?: string;
+    industry?: string;
+    investor?: string;
   };
 }
 
@@ -288,7 +290,7 @@ export default function Filters({ options, currentFilters }: FiltersProps) {
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="text-sm text-gray-500 hover:text-gray-700 underline"
+            className="text-sm text-[#A0A0A0] hover:text-[#F9F9F9] underline transition-colors"
           >
             Clear all
           </button>
