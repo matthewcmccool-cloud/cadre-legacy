@@ -44,8 +44,6 @@ export default function Header() {
             <Link href="/" className="text-sm text-[#A0A0A0] hover:text-[#F9F9F9] transition-colors">
               Jobs
             </Link>
-            <span className="text-sm text-[#6B6B6B]">Companies</span>
-            <span className="text-sm text-[#6B6B6B]">Investors</span>
           </nav>
         </div>
       </div>
