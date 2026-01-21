@@ -144,7 +144,7 @@ export async function getJobs(filters?: {
     const allRecordsResult = await fetchAirtable(TABLES.jobs, { 
           filterByFormula,
     sort: [{ field: 'Date Posted', direction: 'desc' }],
-    maxRecords: 500,
+    maxRecords: 100,
     fields: [
       'Job ID',
       'Title',
@@ -336,7 +336,7 @@ export async function getFilterOptions(): Promise<FilterOptions> {
 
   const jobRecords = await fetchAirtable(TABLES.jobs, {
     fields: ['Location'],
-    maxRecords: 500,
+    maxRecords: 100,
   });
 
   const locationSet = new Set<string>();
