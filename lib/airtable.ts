@@ -210,6 +210,8 @@ export async function getJobs(filters?: {
     const functionIds = record.fields['Function'] || [];
     const funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
 
+          // DEBUG: Log company URL data
+      console.log('Company Debug:', { companyIds, companyName, companyUrl, mapSize: companyUrlMap.size });
     const investorIds = record.fields['Investors'] || [];
     const investorNames = Array.isArray(investorIds)
       ? investorIds.map(id => investorMap.get(id) || '').filter(Boolean)
