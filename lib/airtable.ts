@@ -66,9 +66,7 @@ async function fetchAirtable(
       'Content-Type': 'application/json',
         },
   next: { revalidate: 0 }
-  }
-  });  if (!response.ok) {
-    console.error('Airtable error:', response.status, 'table:', table);
+  });    console.error('Airtable error:', response.status, 'table:', table);
     throw new Error(`Airtable error: ${response.status} for table ${table}`);
   }
   const data: AirtableResponse = await response.json();
