@@ -173,20 +173,20 @@ export async function getJobs(filters?: {
     let companyOffset: string | undefined;
     do {
       const companyRecords = await fetchAirtable(TABLES.companies, {
-        fields: ['Companies', 'URL'],
+        fields: ['Company', 'URL'],
         offset: companyOffset,
       });
       companyRecords.records.forEach(r => {
-        companyMap.set(r.id, (r.fields['Companies'] as string) || '');
+        companyMap.set(r.id, (r.fields['Company'] as string) || '');
               companyUrlMap.set(r.id, (r.fields['URL'] as string) || '');
       });
       companyOffset = companyRecords.offset;
     } while (companyOffset);  const investorRecords = await fetchAirtable(TABLES.investors, {
-    fields: ['Companies'],
+    fields: ['Company'],
   });
   const investorMap = new Map<string, string>();
   investorRecords.records.forEach(r => {
-    investorMap.set(r.id, r.fields['Companies'] || '');
+    investorMap.set(r.id, r.fields['Company'] || '');
   });
 
   const industryRecords = await fetchAirtable(TABLES.industries, {
@@ -328,7 +328,7 @@ export async function getJobs(filters?: {
 export async function getFilterOptions(): Promise<FilterOptions> {
   const [functionRecords, investorRecords, industryRecords] = await Promise.all([
     fetchAirtable(TABLES.functions, { fields: ['Function'] }),
-    fetchAirtable(TABLES.investors, { fields: ['Companies'] }),
+    fetchAirtable(TABLES.investors, { fields: ['Company'] }),
     fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
   ]);
 
@@ -338,7 +338,7 @@ export async function getFilterOptions(): Promise<FilterOptions> {
     .sort();
 
   const investors = investorRecords.records
-    .map(r => r.fields['Companies'])
+    .map(r => r.fields['Company'])
     .filter(Boolean)
     .sort();
 
@@ -389,8 +389,8 @@ export async function getJobById(id: string): Promise<Job & { description: strin
 
   // Fetch related data (companies, investors, industries, functions)
   const [companyRecords, investorRecords, industryRecords, functionRecords] = await Promise.all([
-    fetchAirtable(TABLES.companies, { fields: ['Companies', 'URL'] }),
-    fetchAirtable(TABLES.investors, { fields: ['Companies'] }),
+    fetchAirtable(TABLES.companies, { fields: ['Company', 'URL'] }),
+    fetchAirtable(TABLES.investors, { fields: ['Company'] }),
     fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
     fetchAirtable(TABLES.functions, { fields: ['Function'] }),
   ]);
@@ -398,13 +398,13 @@ export async function getJobById(id: string): Promise<Job & { description: strin
   const companyMap = new Map<string, string>();
   const companyUrlMap = new Map<string, string>();
   companyRecords.records.forEach(r => {
-    companyMap.set(r.id, (r.fields['Companies'] as string) || '');
+    companyMap.set(r.id, (r.fields['Company'] as string) || '');
     companyUrlMap.set(r.id, (r.fields['URL'] as string) || '');
   });
 
   const investorMap = new Map<string, string>();
   investorRecords.records.forEach(r => {
-    investorMap.set(r.id, r.fields['Companies'] || '');
+    investorMap.set(r.id, r.fields['Company'] || '');
   });
 
   const industryMap = new Map<string, string>();
