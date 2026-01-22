@@ -65,8 +65,9 @@ async function fetchAirtable(
   });
 
   if (!response.ok) {
-    throw new Error(`Airtable error: ${response.status} for table ${table}`);
-  }
+    let errorText = '';
+    try { errorText = await response.text(); } catch (e) {}
+    throw new Error(`Airtable error: ${response.status} for table ${table}${errorText ? ': ' + errorText : ''}`);  }
 
   const data = await response.json();
   return { records: data.records, offset: data.offset };
