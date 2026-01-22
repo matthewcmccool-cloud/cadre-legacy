@@ -198,15 +198,22 @@ export async function getJobs(filters?: {
   });
 
   let jobs = allRecords.map(record => {
-    const companyIds = record.fields['Company'] || [];
-    const companyName = companyIds.length > 0 ? companyMap.get(companyIds[0]) || 'Unknown' : 'Unknown';
-          const companyUrl = companyIds.length > 0 ? companyUrlMap.get(companyIds[0]) || '' : '';
-
+    const companyField = record.fields['Company'];
+    let companyName = 'Unknown';
+    let companyUrl = '';
+    
+    if (typeof companyField === 'string') {
+      // Text field - use directly
+      companyName = companyField;
+    } else if (Array.isArray(companyField) && companyField.length > 0) {
+      // Linked record field - look up in map
+      companyName = companyMap.get(companyField[0]) || 'Unknown';
+      companyUrl = companyUrlMap.get(companyField[0]) || '';
+    }
     const functionIds = record.fields['Function'] || [];
     const funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
 
           // DEBUG: Log company URL data
-      console.log('Company Debug:', { companyIds, companyName, companyUrl, mapSize: companyUrlMap.size });
     const investorIds = record.fields['Investors'] || [];
     const investorNames = Array.isArray(investorIds)
       ? investorIds.map(id => investorMap.get(id) || '').filter(Boolean)
