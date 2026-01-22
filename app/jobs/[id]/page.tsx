@@ -10,15 +10,6 @@ function formatDate(dateString: string): string {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-const getDomain = (url: string | null | undefined) => {
-  if (!url) return null;
-  try {
     return new URL(url).hostname.replace('www.', '');
   } catch {
     return null;
@@ -77,9 +68,6 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
               </span>
             )}
           </div>
-          {job.postedDate && (
-            <p className="text-[#A0A0A0] text-sm">Posted {formatDate(job.postedDate)}</p>
-          )}
         </div>
 
         {/* Apply Button */}
