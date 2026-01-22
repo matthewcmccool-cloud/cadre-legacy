@@ -73,6 +73,7 @@ async function fetchAirtable(
   }
   const data: AirtableResponse = await response.json();
   return { records: data.records, offset: data.offset };
+  }
 
 export interface Job {
   id: string;
