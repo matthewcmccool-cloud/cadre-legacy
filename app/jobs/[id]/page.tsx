@@ -1,6 +1,7 @@
 import { getJobById } from '@/lib/airtable';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import CompanyLogo from '@/components/CompanyLogo';
 
 interface JobDetailPageProps {
   params: { id: string };
@@ -47,15 +48,11 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             {companyDomain && (
-              <img
-                src={`https://www.google.com/s2/favicons?domain=${companyDomain}&sz=64`}
-                alt=""
-                className="w-12 h-12 rounded-lg"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
-              />
+              <CompanyLogo
+                  src={`https://www.google.com/s2/favicons?domain=${companyDomain}&sz=64`}
+                  alt={job.company || ''}
+                  className="w-12 h-12 rounded-lg"
+                />
             )}
             <span className="text-[#A0A0A0] text-lg font-medium">{job.company}</span>
           </div>
