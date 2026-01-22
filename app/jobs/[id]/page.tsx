@@ -10,11 +10,19 @@ function formatDate(dateString: string): string {
   if (!dateString) return '';
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function getDomain(url: string): string | null {
+  try {
     return new URL(url).hostname.replace('www.', '');
   } catch {
     return null;
   }
-};
+}
 
 export default async function JobDetailPage({ params }: JobDetailPageProps) {
   let job;
@@ -67,6 +75,16 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                 {job.location}
               </span>
             )}
+            {job.remote && (
+              <span className="inline-flex px-3 py-1 rounded-md text-sm font-medium bg-[#1a472a] text-[#4ade80]">
+                Remote
+              </span>
+            )}
+            {job.salary && (
+              <span className="inline-flex px-3 py-1 rounded-md text-sm font-medium bg-[#3A3A3A] text-[#A0A0A0]">
+                {job.salary}
+              </span>
+            )}
           </div>
         </div>
 
@@ -76,13 +94,23 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             href={job.applyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-medium transition-colors"
+            className="inline-flex items-center justify-center px-6 py-3 bg-[#F9F9F9] text-[#0b0a0a] font-semibold rounded-lg hover:bg-[#E0E0E0] transition-colors mb-8"
           >
             Apply Now
             <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           </a>
+        )}
+
+        {/* Job Description */}
+        {job.description && (
+          <div className="prose prose-invert max-w-none">
+            <h2 className="text-xl font-semibold text-[#F9F9F9] mb-4">About the Role</h2>
+            <div className="text-[#A0A0A0] whitespace-pre-wrap leading-relaxed">
+              {job.description}
+            </div>
+          </div>
         )}
       </div>
     </div>
