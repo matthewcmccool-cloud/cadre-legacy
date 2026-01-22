@@ -68,13 +68,13 @@ async function fetchAirtable(
     next: { revalidate: 0 },
   });
 
-if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('Airtable error:', response.status, 'table:', table, 'body:', errorBody);
-      throw new Error(`Airtable error: ${response.status} for table ${table}: ${errorBody}`);
-    }
-  const data: AirtableResponse = await response.json();
-  return { records: data.records, offset: data.offset };
+  const responseText = await response.text();
+  if (!response.ok) {
+    const errorBody = responseText;
+    console.error('Airtable error:', response.status, 'table:', table, 'body:', errorBody);
+    throw new Error(`Airtable error: ${response.status} for table ${table}: ${errorBody}`);
+  }
+  const data: AirtableResponse = JSON.parse(responseText);  return { records: data.records, offset: data.offset };
 }
 
 export interface Job {
