@@ -16,7 +16,8 @@ function formatDate(dateString: string): string {
   });
 }
 
-function getDomain(url: string): string | null {
+function getDomain(url: string | undefined): string | null {
+  if (!url) return null;
   try {
     return new URL(url).hostname.replace('www.', '');
   } catch {
