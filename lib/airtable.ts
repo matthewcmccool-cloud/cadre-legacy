@@ -57,7 +57,8 @@ async function fetchAirtable(
     ? `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${table}?${queryString}`
     : `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${table}`;
 
-  const response = await fetch(url, {
+  const response = await fetch(url, 
+                                 cache: 'no-store',{
     headers: {
       Authorization: `Bearer ${AIRTABLE_API_KEY}`,
     },
@@ -378,6 +379,7 @@ export async function getJobById(id: string): Promise<Job & { description: strin
       Authorization: `Bearer ${AIRTABLE_API_KEY}`,
       'Content-Type': 'application/json',
     },
+      cache: 'no-store',
 })
   if (!response.ok) {
     throw new Error(`Failed to fetch job: ${response.status}`);
