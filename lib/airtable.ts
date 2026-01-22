@@ -65,9 +65,8 @@ async function fetchAirtable(
       Authorization: `Bearer ${AIRTABLE_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    next: { revalidate: 0 },
+    cache: 'no-store'
   });
-
   const responseText = await response.text();
   if (!response.ok) {
     const errorBody = responseText;
