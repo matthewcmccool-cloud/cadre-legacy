@@ -76,11 +76,6 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
                 {job.location}
               </span>
             )}
-            {job.remote && (
-              <span className="inline-flex px-3 py-1 rounded-md text-sm font-medium bg-[#1a3a2a] text-[#4ade80]">
-                {job.remote}
-              </span>
-            )}
           </div>
           {job.postedDate && (
             <p className="text-[#A0A0A0] text-sm">Posted {formatDate(job.postedDate)}</p>
