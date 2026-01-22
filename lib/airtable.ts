@@ -17,61 +17,25 @@ interface AirtableResponse {
   offset?: string;
 }
 
-async function fetchAirtable(
-  table: string,
-  options: {
-    filterByFormula?: string;
-    sort?: { field: string; direction: 'asc' | 'desc' }[];
-    maxRecords?: number;
-    fields?: string[];
-    offset?: string;
-  } = {}
-): Promise<{ records: AirtableRecord[]; offset?: string }> {
-  const params = new URLSearchParams()
-  const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-  const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
-
-  if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
-    throw new Error('Missing Airtable environment variables');
-  }
-
-  if (options.filterByFormula) {
-    params.append('filterByFormula', options.filterByFormula);
-  }
-
-  if (options.sort) {
-    options.sort.forEach((s, i) => {
-      params.append(`sort[${i}][field]`, s.field);
-      params.append(`sort[${i}][direction]`, s.direction);
-    });
-  }
-
-  if (options.maxRecords) {
-    params.append('maxRecords', String(options.maxRecords));
-  }
-
-  if (options.fields) {
-    options.fields.forEach(f => params.append('fields[]', f));
-  }
-
-  if (options.offset) {
-    params.append('offset', options.offset);
-  }
-
-  const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(table)}?${params}`;
+async function fetchAirtable(table: string, params?: URLSearchParams): Promise<{ records: AirtableRecord[]; offset?: string }> {
+  const url = params 
+    ? `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${table}?${params.toString()}`
+    : `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${table}`;
 
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-      'Content-Type': 'application/json',
-        },
-  next: { revalidate: 0 }
-  });    console.error('Airtable error:', response.status, 'table:', table);
+    },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
     throw new Error(`Airtable error: ${response.status} for table ${table}`);
   }
-  const data: AirtableResponse = await response.json();
+
+  const data = await response.json();
   return { records: data.records, offset: data.offset };
-  }
+}
 
 export interface Job {
   id: string;
