@@ -124,7 +124,7 @@ export async function getJobs(filters?: {
 
   if (filters?.search) {
     const s = filters.search.replace(/'/g, "\\'" );
-    formulaParts.push('OR(FIND(LOWER(\'' + s + '\'), LOWER({Title})), FIND(LOWER(\'' + s + '\'), LOWER(ARRAYJOIN({Company}))))');
+    formulaParts.push('OR(FIND(LOWER(\'' + s + '\'), LOWER({Title})), FIND(LOWER(\'' + s + '\'), LOWER(ARRAYJOIN({Companies}))))');
   }
 
   if (filters?.location) {
@@ -143,7 +143,7 @@ export async function getJobs(filters?: {
     fields: [
       'Job ID',
       'Title',
-      'Company',
+      'Companies',
       'Function',
       'Location',
       'Remote First',
@@ -173,20 +173,20 @@ export async function getJobs(filters?: {
     let companyOffset: string | undefined;
     do {
       const companyRecords = await fetchAirtable(TABLES.companies, {
-        fields: ['Company', 'URL'],
+        fields: ['Companies', 'URL'],
         offset: companyOffset,
       });
       companyRecords.records.forEach(r => {
-        companyMap.set(r.id, (r.fields['Company'] as string) || '');
+        companyMap.set(r.id, (r.fields['Companies'] as string) || '');
               companyUrlMap.set(r.id, (r.fields['URL'] as string) || '');
       });
       companyOffset = companyRecords.offset;
     } while (companyOffset);  const investorRecords = await fetchAirtable(TABLES.investors, {
-    fields: ['Company'],
+    fields: ['Companies'],
   });
   const investorMap = new Map<string, string>();
   investorRecords.records.forEach(r => {
-    investorMap.set(r.id, r.fields['Company'] || '');
+    investorMap.set(r.id, r.fields['Companies'] || '');
   });
 
   const industryRecords = await fetchAirtable(TABLES.industries, {
@@ -198,7 +198,7 @@ export async function getJobs(filters?: {
   });
 
   let jobs = allRecords.map(record => {
-    const companyField = record.fields['Company'];
+    const companyField = record.fields['Companies'];
     let companyName = 'Unknown';
     let companyUrl = '';
     
@@ -328,7 +328,7 @@ export async function getJobs(filters?: {
 export async function getFilterOptions(): Promise<FilterOptions> {
   const [functionRecords, investorRecords, industryRecords] = await Promise.all([
     fetchAirtable(TABLES.functions, { fields: ['Function'] }),
-    fetchAirtable(TABLES.investors, { fields: ['Company'] }),
+    fetchAirtable(TABLES.investors, { fields: ['Companies'] }),
     fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
   ]);
 
@@ -338,7 +338,7 @@ export async function getFilterOptions(): Promise<FilterOptions> {
     .sort();
 
   const investors = investorRecords.records
-    .map(r => r.fields['Company'])
+    .map(r => r.fields['Companies'])
     .filter(Boolean)
     .sort();
 
@@ -389,8 +389,8 @@ export async function getJobById(id: string): Promise<Job & { description: strin
 
   // Fetch related data (companies, investors, industries, functions)
   const [companyRecords, investorRecords, industryRecords, functionRecords] = await Promise.all([
-    fetchAirtable(TABLES.companies, { fields: ['Company', 'URL'] }),
-    fetchAirtable(TABLES.investors, { fields: ['Company'] }),
+    fetchAirtable(TABLES.companies, { fields: ['Companies', 'URL'] }),
+    fetchAirtable(TABLES.investors, { fields: ['Companies'] }),
     fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
     fetchAirtable(TABLES.functions, { fields: ['Function'] }),
   ]);
@@ -398,13 +398,13 @@ export async function getJobById(id: string): Promise<Job & { description: strin
   const companyMap = new Map<string, string>();
   const companyUrlMap = new Map<string, string>();
   companyRecords.records.forEach(r => {
-    companyMap.set(r.id, (r.fields['Company'] as string) || '');
+    companyMap.set(r.id, (r.fields['Companies'] as string) || '');
     companyUrlMap.set(r.id, (r.fields['URL'] as string) || '');
   });
 
   const investorMap = new Map<string, string>();
   investorRecords.records.forEach(r => {
-    investorMap.set(r.id, r.fields['Company'] || '');
+    investorMap.set(r.id, r.fields['Companies'] || '');
   });
 
   const industryMap = new Map<string, string>();
@@ -418,7 +418,7 @@ export async function getJobById(id: string): Promise<Job & { description: strin
   });
 
   // Map the record to a Job object
-  const companyField = record.fields['Company'];
+  const companyField = record.fields['Companies'];
   let companyName = 'Unknown';
   let companyUrl = '';
   if (typeof companyField === 'string') {
