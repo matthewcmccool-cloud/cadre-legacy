@@ -6,16 +6,6 @@ interface JobDetailPageProps {
   params: { id: string };
 }
 
-function formatDate(dateString: string): string {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-}
-
 function getDomain(url: string | undefined): string | null {
   if (!url) return null;
   try {
@@ -74,11 +64,6 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             {job.location && (
               <span className="inline-flex px-3 py-1 rounded-md text-sm font-medium bg-[#3A3A3A] text-[#A0A0A0]">
                 {job.location}
-              </span>
-            )}
-            {job.remote && (
-              <span className="inline-flex px-3 py-1 rounded-md text-sm font-medium bg-[#1a472a] text-[#4ade80]">
-                Remote
               </span>
             )}
             {job.salary && (
