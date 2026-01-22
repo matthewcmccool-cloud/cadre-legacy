@@ -61,8 +61,7 @@ async function fetchAirtable(
     headers: {
       Authorization: `Bearer ${AIRTABLE_API_KEY}`,
     },
-    cache: 'no-store',
-  });
+    next: { revalidate: 0 },  });
 
   if (!response.ok) {
     let errorText = '';
