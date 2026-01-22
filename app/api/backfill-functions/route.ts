@@ -28,6 +28,9 @@ const VALID_FUNCTIONS = [
 
 async function classifyJobFunction(title: string): Promise<string | null> {
   try {
+    // Log that we're attempting classification
+    console.log(`Classifying: "${title}"`);
+    
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -51,13 +54,23 @@ async function classifyJobFunction(title: string): Promise<string | null> {
       }),
     });
 
+    // Better error handling - get response as text first
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Perplexity API error:', errorData);
+      const errorText = await response.text();
+      console.error(`Perplexity API error (${response.status}): ${errorText.substring(0, 500)}`);
       return null;
     }
 
-    const data = await response.json();
+    // Parse response safely
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error(`Perplexity returned non-JSON: ${text.substring(0, 500)}`);
+      return null;
+    }
+
     let classification = data.choices?.[0]?.message?.content?.trim();
     
     // Strip asterisks and extra whitespace
@@ -185,6 +198,10 @@ async function getFunctionRecordId(functionName: string): Promise<string | null>
 export async function GET() {
   const startTime = Date.now();
   const maxRuntime = 55000; // 55 seconds
+
+  // Log API key presence (not the actual key)
+  console.log(`PERPLEXITY_API_KEY present: ${!!PERPLEXITY_API_KEY}`);
+  console.log(`PERPLEXITY_API_KEY length: ${PERPLEXITY_API_KEY?.length || 0}`);
 
   const results: any[] = [];
   let processed = 0;
