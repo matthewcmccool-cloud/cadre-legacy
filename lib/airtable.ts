@@ -58,7 +58,7 @@ async function fetchAirtable(
     : `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${table}`;
 
   const response = await fetch(url, {
-    cache: 'no-store',
+    next: { revalidate: 0 },
     headers: {
       Authorization: `Bearer ${AIRTABLE_API_KEY}`,
     },
@@ -385,7 +385,7 @@ export async function getJobById(id: string): Promise<(Job & { description: stri
       Authorization: `Bearer ${AIRTABLE_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    cache: 'no-store',
+    next: { revalidate: 0 },
   });
 
   if (!response.ok) {
