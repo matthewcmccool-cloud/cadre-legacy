@@ -567,12 +567,9 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
 
   // Fetch jobs for this company to get investor links and job count
   const jobRecords = await fetchAirtable(TABLES.jobs, {
-    filterByFormula: `FIND('${(company.fields['Company'] as string || '').replace(/'/g, "\\'")}, {Companies})`,
     fields: ['Companies', 'Investors'],
   });
 
-  // Collect unique investors from jobs
-  const investorSet = new Set<string>();
   jobRecords.records.forEach(job => {
     const invIds = job.fields['Investors'] || [];
     if (Array.isArray(invIds)) {
