@@ -601,19 +601,30 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
   };
 }
 
-// Get jobs by company name
+// Get jobs by company name - fetches all jobs and dedupes by title+location
 export async function getJobsByCompany(companyName: string): Promise<Job[]> {
-  const result = await getJobs({ company: companyName });
-  return result.jobs;
-}
-
-// Investor interface
-export interface Investor {
-  id: string;
-  name: string;
-  slug: string;
-  companies: Array<{ id: string; name: string; slug: string }>;
-  jobCount: number;
+  // Fetch all jobs for this company (not paginated)
+  const allJobs: Job[] = [];
+  let page = 1;
+  let hasMore = true;
+  
+  while (hasMore) {
+    const result = await getJobs({ company: companyName, page });
+    allJobs.push(...result.jobs);
+    hasMore = page < result.totalPages;
+    page++;
+  }
+  
+  // Dedupe by title + location
+  const seen = new Set<string>();
+  const uniqueJobs = allJobs.filter(job => {
+    const key = `${job.title}|${job.location}`.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  
+  return uniqueJobs;
 }
 
 // Fetch a single investor by slug
