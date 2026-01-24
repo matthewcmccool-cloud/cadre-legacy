@@ -640,7 +640,7 @@ export interface Investor {
 export async function getInvestorBySlug(slug: string): Promise<Investor | null> {
   // Fetch all investors
  
-  
+    const investorRecords = await fetchAirtable(TABLES.investors, {
     fields: ['Company'],
   });
 
