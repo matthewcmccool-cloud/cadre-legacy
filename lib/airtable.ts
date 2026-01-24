@@ -392,8 +392,8 @@ export async function getJobById(id: string): Promise<(Job & { description: stri
     throw new Error(`Failed to fetch job: ${response.status}`);
   }
 
-  const record = await response.json();
-
+  const text = await response.text();
+  const record = JSON.parse(text);
   // Check if record exists and has fields
   if (!record || !record.fields) {
     return null;
