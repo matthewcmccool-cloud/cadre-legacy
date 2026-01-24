@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { serializeFilters } from '@/lib/filters';
 
 interface PaginationProps {
   currentPage: number;
@@ -12,47 +13,45 @@ export default function Pagination({ currentPage, totalPages, searchParams }: Pa
   const router = useRouter();
 
   const goToPage = (page: number) => {
-    const params = new URLSearchParams();
-    Object.entries(searchParams).forEach(([key, value]) => {
-      if (value && key !== 'page') {
-        params.set(key, value);
-      }
-    });
+const params = serializeFilters(searchParams);
     if (page > 1) {
-      params.set('page', String(page));
+      const newParams = new URLSearchParams(params);
+      newParams.set('page', String(page));
+      router.push('/?' + newParams.toString());
+    } else {
+router.push('/' + (params ? '?' + params : ''));
     }
-    router.push('/?' + params.toString());
   };
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const showPages = 5;
-    
+
     if (totalPages <= showPages + 2) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
       pages.push(1);
-      
+
       if (currentPage > 3) {
         pages.push('...');
       }
-      
+
       const start = Math.max(2, currentPage - 1);
       const end = Math.min(totalPages - 1, currentPage + 1);
-      
+
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
-      
+
       if (currentPage < totalPages - 2) {
         pages.push('...');
       }
-      
+
       pages.push(totalPages);
     }
-    
+
     return pages;
   };
 
@@ -67,7 +66,7 @@ export default function Pagination({ currentPage, totalPages, searchParams }: Pa
       </button>
 
       <div className="flex items-center gap-1">
-        {getPageNumbers().map((page, index) => (
+        {getPageNumbers().map((page, index) =>
           typeof page === 'number' ? (
             <button
               key={index}
@@ -85,7 +84,7 @@ export default function Pagination({ currentPage, totalPages, searchParams }: Pa
               {page}
             </span>
           )
-        ))}
+        )}
       </div>
 
       <button
