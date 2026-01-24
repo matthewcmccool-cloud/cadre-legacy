@@ -14,7 +14,7 @@
     "react": "^18",
     "react-dom": "^18",
     "airtable": "^0.12.2",
-    "@clerk/nextjs": "^5.10.0",
+    "@clerk/nextjs": "^6.36.10",
     "@supabase/supabase-js": "^2.45.4",
     "@supabase/ssr": "^0.5.1"
   },
