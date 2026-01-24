@@ -630,7 +630,17 @@ export async function getJobsByCompany(companyName: string): Promise<Job[]> {
 // Fetch a single investor by slug
 export async function getInvestorBySlug(slug: string): Promise<Investor | null> {
   // Fetch all investors
-  const investorRecords = await fetchAirtable(TABLES.investors, {
+ 
+  
+  // Investor interface
+export interface Investor {
+  id: string;
+  name: string;
+  slug: string;
+  companies: Array<{ id: string; name: string; slug: string }>;
+  jobCount: number;
+}
+const investorRecords = await fetchAirtable(TABLES.investors, {
     fields: ['Company'],
   });
 
