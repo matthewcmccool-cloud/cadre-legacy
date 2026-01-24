@@ -556,6 +556,9 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
     return null;
   }
 
+    const companyId = company.id;
+  const companyName = (company.fields['Company'] as string) || '';
+
   // Fetch investors linked to this company
   const investorRecords = await fetchAirtable(TABLES.investors, {
     fields: ['Company'],
@@ -570,8 +573,14 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
     fields: ['Companies', 'Investors'],
   });
 
+    // Filter jobs to only those linked to this company
+  const jobsForCompany = jobRecords.records.filter(job => {
+    const companyIds = job.fields['Companies'] || [];
+    return Array.isArray(companyIds) && companyIds.includes(companyId);
+  });
+
     const investorSet = new Set<string>();
-  jobRecords.records.forEach(job => {
+  jobsForCompany.forEach(job => {
     const invIds = job.fields['Investors'] || [];
     if (Array.isArray(invIds)) {
       invIds.forEach(id => {
@@ -581,9 +590,6 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
       });
     }
   });
-
-  const companyName = company.fields['Company'] as string || '';
-
   return {
     id: company.id,
     name: companyName,
@@ -591,7 +597,7 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
     url: company.fields['URL'] as string || undefined,
     description: company.fields['Description'] as string || undefined,
     investors: Array.from(investorSet),
-    jobCount: jobRecords.records.length,
+    jobCount: jobsForCompany.length,
   };
 }
 
