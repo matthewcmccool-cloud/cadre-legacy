@@ -16,6 +16,15 @@ function getDomain(url: string | undefined): string | null {
   }
 }
 
+function decodeHtml(html: string): string {
+  return html
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 export default async function JobDetailPage({ params }: JobDetailPageProps) {
   let job;
   try {
@@ -99,7 +108,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             <h2 className="text-xl font-semibold text-[#F9F9F9] mb-4">About the Role</h2>
 <div
                       className="text-[#A0A0A0] leading-relaxed [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-2"
-                      dangerouslySetInnerHTML={{ __html: job.description || "" }}
+                      dangerouslySetInnerHTML={{ __html: decodeHtml(job.description || "") }}
                     />
           </div>
         )}
