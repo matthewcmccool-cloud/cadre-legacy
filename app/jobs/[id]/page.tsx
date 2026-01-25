@@ -2,6 +2,7 @@ import { getJobById } from '@/lib/airtable';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CompanyLogo from '@/components/CompanyLogo';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface JobDetailPageProps {
   params: { id: string };
@@ -99,7 +100,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
             <h2 className="text-xl font-semibold text-[#F9F9F9] mb-4">About the Role</h2>
 <div
                       className="text-[#A0A0A0] leading-relaxed [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-2"
-                      dangerouslySetInnerHTML={{ __html: job.description || "" }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description || "") }}
                     />
           </div>
         )}
