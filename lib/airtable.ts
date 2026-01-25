@@ -997,3 +997,19 @@ export async function getOrganicJobs(page: number = 1, pageSize: number = 25): P
     totalPages,
   };
 }
+
+// Get stats for the homepage
+export async function getStats(): Promise<{ jobCount: number; companyCount: number; investorCount: number }> {
+  // Fetch counts from each table
+  const [jobRecords, companyRecords, investorRecords] = await Promise.all([
+    fetchAirtable(TABLES.jobs, { fields: ['Job ID'], maxRecords: 1000 }),
+    fetchAirtable(TABLES.companies, { fields: ['Company'], filterByFormula: 'OR({Rank}=1,{Rank}=2)' }),
+    fetchAirtable(TABLES.investors, { fields: ['Company'] }),
+  ]);
+
+  return {
+    jobCount: jobRecords.records.length,
+    companyCount: companyRecords.records.length,
+    investorCount: investorRecords.records.length,
+  };
+}
