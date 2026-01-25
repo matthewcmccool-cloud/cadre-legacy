@@ -1,4 +1,4 @@
-import { getOrganicJobs, getFilterOptions } from '@/lib/airtable';
+import { getJobs, getFilterOptions } from '@/lib/airtable';
 import JobTable from '@/components/JobTable';
 import QueryBuilder from '@/components/QueryBuilder';
 import Header from '@/components/Header';
@@ -22,9 +22,21 @@ interface PageProps {
 export default async function Home({ searchParams }: PageProps) {
   const currentPage = parseInt(searchParams.page || '1', 10);
 
-  // Fetch organic jobs sorted by Posted Date desc and filter options
+  // Build filters from search params
+  const filters = {
+    functionName: searchParams.functionName,
+    industry: searchParams.industry,
+    location: searchParams.location,
+    remoteOnly: searchParams.remote === 'true',
+    search: searchParams.search,
+    company: searchParams.company,
+    investor: searchParams.investor,
+    page: currentPage,
+  };
+
+  // Fetch jobs with filters and filter options
   const [jobsResult, filterOptions] = await Promise.all([
-    getOrganicJobs(currentPage, 25),
+    getJobs(filters),
     getFilterOptions(),
   ]);
 
