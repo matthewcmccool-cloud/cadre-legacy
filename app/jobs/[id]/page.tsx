@@ -41,12 +41,11 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
   const companyDomain = getDomain(job.companyUrl);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0d1f1f] via-[#1a1a1a] to-[#0a0a0a]">
+    <div className="min-h-screen">
             <Header />
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Back Button */}
-        <Link
-          href="/"
+      <div className="min-h-screen">          href="/"
           className="inline-flex items-center text-[#A0A0A0] hover:text-[#F9F9F9] transition-colors mb-8"
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
