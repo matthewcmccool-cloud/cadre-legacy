@@ -16,6 +16,7 @@
     "@supabase/supabase-js": "^2.45.4",
     "@supabase/ssr": "^0.5.1",
     "svix": "^1.24.0"
+        "@next/swc-linux-x64-gnu": "14.2.25"
   },
   "devDependencies": {
     "autoprefixer": "^10",
