@@ -2,6 +2,7 @@ import { getJobById } from '@/lib/airtable';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CompanyLogo from '@/components/CompanyLogo';
+import Header from '@/components/Header';
 
 interface JobDetailPageProps {
   params: { id: string };
@@ -41,6 +42,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d1f1f] via-[#1a1a1a] to-[#0a0a0a]">
+            <Header />
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Back Button */}
         <Link
