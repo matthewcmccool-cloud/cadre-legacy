@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CompanyLogo from '@/components/CompanyLogo';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface CompanyPageProps {
   params: { slug: string };
 }
