@@ -33,7 +33,7 @@ const fieldConfigs: Record<FieldType, { label: string; optionsKey?: keyof Filter
   function: { label: 'Function', optionsKey: 'functions' },
   industry: { label: 'Industry', optionsKey: 'industries' },
   investor: { label: 'Investor', optionsKey: 'investors' },
-  location: { label: 'Location' },
+  location: { label: 'Location', optionsKey: 'locations' },
   remote: { label: 'Remote' },
 };
 
