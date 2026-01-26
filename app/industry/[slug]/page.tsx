@@ -17,7 +17,7 @@ export default async function IndustryPage({ params }: IndustryPageProps) {
   const jobsResult = await getJobs({ industry: industry.name });
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-[#262626] text-white">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Back link */}
         <Link
