@@ -2,6 +2,9 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getInvestorBySlug, getJobs } from '@/lib/airtable';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface InvestorPageProps {
   params: { slug: string };
 }
