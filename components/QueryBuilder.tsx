@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { FilterOptions } from '@/lib/airtable';
 import { useState, useRef, useEffect } from 'react';
 
@@ -101,7 +101,7 @@ const parseUrlToConditions = (filters: QueryBuilderProps['currentFilters']): Fil
 };
 
 export default function QueryBuilder({ options, defaultOpen, currentFilters }: QueryBuilderProps) {
-  const router = useRouter();
+  const router = useRouter();   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [conditions, setConditions] = useState<FilterCondition[]>(() => 
     parseUrlToConditions(currentFilters)
@@ -153,7 +153,7 @@ export default function QueryBuilder({ options, defaultOpen, currentFilters }: Q
       }
     });
     
-    router.push('/?' + params.toString());
+    router.push(pathname + '?' + params.toString());
   };
 
 
@@ -341,7 +341,7 @@ export default function QueryBuilder({ options, defaultOpen, currentFilters }: Q
         </button>
         {hasFilters && (
           <button
-            onClick={() => { setConditions([]); router.push('/'); }}
+            onClick={() => { setConditions([]); router.push(pathname); }}
             className="text-sm text-[#666] hover:text-white transition-colors"
           >
             Clear all
