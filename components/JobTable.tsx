@@ -35,16 +35,18 @@ const getDomain = (url: string | null | undefined) => {
   }
 };
 
+const createSlug = (name: string): string => {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+};
+
 export default function JobTable({ jobs }: JobTableProps) {
   const router = useRouter();
 
   const handleCompanyClick = (company: string) => {
-    router.push('/?company=' + encodeURIComponent(company));
-  };
+    router.push('/companies/' + createSlug(company));  };
 
   const handleInvestorClick = (investor: string) => {
-    router.push('/?investor=' + encodeURIComponent(investor));
-  }; 
+    router.push('/investors/' + createSlug(investor));  }; 
 
   if (jobs.length === 0) {
     return (
@@ -101,7 +103,7 @@ export default function JobTable({ jobs }: JobTableProps) {
                 </button>
               </td>
               <td className="py-4 px-4">
-              {job.industry ? (                  <Link href={`/industry/${job.industry.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}`}>
+              {job.industry ? (                  <Link href={`/industry/${createSlug(job.industry)}`}
                     <span className="inline-flex px-2 py-1 rounded-md text-xs font-medium bg-[#3D2D4A] text-[#C4B5FD] hover:opacity-80 cursor-pointer">
                     {job.industry}
                   </span>
