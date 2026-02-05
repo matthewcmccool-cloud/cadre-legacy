@@ -1,9 +1,8 @@
 import { getJobs, getFilterOptions } from '@/lib/airtable';
 import JobTable from '@/components/JobTable';
-import QueryBuilder from '@/components/QueryBuilder';
 import Header from '@/components/Header';
 import Pagination from '@/components/Pagination';
-import SearchBar from '@/components/SearchBar';
+import SearchFilters from '@/components/SearchFilters';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,50 +38,25 @@ export default async function Home({ searchParams }: PageProps) {
     getFilterOptions(),
   ]);
 
-  // Calculate stats from available data
-  const jobCount = jobsResult.totalCount;
-  const investorCount = filterOptions.investors?.length || 0;
-  // Get unique company count from jobs
-  const uniqueCompanies = new Set(jobsResult.jobs.map(job => job.company));
-  const companyCount = uniqueCompanies.size;
-
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-[#0e0e0f]">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section - Compact */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#F9F9F9] mb-3">
-            Find your next role at a VC-backed company
-          </h1>
-          <p className="text-[#A0A0A0] text-lg mb-4">
-            The career graph for VC-backed tech talent.
-          </p>
-          <div className="flex justify-center gap-6 text-sm text-[#A0A0A0]">
-            <span><strong className="text-[#F9F9F9]">{jobCount.toLocaleString()}</strong> jobs</span>
-            <span><strong className="text-[#F9F9F9]">{companyCount.toLocaleString()}</strong> companies</span>
-            <span><strong className="text-[#F9F9F9]">{investorCount.toLocaleString()}</strong> investors</span>
-          </div>
-        </div>
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Tagline - Left aligned */}
+        <p className="text-[#888] text-sm mb-6">
+          High signal jobs at the world's leading technology companies.
+        </p>
 
-        <SearchBar
-          initialSearch={searchParams.search}
-          initialLocation={searchParams.location}
-        />
+        <SearchFilters />
 
-        <QueryBuilder
-          options={filterOptions}
-          currentFilters={searchParams}
-          defaultOpen={true}
-        />
-
-        <div className="mt-8 mb-4 flex justify-between items-center">
-          <p className="text-sm text-[#A0A0A0]">
-            {jobsResult.totalCount} {jobsResult.totalCount === 1 ? 'job' : 'jobs'} found
+        {/* Results count */}
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs text-[#666]">
+            {jobsResult.totalCount} {jobsResult.totalCount === 1 ? 'job' : 'jobs'}
           </p>
           {jobsResult.totalPages > 1 && (
-            <p className="text-sm text-[#A0A0A0]">
+            <p className="text-xs text-[#666]">
               Page {jobsResult.page} of {jobsResult.totalPages}
             </p>
           )}

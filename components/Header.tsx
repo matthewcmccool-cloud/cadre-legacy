@@ -1,19 +1,23 @@
 'use client';
 
 import Link from 'next/link';
+
 export default function Header() {
-    return (
-    <header className="border-b border-[#3A3A3A]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <Link href="/" className="flex items-center">
-            <h1 className="text-2xl font-bold text-[#F9F9F9] tracking-tight">
-              Portco.Jobs
-            </h1>
+  return (
+    <header className="bg-[#0e0e0f]">
+      <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-lg font-semibold text-white tracking-tight">
+              HighSignal.Jobs
+            </span>
           </Link>
 
-          <nav className="hidden sm:flex items-center gap-6">
-            <Link href="/" className="text-sm text-[#A0A0A0] hover:text-[#F9F9F9] transition-colors">
+          <nav className="flex items-center gap-1">
+            <Link
+              href="/"
+              className="px-3 py-1.5 text-sm text-[#888] hover:text-[#e8e8e8] hover:bg-[#1a1a1b] rounded transition-colors"
+            >
               Jobs
             </Link>
           </nav>
