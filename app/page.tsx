@@ -39,25 +39,24 @@ export default async function Home({ searchParams }: PageProps) {
   ]);
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-[#0e0e0f]">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section - Minimal */}
-        <div className="text-center mb-8">
-          <p className="text-[#A0A0A0] text-lg">
-            High signal jobs at the world's leading technology companies.
-          </p>
-        </div>
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Tagline - Left aligned */}
+        <p className="text-[#888] text-sm mb-6">
+          High signal jobs at the world's leading technology companies.
+        </p>
 
         <SearchFilters />
 
-        <div className="mb-4 flex justify-between items-center">
-          <p className="text-sm text-[#A0A0A0]">
-            {jobsResult.totalCount} {jobsResult.totalCount === 1 ? 'job' : 'jobs'} found
+        {/* Results count */}
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs text-[#666]">
+            {jobsResult.totalCount} {jobsResult.totalCount === 1 ? 'job' : 'jobs'}
           </p>
           {jobsResult.totalPages > 1 && (
-            <p className="text-sm text-[#A0A0A0]">
+            <p className="text-xs text-[#666]">
               Page {jobsResult.page} of {jobsResult.totalPages}
             </p>
           )}

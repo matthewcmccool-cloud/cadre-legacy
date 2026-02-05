@@ -12,14 +12,16 @@ interface PaginationProps {
 export default function Pagination({ currentPage, totalPages, searchParams }: PaginationProps) {
   const router = useRouter();
 
+  if (totalPages <= 1) return null;
+
   const goToPage = (page: number) => {
-const params = serializeFilters(searchParams);
+    const params = serializeFilters(searchParams);
     if (page > 1) {
       const newParams = new URLSearchParams(params);
       newParams.set('page', String(page));
       router.push('/?' + newParams.toString());
     } else {
-router.push('/' + (params ? '?' + params : ''));
+      router.push('/' + (params ? '?' + params : ''));
     }
   };
 
@@ -56,31 +58,31 @@ router.push('/' + (params ? '?' + params : ''));
   };
 
   return (
-    <div className="mt-8 flex items-center justify-center gap-2">
+    <div className="mt-8 flex items-center justify-center gap-1">
       <button
         onClick={() => goToPage(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-4 py-2 text-sm border border-[#3A3A3A] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#404040]"
+        className="px-3 py-1.5 text-sm text-[#888] hover:text-[#e8e8e8] hover:bg-[#1a1a1b] rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
       >
         Previous
       </button>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
         {getPageNumbers().map((page, index) =>
           typeof page === 'number' ? (
             <button
               key={index}
               onClick={() => goToPage(page)}
-              className={`w-10 h-10 text-sm rounded-lg ${
+              className={`w-8 h-8 text-sm rounded transition-colors ${
                 page === currentPage
-                  ? 'bg-[#F9F9F9] text-[#262626]'
-                  : 'border border-[#3A3A3A] hover:bg-[#404040]'
+                  ? 'bg-[#5e6ad2] text-white'
+                  : 'text-[#888] hover:text-[#e8e8e8] hover:bg-[#1a1a1b]'
               }`}
             >
               {page}
             </button>
           ) : (
-            <span key={index} className="px-2 text-[#6B6B6B]">
+            <span key={index} className="px-1 text-[#666]">
               {page}
             </span>
           )
@@ -90,7 +92,7 @@ router.push('/' + (params ? '?' + params : ''));
       <button
         onClick={() => goToPage(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-4 py-2 text-sm border border-[#3A3A3A] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#404040]"
+        className="px-3 py-1.5 text-sm text-[#888] hover:text-[#e8e8e8] hover:bg-[#1a1a1b] rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
       >
         Next
       </button>
