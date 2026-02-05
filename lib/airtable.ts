@@ -670,29 +670,45 @@ export async function getInvestorBySlug(slug: string): Promise<Investor | null> 
   const investorName = investor.fields['Company'] as string || '';
   const investorId = investor.id;
 
-  // Fetch ALL jobs to find companies backed by this investor (paginated - 16k+ jobs)
+  // Fetch ALL companies with their VCs field to find portfolio companies
+  // This catches companies even if they don't have jobs synced yet
+  const companyRecords = await fetchAllAirtable(TABLES.companies, {
+    fields: ['Company', 'VCs'],
+  });
+
+  // Build company map and find companies directly linked to this investor
+  const companyMap = new Map<string, string>();
+  const companySet = new Map<string, { id: string; name: string; slug: string }>();
+
+  companyRecords.forEach(r => {
+    const companyName = r.fields['Company'] as string || '';
+    companyMap.set(r.id, companyName);
+
+    // Check if this company is backed by the target investor
+    const companyVCs = r.fields['VCs'] || [];
+    if (Array.isArray(companyVCs) && companyVCs.includes(investorId)) {
+      if (companyName && !companySet.has(r.id)) {
+        companySet.set(r.id, {
+          id: r.id,
+          name: companyName,
+          slug: toSlug(companyName),
+        });
+      }
+    }
+  });
+
+  // Fetch ALL jobs to count jobs and find any additional companies through job links
   const jobRecords = await fetchAllAirtable(TABLES.jobs, {
     fields: ['Companies', 'Investors'],
   });
 
-  // Fetch company records for name lookup
-  const companyRecords = await fetchAirtable(TABLES.companies, {
-    fields: ['Company'],
-  });
-
-  const companyMap = new Map<string, string>();
-  companyRecords.records.forEach(r => {
-    companyMap.set(r.id, r.fields['Company'] as string || '');
-  });
-
-  // Find companies that have jobs with this investor
-  const companySet = new Map<string, { id: string; name: string; slug: string }>();
   let jobCount = 0;
 
   jobRecords.forEach(job => {
     const investorIds = job.fields['Investors'] || [];
     if (Array.isArray(investorIds) && investorIds.includes(investorId)) {
       jobCount++;
+      // Also add any companies from jobs that might not be in the direct link
       const companyIds = job.fields['Companies'] || [];
       if (Array.isArray(companyIds)) {
         companyIds.forEach(companyId => {
@@ -747,29 +763,45 @@ export async function getIndustryBySlug(slug: string): Promise<Industry | null> 
   const industryName = industry.fields['Industry Name'] as string || '';
   const industryId = industry.id;
 
-  // Fetch ALL jobs to find companies in this industry (paginated - 16k+ jobs)
+  // Fetch ALL companies with their Industry field to find companies in this industry
+  // This catches companies even if they don't have jobs synced yet
+  const companyRecords = await fetchAllAirtable(TABLES.companies, {
+    fields: ['Company', 'Industry'],
+  });
+
+  // Build company map and find companies directly linked to this industry
+  const companyMap = new Map<string, string>();
+  const companySet = new Map<string, { id: string; name: string; slug: string }>();
+
+  companyRecords.forEach(r => {
+    const companyName = r.fields['Company'] as string || '';
+    companyMap.set(r.id, companyName);
+
+    // Check if this company is linked to the target industry
+    const companyIndustries = r.fields['Industry'] || [];
+    if (Array.isArray(companyIndustries) && companyIndustries.includes(industryId)) {
+      if (companyName && !companySet.has(r.id)) {
+        companySet.set(r.id, {
+          id: r.id,
+          name: companyName,
+          slug: toSlug(companyName),
+        });
+      }
+    }
+  });
+
+  // Fetch ALL jobs to count jobs in this industry and find any additional companies
   const jobRecords = await fetchAllAirtable(TABLES.jobs, {
     fields: ['Companies', 'Company Industry (Lookup)'],
   });
 
-  // Fetch company records for name lookup
-  const companyRecords = await fetchAirtable(TABLES.companies, {
-    fields: ['Company'],
-  });
-
-  const companyMap = new Map<string, string>();
-  companyRecords.records.forEach(r => {
-    companyMap.set(r.id, r.fields['Company'] as string || '');
-  });
-
-  // Find companies in this industry
-  const companySet = new Map<string, { id: string; name: string; slug: string }>();
   let jobCount = 0;
 
   jobRecords.forEach(job => {
     const industryIds = job.fields['Company Industry (Lookup)'] || [];
     if (Array.isArray(industryIds) && industryIds.includes(industryId)) {
       jobCount++;
+      // Also add any companies from jobs that might not be in the direct link
       const companyIds = job.fields['Companies'] || [];
       if (Array.isArray(companyIds)) {
         companyIds.forEach(companyId => {
