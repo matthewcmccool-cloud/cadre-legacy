@@ -68,15 +68,15 @@ export default function JobTable({ jobs }: JobTableProps) {
               </td>
               <td className="px-6 py-4">
                 <div className="text-sm text-gray-900">{job.title}</div>
-                {job.department && (
-                  <div className="text-sm text-gray-500">{job.department}</div>
+                {job.functionName && (
+                  <div className="text-sm text-gray-500">{job.functionName}</div>
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-900">{job.location}</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {formatDate(job.posted_date)}
+                {formatDate(job.datePosted)}
               </td>
             </tr>
           ))}
