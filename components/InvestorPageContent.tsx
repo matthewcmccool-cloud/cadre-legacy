@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Job } from '@/lib/airtable';
 
 const POPULAR_TAGS = [
@@ -30,30 +30,37 @@ const getDomain = (url: string | null | undefined) => {
 };
 
 const PAGE_SIZE = 25;
+const COLLAPSED_HEIGHT = 80; // ~2 rows of chips
 
 export default function InvestorPageContent({ investor, jobs }: InvestorPageContentProps) {
   const [search, setSearch] = useState('');
   const [isRemote, setIsRemote] = useState(false);
   const [activeTag, setActiveTag] = useState('');
   const [page, setPage] = useState(1);
+  const [companiesExpanded, setCompaniesExpanded] = useState(false);
+  const [needsExpand, setNeedsExpand] = useState(false);
+  const companiesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (companiesRef.current) {
+      setNeedsExpand(companiesRef.current.scrollHeight > COLLAPSED_HEIGHT + 8);
+    }
+  }, [investor.companies]);
 
   // Filter jobs based on search, remote, and tag
   const filteredJobs = jobs.filter((job) => {
     const searchLower = search.toLowerCase();
     const tagLower = activeTag.toLowerCase();
 
-    // Search filter
     const matchesSearch = !search ||
       job.title.toLowerCase().includes(searchLower) ||
       job.company.toLowerCase().includes(searchLower) ||
       (job.location && job.location.toLowerCase().includes(searchLower));
 
-    // Tag filter
     const matchesTag = !activeTag ||
       job.title.toLowerCase().includes(tagLower) ||
       (job.functionName && job.functionName.toLowerCase().includes(tagLower));
 
-    // Remote filter
     const matchesRemote = !isRemote || job.remoteFirst;
 
     return matchesSearch && matchesTag && matchesRemote;
@@ -91,26 +98,6 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
           </span>
         </div>
       </div>
-
-      {/* Portfolio Companies */}
-      <section className="mb-8">
-        <h2 className="text-sm font-medium text-[#888] uppercase tracking-wide mb-3">Portfolio Companies</h2>
-        {investor.companies.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {investor.companies.map((company) => (
-              <Link
-                key={company.id}
-                href={`/companies/${company.slug}`}
-                className="px-3 py-1.5 bg-[#1a1a1b] hover:bg-[#252526] rounded text-sm text-[#e8e8e8] transition-colors"
-              >
-                {company.name}
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <p className="text-[#666] text-sm">No portfolio companies listed.</p>
-        )}
-      </section>
 
       {/* Search Bar + Remote Toggle */}
       <div className="flex gap-3 mb-5">
@@ -186,6 +173,40 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
           </button>
         ))}
       </div>
+
+      {/* Portfolio Companies — collapsible to 2 rows */}
+      <section className="mb-8">
+        <h2 className="text-sm font-medium text-[#888] uppercase tracking-wide mb-3">Portfolio Companies</h2>
+        {investor.companies.length > 0 ? (
+          <div className="relative">
+            <div
+              ref={companiesRef}
+              className="flex flex-wrap gap-2 overflow-hidden transition-all duration-300"
+              style={{ maxHeight: companiesExpanded ? companiesRef.current?.scrollHeight : COLLAPSED_HEIGHT }}
+            >
+              {investor.companies.map((company) => (
+                <Link
+                  key={company.id}
+                  href={`/companies/${company.slug}`}
+                  className="px-3 py-1.5 bg-[#1a1a1b] hover:bg-[#252526] rounded text-sm text-[#e8e8e8] transition-colors"
+                >
+                  {company.name}
+                </Link>
+              ))}
+            </div>
+            {needsExpand && (
+              <button
+                onClick={() => setCompaniesExpanded(!companiesExpanded)}
+                className="mt-2 px-3 py-1.5 bg-[#1a1a1b] hover:bg-[#252526] rounded text-sm text-[#5e6ad2] transition-colors"
+              >
+                {companiesExpanded ? 'Show less' : `+${investor.companies.length - Math.floor(investor.companies.length * (COLLAPSED_HEIGHT / (companiesRef.current?.scrollHeight || 1)))} more`}
+              </button>
+            )}
+          </div>
+        ) : (
+          <p className="text-[#666] text-sm">No portfolio companies listed.</p>
+        )}
+      </section>
 
       {/* Open Positions */}
       <section>
