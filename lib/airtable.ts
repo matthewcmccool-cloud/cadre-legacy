@@ -275,7 +275,10 @@ export async function getJobs(filters?: {
     }
 
     const functionIds = record.fields['Function'] || [];
-    const funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
+    let funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
+    if (!funcName) {
+      funcName = inferFunction(record.fields['Title'] as string || '');
+    }
 
     const investorIds = record.fields['Investors'] || [];
     const investorNames = Array.isArray(investorIds)
@@ -505,7 +508,10 @@ export async function getJobById(id: string): Promise<(Job & { description: stri
   }
 
   const functionIds = record.fields['Function'] || [];
-  const funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
+  let funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
+  if (!funcName) {
+    funcName = inferFunction(record.fields['Title'] as string || '');
+  }
 
   const investorIds = record.fields['Investors'] || [];
   const investorNames = Array.isArray(investorIds)
@@ -1002,7 +1008,10 @@ export async function getFeaturedJobs(): Promise<Job[]> {
     }
 
     const functionIds = record.fields['Function'] || [];
-    const funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
+    let funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
+    if (!funcName) {
+      funcName = inferFunction(record.fields['Title'] as string || '');
+    }
 
     const investorIds = record.fields['Investors'] || [];
     const investorNames = Array.isArray(investorIds)
@@ -1114,7 +1123,10 @@ export async function getOrganicJobs(page: number = 1, pageSize: number = 25): P
     }
 
     const functionIds = record.fields['Function'] || [];
-    const funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
+    let funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
+    if (!funcName) {
+      funcName = inferFunction(record.fields['Title'] as string || '');
+    }
 
     const investorIds = record.fields['Investors'] || [];
     const investorNames = Array.isArray(investorIds)
