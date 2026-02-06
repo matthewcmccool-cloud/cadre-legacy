@@ -29,10 +29,13 @@ const getDomain = (url: string | null | undefined) => {
   }
 };
 
+const PAGE_SIZE = 25;
+
 export default function InvestorPageContent({ investor, jobs }: InvestorPageContentProps) {
   const [search, setSearch] = useState('');
   const [isRemote, setIsRemote] = useState(false);
   const [activeTag, setActiveTag] = useState('');
+  const [page, setPage] = useState(1);
 
   // Filter jobs based on search, remote, and tag
   const filteredJobs = jobs.filter((job) => {
@@ -56,7 +59,12 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
     return matchesSearch && matchesTag && matchesRemote;
   });
 
+  // Pagination
+  const totalPages = Math.ceil(filteredJobs.length / PAGE_SIZE);
+  const paginatedJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const handleTagClick = (tag: string) => {
+    setPage(1);
     if (activeTag === tag) {
       setActiveTag('');
     } else {
@@ -66,6 +74,7 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
 
   const clearSearch = () => {
     setSearch('');
+    setPage(1);
   };
 
   return (
@@ -123,7 +132,7 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search roles, companies, skills..."
               className="w-full pl-10 pr-10 py-2.5 bg-[#1a1a1b] text-[#e8e8e8] placeholder-[#666] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/50 transition-all"
             />
@@ -143,7 +152,7 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
 
         {/* Remote Toggle */}
         <button
-          onClick={() => setIsRemote(!isRemote)}
+          onClick={() => { setIsRemote(!isRemote); setPage(1); }}
           className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
             isRemote
               ? 'bg-[#5e6ad2]/20 text-[#5e6ad2]'
@@ -181,9 +190,9 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
       {/* Open Positions */}
       <section>
         <h2 className="text-sm font-medium text-[#888] uppercase tracking-wide mb-3">Open Positions</h2>
-        {filteredJobs.length > 0 ? (
+        {paginatedJobs.length > 0 ? (
           <div className="space-y-0.5">
-            {filteredJobs.map((job, index) => {
+            {paginatedJobs.map((job, index) => {
               const companyDomain = getDomain(job.companyUrl);
               return (
                 <Link
@@ -222,6 +231,53 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
           </div>
         ) : (
           <p className="text-[#666] text-sm py-8 text-center">No jobs found matching your filters.</p>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-8 flex items-center justify-center gap-1">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1.5 text-sm text-[#888] hover:text-[#e8e8e8] hover:bg-[#1a1a1b] rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                let pageNum: number;
+                if (totalPages <= 7) {
+                  pageNum = i + 1;
+                } else if (page <= 4) {
+                  pageNum = i + 1;
+                } else if (page >= totalPages - 3) {
+                  pageNum = totalPages - 6 + i;
+                } else {
+                  pageNum = page - 3 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPage(pageNum)}
+                    className={`w-8 h-8 text-sm rounded transition-colors ${
+                      pageNum === page
+                        ? 'bg-[#5e6ad2] text-white'
+                        : 'text-[#888] hover:text-[#e8e8e8] hover:bg-[#1a1a1b]'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-3 py-1.5 text-sm text-[#888] hover:text-[#e8e8e8] hover:bg-[#1a1a1b] rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
         )}
       </section>
     </>
