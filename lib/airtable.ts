@@ -682,6 +682,8 @@ export interface Investor {
   id: string;
   name: string;
   slug: string;
+  bio: string;
+  location: string;
   companies: Array<{ id: string; name: string; slug: string }>;
   jobCount: number;
 }
@@ -690,7 +692,7 @@ export interface Investor {
 export async function getInvestorBySlug(slug: string): Promise<Investor | null> {
   // Fetch all investors
   const investorRecords = await fetchAirtable(TABLES.investors, {
-    fields: ['Company'],
+    fields: ['Company', 'Bio', 'Location'],
   });
 
   const investor = investorRecords.records.find(r => {
@@ -704,6 +706,8 @@ export async function getInvestorBySlug(slug: string): Promise<Investor | null> 
   }
 
   const investorName = investor.fields['Company'] as string || '';
+  const investorBio = investor.fields['Bio'] as string || '';
+  const investorLocation = investor.fields['Location'] as string || '';
   const investorId = investor.id;
 
   // Fetch ALL companies with their VCs field to find portfolio companies
@@ -738,6 +742,8 @@ export async function getInvestorBySlug(slug: string): Promise<Investor | null> 
     id: investorId,
     name: investorName,
     slug: toSlug(investorName),
+    bio: investorBio,
+    location: investorLocation,
     companies: Array.from(companySet.values()),
     jobCount: 0, // Will be replaced by actual filtered jobs count in the component
   };

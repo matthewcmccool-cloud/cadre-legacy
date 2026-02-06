@@ -14,6 +14,8 @@ const POPULAR_TAGS = [
 interface InvestorPageContentProps {
   investor: {
     name: string;
+    bio: string;
+    location: string;
     jobCount: number;
     companies: Array<{ id: string; name: string; slug: string }>;
   };
@@ -96,7 +98,17 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
           <span className="px-2.5 py-1 bg-[#252526] rounded text-xs text-[#888]">
             {investor.companies.length} portfolio companies
           </span>
+          {investor.location && (
+            <span className="px-2.5 py-1 bg-[#252526] rounded text-xs text-[#888]">
+              {investor.location}
+            </span>
+          )}
         </div>
+        {investor.bio && (
+          <p className="mt-3 text-sm text-[#999] leading-relaxed max-w-2xl">
+            {investor.bio}
+          </p>
+        )}
       </div>
 
       {/* Search Bar + Remote Toggle */}
