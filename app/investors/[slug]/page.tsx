@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getInvestorBySlug, getJobs } from '@/lib/airtable';
+import { getInvestorBySlug, getJobsForInvestor } from '@/lib/airtable';
 import InvestorPageContent from '@/components/InvestorPageContent';
 
 export const dynamic = 'force-dynamic';
@@ -17,8 +17,8 @@ export default async function InvestorPage({ params }: InvestorPageProps) {
     notFound();
   }
 
-  // Get jobs from companies backed by this investor
-  const jobsResult = await getJobs({ investor: investor.name });
+  // Get ALL jobs from companies backed by this investor (not just 100)
+  const jobs = await getJobsForInvestor(investor.id);
 
   return (
     <main className="min-h-screen bg-[#0e0e0f] text-white">
@@ -31,7 +31,7 @@ export default async function InvestorPage({ params }: InvestorPageProps) {
           ← Back to jobs
         </Link>
 
-        <InvestorPageContent investor={investor} jobs={jobsResult.jobs} />
+        <InvestorPageContent investor={investor} jobs={jobs} />
       </div>
     </main>
   );
