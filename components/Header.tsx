@@ -5,11 +5,11 @@ import Link from 'next/link';
 export default function Header() {
   return (
     <header className="bg-[#0e0e0f]">
-      <div className="max-w-6xl mx-auto px-4 py-4">
+      <div className="max-w-5xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-lg font-semibold text-white tracking-tight">
-              HighSignal.Jobs
+              Cadre
             </span>
           </Link>
 
