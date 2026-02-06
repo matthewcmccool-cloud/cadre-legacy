@@ -1,3 +1,27 @@
+// Infer function from job title when Function field is empty
+function inferFunction(title: string): string {
+  const t = title.toLowerCase();
+  const rules: [RegExp, string][] = [
+    [/\bengineer|software|developer|sre|devops|infrastructure|platform|full.?stack|backend|frontend|ios|android|mobile dev/i, 'Engineering'],
+    [/\bdesign|ux|ui|graphic|brand|creative director/i, 'Design'],
+    [/\bproduct manag|head of product|vp.*product|director.*product|product lead|product owner/i, 'Product'],
+    [/\bdata scien|machine learn|ml |ai |research scien/i, 'Data Science'],
+    [/\bdata analy|business intel|analytics/i, 'Analytics'],
+    [/\bsales|account exec|business develop|sdr|bdr|revenue/i, 'Sales'],
+    [/\bmarketing|growth|demand gen|content|seo|brand manag|comms|communications/i, 'Marketing'],
+    [/\brecruit|talent|people ops|human resource|hr /i, 'People'],
+    [/\bfinance|account|controller|tax|treasury|financial/i, 'Finance'],
+    [/\boperation|chief of staff|program manag|project manag|business ops/i, 'Operations'],
+    [/\blegal|counsel|compliance|regulatory|policy/i, 'Legal'],
+    [/\bcustomer success|customer support|customer experience|support engineer/i, 'Customer Success'],
+    [/\bsecurity|infosec|cyber|penetration/i, 'Security'],
+  ];
+  for (const [pattern, label] of rules) {
+    if (pattern.test(t)) return label;
+  }
+  return '';
+}
+
 const TABLES = {
   jobs: 'Job Listings',
   companies: 'Companies',
@@ -850,7 +874,17 @@ export async function getJobsForCompanyNames(companyNames: string[]): Promise<Jo
     }
 
     const functionIds = record.fields['Function'] || [];
-    const funcName = functionIds.length > 0 ? functionMap.get(functionIds[0]) || '' : '';
+    let funcName = '';
+    if (Array.isArray(functionIds) && functionIds.length > 0) {
+      funcName = functionMap.get(functionIds[0]) || (typeof functionIds[0] === 'string' ? functionIds[0] : '');
+    } else if (typeof functionIds === 'string') {
+      funcName = functionMap.get(functionIds) || functionIds;
+    }
+    // Fallback: infer function from job title
+    const jobTitle = (record.fields['Title'] as string) || '';
+    if (!funcName) {
+      funcName = inferFunction(jobTitle);
+    }
 
     const investorIds = record.fields['Investors'] || [];
     const investorNames = Array.isArray(investorIds)
