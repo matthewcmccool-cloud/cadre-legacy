@@ -676,8 +676,7 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
 
 // Get jobs by company name
 export async function getJobsByCompany(companyName: string): Promise<Job[]> {
-  const result = await getJobs({ company: companyName });
-  return result.jobs;
+  return getJobsForCompanyNames([companyName]);
 }
 
 // Investor interface
