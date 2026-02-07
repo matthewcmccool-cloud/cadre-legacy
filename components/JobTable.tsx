@@ -106,7 +106,7 @@ export default function JobTable({ jobs }: JobTableProps) {
               {job.industry && (
                 <Link
                   href={`/industry/${toSlug(job.industry)}`}
-                  className="px-2 py-0.5 rounded text-xs bg-[#252526] text-[#888] hover:bg-[#2a2a2b] hover:text-[#e8e8e8] transition-colors truncate max-w-[140px]"
+                  className="px-2.5 py-0.5 rounded-full text-xs border border-[#333] text-[#999] hover:border-[#555] hover:text-[#e8e8e8] transition-colors truncate max-w-[160px]"
                 >
                   {job.industry}
                 </Link>
@@ -114,18 +114,18 @@ export default function JobTable({ jobs }: JobTableProps) {
             </div>
 
             {/* Investors Column */}
-            <div className="hidden sm:flex items-center gap-1.5 flex-shrink-0 justify-end ml-auto w-56">
+            <div className="hidden sm:flex items-center gap-1 flex-shrink-0 justify-end ml-auto w-56">
               {job.investors && job.investors.slice(0, 2).map((investor) => (
                 <Link
                   key={investor}
                   href={`/investors/${toSlug(investor)}`}
-                  className="px-2 py-0.5 rounded text-xs bg-[#252526] text-[#888] hover:bg-[#2a2a2b] hover:text-[#e8e8e8] transition-colors"
+                  className="px-2 py-0.5 rounded text-xs bg-[#1a1a1b] text-[#666] hover:bg-[#252526] hover:text-[#e8e8e8] transition-colors truncate max-w-[120px]"
                 >
                   {investor}
                 </Link>
               ))}
               {job.investors && job.investors.length > 2 && (
-                <span className="px-2 py-0.5 rounded text-xs bg-[#252526] text-[#666]">
+                <span className="px-1.5 py-0.5 rounded text-xs text-[#555]">
                   +{job.investors.length - 2}
                 </span>
               )}
