@@ -573,9 +573,16 @@ export async function getJobById(id: string): Promise<(Job & { description: stri
     }
   }
 
-  // Extract job description from Raw JSON
+  // Extract job description — check multiple sources
   let description = '';
-  if (record.fields['Raw JSON']) {
+
+  // 1. Direct content field (raw HTML from ATS)
+  if (record.fields['content']) {
+    description = record.fields['content'] as string;
+  }
+
+  // 2. Raw JSON content/description
+  if (!description && record.fields['Raw JSON']) {
     try {
       const rawData = JSON.parse(record.fields['Raw JSON'] as string);
       description = rawData?.content || rawData?.description || '';
@@ -584,7 +591,7 @@ export async function getJobById(id: string): Promise<(Job & { description: stri
     }
   }
 
-  // If no description from Raw JSON, try direct Job Description field
+  // 3. Job Description field
   if (!description) {
     description = (record.fields['Job Description'] as string) || '';
   }
