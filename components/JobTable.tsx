@@ -114,7 +114,7 @@ export default function JobTable({ jobs }: JobTableProps) {
             </div>
 
             {/* Investors Column */}
-            <div className="hidden sm:flex items-center gap-1 flex-shrink-0 justify-end w-56">
+            <div className="hidden sm:flex items-center gap-1 flex-shrink-0 justify-end ml-auto w-56">
               {job.investors && job.investors.slice(0, 2).map((investor) => (
                 <Link
                   key={investor}
