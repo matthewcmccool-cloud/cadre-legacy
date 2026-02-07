@@ -271,7 +271,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
         )}
 
         {/* Job description */}
-        {job.description && (
+        {job.description && stripHtml(job.description).trim().length > 0 && (
           <section>
             <h2 className="text-sm font-medium text-[#888] uppercase tracking-wide mb-4">About the Role</h2>
             <div
@@ -282,7 +282,7 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
         )}
 
         {/* Bottom apply CTA */}
-        {job.applyUrl && job.description && (
+        {job.applyUrl && job.description && stripHtml(job.description).trim().length > 0 && (
           <div className="mt-10 pt-6 border-t border-[#1a1a1b]">
             <a
               href={job.applyUrl}
