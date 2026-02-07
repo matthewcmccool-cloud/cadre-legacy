@@ -43,7 +43,8 @@ async function testAtsUrl(companyName: string, atsUrl: string): Promise<AtsTestR
       };
     }
 
-    const data = await response.json();
+    const atsText = await response.text();
+    const data = JSON.parse(atsText);
 
     // Parse jobs based on platform
     let jobs: any[] = [];
@@ -136,7 +137,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch companies', details: errorText }, { status: 500 });
     }
 
-    const data = await response.json();
+    const text = await response.text();
+    const data = JSON.parse(text);
     const companies = data.records || [];
 
     const results: AtsTestResult[] = [];

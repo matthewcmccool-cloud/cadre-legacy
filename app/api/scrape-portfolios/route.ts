@@ -16,8 +16,7 @@ interface Investor {
   id: string;
   fields: {
     Company?: string;
-    'Portfolio URL'?: string;
-    'Portfolio Companies'?: string[];
+    Website?: string;
     'Last Scraped'?: string;
   };
 }
@@ -52,18 +51,19 @@ async function fetchInvestors(): Promise<Investor[]> {
   do {
     const params = new URLSearchParams();
     if (offset) params.append('offset', offset);
-      params.append('filterByFormula', "AND(NOT({Portfolio URL} = ''), {Last Scraped} = '')");
+      params.append('filterByFormula', "AND(NOT({Website} = ''), {Last Scraped} = '')");
     const response = await fetch(`${url}?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${AIRTABLE_API_KEY}`,
       },
     });
 
+    const text = await response.text();
     if (!response.ok) {
-      throw new Error(`Airtable API error: ${response.statusText}`);
+      throw new Error(`Airtable API error: ${response.status}: ${text.substring(0, 200)}`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(text);
     investors = investors.concat(data.records);
     offset = data.offset;
   } while (offset);
@@ -86,11 +86,12 @@ async function fetchExistingCompanies(): Promise<Map<string, Company>> {
       },
     });
 
+    const text = await response.text();
     if (!response.ok) {
-      throw new Error(`Airtable API error: ${response.statusText}`);
+      throw new Error(`Airtable API error: ${response.status}: ${text.substring(0, 200)}`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(text);
     companies = companies.concat(data.records);
     offset = data.offset;
   } while (offset);
@@ -125,11 +126,12 @@ async function extractCompaniesFromPortfolio(portfolioUrl: string): Promise<stri
     }),
   });
 
+  const pText = await response.text();
   if (!response.ok) {
-    throw new Error(`Perplexity API error: ${response.statusText}`);
+    throw new Error(`Perplexity API error: ${response.status}: ${pText.substring(0, 200)}`);
   }
 
-  const data = await response.json();
+  const data = JSON.parse(pText);
   const content = data.choices[0]?.message?.content || '[]';
 
   try {
@@ -182,11 +184,12 @@ async function addCompanyToAirtable(
     }),
   });
 
+  const cText = await response.text();
   if (!response.ok) {
-    throw new Error(`Failed to create company: ${response.statusText}`);
+    throw new Error(`Failed to create company: ${response.status}: ${cText.substring(0, 200)}`);
   }
 
-  const newCompany = await response.json();
+  const newCompany = JSON.parse(cText);
   existingCompanies.set(normalizedName, newCompany);
   return { isNew: true, companyId: newCompany.id };
 }
@@ -209,7 +212,7 @@ export async function GET(request: NextRequest) {
       }
 
       const investorName = investor.fields.Company || 'Unknown';
-      const portfolioUrl = investor.fields['Portfolio URL'];
+      const portfolioUrl = investor.fields['Website'];
 
       if (!portfolioUrl) {
         continue;
