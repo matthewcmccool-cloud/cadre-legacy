@@ -34,7 +34,8 @@ async function findAtsUrl(companyName: string): Promise<string | null> {
     });
 
     if (!response.ok) return null;
-    const data = await response.json();
+    const pText = await response.text();
+    const data = JSON.parse(pText);
     let content = data.choices?.[0]?.message?.content?.trim();
     
     if (!content || content === 'null' || content.toLowerCase().includes('unknown')) return null;
@@ -70,7 +71,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch from Airtable', details: errorText }, { status: 500 });
     }
 
-    const data = await response.json();
+    const text = await response.text();
+    const data = JSON.parse(text);
     const companies = data.records || [];
     totalCompanies = companies.length;
 

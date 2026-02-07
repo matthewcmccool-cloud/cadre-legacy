@@ -19,7 +19,8 @@ export async function GET() {
         'Content-Type': 'application/json',
       },
     });
-    const functionData = await functionResponse.json();
+    const functionText = await functionResponse.text();
+    const functionData = JSON.parse(functionText);
 
     // Test Job Listings with Function field
     const jobUrl = `https://api.airtable.com/v0/${baseId}/Job%20Listings?maxRecords=5&fields%5B%5D=Title&fields%5B%5D=Function&fields%5B%5D=Company`;
@@ -29,7 +30,8 @@ export async function GET() {
         'Content-Type': 'application/json',
       },
     });
-    const jobData = await jobResponse.json();
+    const jobText = await jobResponse.text();
+    const jobData = JSON.parse(jobText);
 
     return Response.json({
       success: true,

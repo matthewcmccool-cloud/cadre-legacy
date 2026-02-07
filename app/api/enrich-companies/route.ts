@@ -100,11 +100,12 @@ async function getCompaniesNeedingEnrichment(): Promise<CompanyRecord[]> {
       }
     );
     
+    const text = await response.text();
     if (!response.ok) {
-      throw new Error(`Airtable API error: ${response.statusText}`);
+      throw new Error(`Airtable API error: ${response.status}: ${text.substring(0, 200)}`);
     }
-    
-    const data = await response.json();
+
+    const data = JSON.parse(text);
     companies.push(...data.records);
     offset = data.offset;
     
@@ -137,11 +138,12 @@ async function callPerplexity(companyName: string): Promise<EnrichmentResult | n
       }),
     });
     
+    const pText = await response.text();
     if (!response.ok) {
-      throw new Error(`Perplexity API error: ${response.statusText}`);
+      throw new Error(`Perplexity API error: ${response.status}: ${pText.substring(0, 200)}`);
     }
-    
-    const data = await response.json();
+
+    const data = JSON.parse(pText);
     const content = data.choices?.[0]?.message?.content || '';
     
     // Try to find a JSON block, then parse
