@@ -28,30 +28,14 @@ async function airtableFetch(url: string, options?: RequestInit) {
   return JSON.parse(text);
 }
 
-// Extract the best available date from Raw JSON per ATS platform
-function extractBestDate(rawData: any, airtableCreatedTime: string): string | null {
-  // Ashby: publishedAt is the real publish date
-  if (rawData?.publishedAt) return rawData.publishedAt;
-
-  // Lever: createdAt is a unix timestamp (milliseconds)
-  if (rawData?.createdAt && typeof rawData.createdAt === 'number') {
-    return new Date(rawData.createdAt).toISOString();
-  }
-
-  // Greenhouse: no created_at in public API — use Airtable record creation time
-  // This is when we first discovered the job, within 24h of actual post date
-  if (airtableCreatedTime) return airtableCreatedTime;
-
-  return null;
-}
-
-async function fetchJobsNeedingDateFix(offset?: string) {
+async function fetchJobsBatch(offset?: string) {
   const params = new URLSearchParams();
-  // Fetch all jobs that have Raw JSON (we'll compare dates and fix bad ones)
-  params.append('filterByFormula', "{Raw JSON} != BLANK()");
+  // Jobs where First Seen is blank (needs backfill)
+  params.append('filterByFormula', "{First Seen} = BLANK()");
   params.append('pageSize', '100');
   params.append('fields[]', 'Raw JSON');
   params.append('fields[]', 'Date Posted');
+  params.append('fields[]', 'First Seen');
   if (offset) params.append('offset', offset);
 
   return airtableFetch(
@@ -75,7 +59,6 @@ export async function GET() {
   let updated = 0;
   let skipped = 0;
   let errors = 0;
-  let alreadyGood = 0;
 
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
     return NextResponse.json({ success: false, error: 'Missing env vars' }, { status: 500 });
@@ -87,7 +70,7 @@ export async function GET() {
     do {
       if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
-      const data = await fetchJobsNeedingDateFix(offset);
+      const data = await fetchJobsBatch(offset);
       const records = data.records || [];
       offset = data.offset;
 
@@ -97,36 +80,42 @@ export async function GET() {
 
       for (const record of records) {
         processed++;
-
-        const rawJsonStr = record.fields?.['Raw JSON'];
-        if (!rawJsonStr) { skipped++; continue; }
-
-        let rawData: any;
-        try { rawData = JSON.parse(rawJsonStr); } catch { skipped++; continue; }
-
-        const currentDatePosted = record.fields?.['Date Posted'] || '';
         const airtableCreated = record.createdTime;
+        if (!airtableCreated) { skipped++; continue; }
 
-        // Determine if this is a Greenhouse job (no createdAt, no publishedAt)
-        const isGreenhouse = !rawData.publishedAt && !(rawData.createdAt && typeof rawData.createdAt === 'number');
+        const fields: Record<string, unknown> = {};
 
-        if (isGreenhouse) {
-          // For Greenhouse: if Date Posted matches updated_at, it's bad — replace with createdTime
-          const atsUpdatedAt = rawData.updated_at || '';
-          if (currentDatePosted === atsUpdatedAt && airtableCreated) {
-            updates.push({ id: record.id, fields: { 'Date Posted': airtableCreated } });
-          } else {
-            alreadyGood++;
-          }
-        } else {
-          // For Lever/Ashby: use the real ATS date
-          const bestDate = extractBestDate(rawData, airtableCreated);
-          if (bestDate && bestDate !== currentDatePosted) {
-            updates.push({ id: record.id, fields: { 'Date Posted': bestDate } });
-          } else {
-            alreadyGood++;
+        // Always set First Seen to Airtable record creation time
+        fields['First Seen'] = airtableCreated;
+
+        // Fix Date Posted: use real ATS date when available
+        const rawJsonStr = record.fields?.['Raw JSON'];
+        if (rawJsonStr) {
+          try {
+            const rawData = JSON.parse(rawJsonStr);
+
+            // Ashby: publishedAt is the real publish date
+            if (rawData.publishedAt) {
+              fields['Date Posted'] = rawData.publishedAt;
+            }
+            // Lever: createdAt is a unix timestamp (milliseconds)
+            else if (rawData.createdAt && typeof rawData.createdAt === 'number') {
+              fields['Date Posted'] = new Date(rawData.createdAt).toISOString();
+            }
+            // Greenhouse: clear the misleading updated_at, leave Date Posted blank
+            // Display logic in cadre-ui will fall back to First Seen
+            else if (rawData.updated_at) {
+              const currentDatePosted = record.fields?.['Date Posted'] || '';
+              if (currentDatePosted === rawData.updated_at) {
+                fields['Date Posted'] = null; // Clear the bad date
+              }
+            }
+          } catch {
+            // Raw JSON parse failed, just set First Seen
           }
         }
+
+        updates.push({ id: record.id, fields });
       }
 
       for (let i = 0; i < updates.length; i += 10) {
@@ -152,14 +141,13 @@ export async function GET() {
       success: true,
       processed,
       updated,
-      alreadyGood,
       skipped,
       errors,
       hasMore,
       runtime: `${runtime}ms`,
       message: hasMore
-        ? `Fixed ${updated} dates in ${runtime}ms. More records remaining — call again.`
-        : `Done! Fixed ${updated} dates in ${runtime}ms.`,
+        ? `Backfilled ${updated} records in ${runtime}ms. More remaining — call again.`
+        : `Done! Backfilled ${updated} records in ${runtime}ms.`,
     });
   } catch (error) {
     console.error('Backfill-dates error:', error);
