@@ -37,23 +37,11 @@ Cadre is a job board for VC-backed companies. The frontend (cadre-ui) is in good
 | **Remote First** | **Checkbox** | **❌ Empty** | **Extractable from Raw JSON** |
 | **Salary** | **Text** | **❌ Empty** | **Extractable from Raw JSON (if present)** |
 | **Country** | **Text** | **❌ Empty** | **Derivable from location** |
-| **ATS Platform (Lookup)** | **Lookup** | **❌ Mostly empty** | **Auto from Companies** |
 
-**Likely legacy fields (confirm with Matt before deleting):**
-| Field | Why likely legacy |
-|-------|-------------------|
-| Matched Keyword | Old matching approach, no code references it |
-| About | Belongs on Companies table, not Job Listings |
-| AI Score | No code uses it; may be planned future feature |
-| is_featured | Future monetization — not built yet |
-| featured_tier | Future monetization — not built yet |
-| featured_start | Future monetization — not built yet |
-| Featured End | Future monetization — not built yet |
-| stripe_payment_id | Future monetization — not built yet |
-| featured_status | Future monetization — not built yet |
-| Type (from...) | Lookup field with no visible use |
-
-**Note:** The featured_* and stripe_* fields may be planned features, not legacy. Don't delete without confirmation — just ignore them for now.
+**Deleted fields (cleaned up Feb 2026):**
+- Matched Keyword, About, AI Score, Type (from...) — legacy/unused
+- is_featured, featured_tier, featured_start, Featured End, stripe_payment_id, featured_status — monetization (can re-add later)
+- ATS Platform (Lookup) — removed from Jobs (kept on Companies table)
 
 ---
 
@@ -99,8 +87,6 @@ Cadre is a job board for VC-backed companies. The frontend (cadre-ui) is in good
 | Portfolio URL | URL | ✅ Populated | Manual |
 | URL Verified | Checkbox | ⚠️ Partial | Manual |
 | Last Scraped | Date | ⚠️ Partial | Scrape endpoint |
-| Job Listings | Lookup | Auto | — |
-| Job Feed | URL | ❌ Empty | TBD |
 | **Bio** | **Long Text** | **❌ Mostly empty** | **Perplexity enrichment** |
 | **Location** | **Text** | **❌ Mostly empty** | **Perplexity enrichment** |
 | Fundraises (Linked) | Linked Record → Fundraises | ⚠️ Partial | — |
