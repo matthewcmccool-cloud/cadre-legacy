@@ -6,9 +6,7 @@ import { useState, useMemo } from 'react';
 
 const POPULAR_TAGS = [
   'engineering', 'product', 'design', 'sales', 'marketing',
-  'data science', 'ai', 'machine learning', 'backend', 'frontend',
-  'full stack', 'devops', 'mobile', 'product manager', 'analyst',
-  'operations', 'finance', 'growth', 'customer success', 'recruiting',
+  'ai', 'operations', 'finance',
 ];
 
 function toSlug(name: string): string {
