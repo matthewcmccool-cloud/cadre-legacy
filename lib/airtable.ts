@@ -517,40 +517,34 @@ interface ScoredJob {
 
 /**
  * Interleave ALL jobs with diversity constraints.
- * Pass 1: greedy pick with per-company cap (max 2 per company per page-sized
- * window). Pass 2: append deferred jobs so nothing is lost.
+ * Multiple passes: each pass allows max 2 per company. This spreads
+ * any single company's jobs evenly across the full list instead of
+ * clustering them together.
  */
 function diversifyAll(sorted: ScoredJob[]): Job[] {
-  const MAX_PER_COMPANY = 2;
-  const WINDOW = 20; // per-page window for company cap
+  const MAX_PER_COMPANY_PER_PASS = 2;
 
   const result: Job[] = [];
-  const deferred: ScoredJob[] = [];
-  const companyCounts = new Map<string, number>();
-  let windowStart = 0;
+  let remaining = [...sorted];
 
-  for (const item of sorted) {
-    const co = item.job.company;
-    const coCount = companyCounts.get(co) || 0;
+  while (remaining.length > 0) {
+    const companyCounts = new Map<string, number>();
+    const deferred: ScoredJob[] = [];
 
-    if (coCount >= MAX_PER_COMPANY) {
-      deferred.push(item);
-      continue;
+    for (const item of remaining) {
+      const co = item.job.company;
+      const count = companyCounts.get(co) || 0;
+
+      if (count >= MAX_PER_COMPANY_PER_PASS) {
+        deferred.push(item);
+        continue;
+      }
+
+      result.push(item.job);
+      companyCounts.set(co, count + 1);
     }
 
-    result.push(item.job);
-    companyCounts.set(co, coCount + 1);
-
-    // Reset company counts every WINDOW picks so later pages stay diverse
-    if (result.length - windowStart >= WINDOW) {
-      windowStart = result.length;
-      companyCounts.clear();
-    }
-  }
-
-  // Append deferred jobs (they keep their score order)
-  for (const item of deferred) {
-    result.push(item.job);
+    remaining = deferred;
   }
 
   return result;
