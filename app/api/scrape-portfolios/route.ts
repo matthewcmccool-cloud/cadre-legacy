@@ -10,7 +10,7 @@ const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 const INVESTORS_TABLE = 'tblH6MmoXCn3Ve0K2';
 const COMPANIES_TABLE = 'tbl4dA7iDr7mjF6Gt';
 const RATE_LIMIT_DELAY = 600;
-const TIMEOUT_MS = 55000;
+const TIMEOUT_MS = 8000; // Vercel hobby plan has 10s timeout — stay under
 
 interface Investor {
   id: string;
@@ -135,8 +135,17 @@ async function extractCompaniesFromPortfolio(portfolioUrl: string): Promise<stri
   const content = data.choices[0]?.message?.content || '[]';
 
   try {
-    const companies = JSON.parse(content);
-    return Array.isArray(companies) ? companies : [];
+    // Strip markdown code fences that Perplexity often wraps around JSON
+    const cleaned = content.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+    // Try parsing the cleaned content; fall back to extracting a JSON array
+    let companies: unknown;
+    try {
+      companies = JSON.parse(cleaned);
+    } catch {
+      const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+      companies = arrayMatch ? JSON.parse(arrayMatch[0]) : [];
+    }
+    return Array.isArray(companies) ? companies.filter((c): c is string => typeof c === 'string' && c.length > 0) : [];
   } catch (error) {
     console.error('Failed to parse Perplexity response:', content);
     return [];

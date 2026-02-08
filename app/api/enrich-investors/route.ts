@@ -88,8 +88,9 @@ async function lookupInvestor(
     const data = JSON.parse(text);
     const content = data.choices?.[0]?.message?.content || '';
 
-    // Extract JSON from response (Perplexity sometimes wraps in markdown)
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    // Strip markdown code fences before extracting JSON
+    const cleaned = content.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.error(`No JSON in Perplexity response for "${name}": ${content.substring(0, 300)}`);
       return null;
