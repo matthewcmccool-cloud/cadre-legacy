@@ -30,12 +30,8 @@ async function airtableFetch(url: string, options?: RequestInit) {
 
 async function fetchJobsBatch(offset?: string) {
   const params = new URLSearchParams();
-  // Jobs where First Seen is blank (needs backfill)
   params.append('filterByFormula', "{First Seen} = BLANK()");
   params.append('pageSize', '100');
-  params.append('fields[]', 'Raw JSON');
-  params.append('fields[]', 'Date Posted');
-  params.append('fields[]', 'First Seen');
   if (offset) params.append('offset', offset);
 
   return airtableFetch(
@@ -57,7 +53,6 @@ export async function GET() {
   const startTime = Date.now();
   let processed = 0;
   let updated = 0;
-  let skipped = 0;
   let errors = 0;
 
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
@@ -76,47 +71,12 @@ export async function GET() {
 
       if (records.length === 0) break;
 
-      const updates: Array<{ id: string; fields: Record<string, unknown> }> = [];
+      // Set First Seen to Airtable record creation time
+      const updates = records
+        .filter((r: any) => r.createdTime)
+        .map((r: any) => ({ id: r.id, fields: { 'First Seen': r.createdTime } }));
 
-      for (const record of records) {
-        processed++;
-        const airtableCreated = record.createdTime;
-        if (!airtableCreated) { skipped++; continue; }
-
-        const fields: Record<string, unknown> = {};
-
-        // Always set First Seen to Airtable record creation time
-        fields['First Seen'] = airtableCreated;
-
-        // Fix Date Posted: use real ATS date when available
-        const rawJsonStr = record.fields?.['Raw JSON'];
-        if (rawJsonStr) {
-          try {
-            const rawData = JSON.parse(rawJsonStr);
-
-            // Ashby: publishedAt is the real publish date
-            if (rawData.publishedAt) {
-              fields['Date Posted'] = rawData.publishedAt;
-            }
-            // Lever: createdAt is a unix timestamp (milliseconds)
-            else if (rawData.createdAt && typeof rawData.createdAt === 'number') {
-              fields['Date Posted'] = new Date(rawData.createdAt).toISOString();
-            }
-            // Greenhouse: clear the misleading updated_at, leave Date Posted blank
-            // Display logic in cadre-ui will fall back to First Seen
-            else if (rawData.updated_at) {
-              const currentDatePosted = record.fields?.['Date Posted'] || '';
-              if (currentDatePosted === rawData.updated_at) {
-                fields['Date Posted'] = null; // Clear the bad date
-              }
-            }
-          } catch {
-            // Raw JSON parse failed, just set First Seen
-          }
-        }
-
-        updates.push({ id: record.id, fields });
-      }
+      processed += records.length;
 
       for (let i = 0; i < updates.length; i += 10) {
         if (Date.now() - startTime > MAX_RUNTIME_MS) break;
@@ -141,7 +101,6 @@ export async function GET() {
       success: true,
       processed,
       updated,
-      skipped,
       errors,
       hasMore,
       runtime: `${runtime}ms`,
@@ -154,7 +113,7 @@ export async function GET() {
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
-      processed, updated, skipped, errors,
+      processed, updated, errors,
       runtime: `${Date.now() - startTime}ms`,
     }, { status: 500 });
   }
