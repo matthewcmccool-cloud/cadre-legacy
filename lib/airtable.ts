@@ -453,11 +453,11 @@ export async function getFilterOptions(): Promise<FilterOptions> {
     .filter(Boolean)
     .sort();
 
-  const departments = [...new Set(
+  const departments = Array.from(new Set(
     functionRecords.records
       .map(r => r.fields['Department (Primary)'])
       .filter(Boolean)
-  )].sort();
+  )).sort();
 
   const investors = investorRecords
     .map(r => r.fields['Company'])
