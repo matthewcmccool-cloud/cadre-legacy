@@ -2,7 +2,7 @@
 // Categories MUST match the Airtable Function table exactly so the client-side
 // fallback produces the same labels as the /api/backfill-functions endpoint.
 // Order matters — specific roles first, broad catch-alls last.
-function inferFunction(title: string): string {
+export function inferFunction(title: string): string {
   const rules: [RegExp, string][] = [
     [/\bsolutions? engineer|sales engineer|pre.?sales/i, 'Solutions Engineering'],
     [/\bdevrel|developer relation|developer advocate|developer evangel/i, 'Developer Relations'],
