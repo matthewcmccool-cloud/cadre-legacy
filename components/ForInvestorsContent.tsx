@@ -72,13 +72,6 @@ const FEATURE_OPTIONS = [
   'Raw data exports',
 ];
 
-const COMPETITORS = [
-  { name: 'Getro', gap: 'Expensive, limited analytics, siloed portals with no organic traffic' },
-  { name: 'Pallet', gap: 'Community job boards, not VC-focused' },
-  { name: 'Harmonic', gap: 'Company/people data for sourcing, not portfolio-oriented' },
-  { name: 'Manual LinkedIn posts', gap: 'Labor-intensive, stale within days' },
-];
-
 // ── Component ────────────────────────────────────────────────────────
 
 export default function ForInvestorsContent() {
@@ -235,33 +228,6 @@ export default function ForInvestorsContent() {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* ── vs. Alternatives ──────────────────────────────────── */}
-      <div className="mb-20">
-        <h2 className="text-lg font-semibold text-white mb-6">
-          vs. the alternatives
-        </h2>
-        <div className="rounded-xl bg-[#131314] border border-[#1a1a1b] overflow-hidden">
-          {COMPETITORS.map((comp, i) => (
-            <div
-              key={comp.name}
-              className={`flex items-start gap-4 px-5 py-3.5 text-sm ${
-                i !== COMPETITORS.length - 1 ? 'border-b border-[#1a1a1b]' : ''
-              }`}
-            >
-              <span className="text-[#e8e8e8] font-medium w-40 flex-shrink-0">
-                {comp.name}
-              </span>
-              <span className="text-[#666]">{comp.gap}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-[#555] mt-3">
-          Cadre&apos;s edge: one destination for all VC-backed jobs with investor-specific
-          analytics layered on top. VCs don&apos;t get a dead-end portal — they get a window
-          into a platform that already has traffic.
-        </p>
       </div>
 
       {/* ── Interest Form ─────────────────────────────────────── */}
