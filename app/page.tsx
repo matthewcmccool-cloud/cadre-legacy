@@ -17,11 +17,13 @@ interface PageProps {
     company?: string;
     investor?: string;
     page?: string;
+    sort?: string;
   };
 }
 
 export default async function Home({ searchParams }: PageProps) {
   const currentPage = parseInt(searchParams.page || '1', 10);
+  const sortMode = (searchParams.sort === 'recent' ? 'recent' : 'featured') as 'featured' | 'recent';
 
   const filters = {
     functionName: searchParams.functionName,
@@ -32,6 +34,7 @@ export default async function Home({ searchParams }: PageProps) {
     company: searchParams.company,
     investor: searchParams.investor,
     page: currentPage,
+    sort: sortMode,
   };
 
   const [jobsResult, filterOptions] = await Promise.all([

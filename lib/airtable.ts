@@ -178,6 +178,7 @@ export interface Job {
   departmentName: string;
   industry: string;
   datePosted: string;
+  firstSeenAt: string;
   jobUrl: string;
   applyUrl: string;
   salary: string;
@@ -210,6 +211,7 @@ export async function getJobs(filters?: {
   search?: string;
   company?: string;
   page?: number;
+  sort?: 'featured' | 'recent';
 }): Promise<JobsResult> {
   const pageSize = 25;
   const page = filters?.page || 1;
@@ -243,6 +245,7 @@ export async function getJobs(filters?: {
       'Investors',
       'Company Industry (Lookup)',
       'Raw JSON',
+      'First Seen',
     ],
   });
 
@@ -371,6 +374,7 @@ export async function getJobs(filters?: {
       departmentName: deptName,
       industry: industryName,
       datePosted: record.fields['Created Time'] || record.createdTime || '',
+      firstSeenAt: (record.fields['First Seen'] as string) || record.fields['Created Time'] || record.createdTime || '',
       jobUrl: record.fields['Job URL'] || '',
       applyUrl: record.fields['Apply URL'] || record.fields['Job URL'] || '',
       salary: record.fields['Salary'] || '',
@@ -424,6 +428,36 @@ export async function getJobs(filters?: {
     );
   }
 
+  // ── Feed scoring & diversity ─────────────────────────────────────
+  const sortMode = filters?.sort || 'featured';
+
+  if (sortMode === 'featured') {
+    // Score every job
+    const now = Date.now();
+    const scored = jobs.map(job => ({
+      job,
+      freshness: computeFreshness(job, now),
+      interest: computeInterest(job),
+    })).map(s => ({
+      ...s,
+      overall: s.freshness + s.interest,
+    }));
+
+    // Sort by overall score (deterministic tie-break on id)
+    scored.sort((a, b) => b.overall - a.overall || a.job.id.localeCompare(b.job.id));
+
+    // Diversify the first page: greedy pick with caps
+    const firstPageSize = pageSize;
+    const diversified = diversifyTopN(scored, firstPageSize);
+
+    // Remainder: everything not in the diversified set, sorted by overall
+    const pickedIds = new Set(diversified.map(s => s.job.id));
+    const remainder = scored.filter(s => !pickedIds.has(s.job.id));
+
+    jobs = [...diversified.map(s => s.job), ...remainder.map(s => s.job)];
+  }
+  // else 'recent' — keep existing Created Time desc order from Airtable
+
   const totalCount = jobs.length;
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -438,6 +472,84 @@ export async function getJobs(filters?: {
     pageSize,
     totalPages,
   };
+}
+
+// ── Feed scoring helpers ───────────────────────────────────────────
+
+/** Freshness score (0–100) based on firstSeenAt, not ATS published date */
+function computeFreshness(job: Job, now: number): number {
+  const seen = job.firstSeenAt ? new Date(job.firstSeenAt).getTime() : 0;
+  if (!seen) return 10;
+  const daysOld = (now - seen) / (1000 * 60 * 60 * 24);
+  if (daysOld <= 1) return 100;
+  if (daysOld <= 3) return 85;
+  if (daysOld <= 7) return 70;
+  if (daysOld <= 14) return 50;
+  if (daysOld <= 30) return 30;
+  return 10;
+}
+
+/** High-interest departments get a boost */
+const DEPT_INTEREST: Record<string, number> = {
+  'Engineering': 15,
+  'AI & Research': 15,
+  'Product': 12,
+  'Sales & GTM': 10,
+  'Design': 8,
+  'Marketing': 8,
+  'Customer Success & Support': 5,
+  'People & Talent': 5,
+  'Finance & Legal': 3,
+  'Operations & Admin': 3,
+};
+
+/** Interest score (0–50) from brand strength + function + salary */
+function computeInterest(job: Job): number {
+  let score = 0;
+  // Brand proxy: more investors = stronger brand (capped at 20)
+  const investorCount = job.investors?.length || 0;
+  score += Math.min(investorCount * 5, 20);
+  // Department interest
+  score += DEPT_INTEREST[job.departmentName] || 5;
+  // Salary present is a signal of a well-structured listing
+  if (job.salary) score += 5;
+  return score;
+}
+
+interface ScoredJob {
+  job: Job;
+  freshness: number;
+  interest: number;
+  overall: number;
+}
+
+/** Greedy pick of top N jobs with diversity constraints */
+function diversifyTopN(sorted: ScoredJob[], n: number): ScoredJob[] {
+  const MAX_PER_COMPANY = 2;
+  const MAX_PER_DEPT = 8;
+
+  const picked: ScoredJob[] = [];
+  const companyCounts = new Map<string, number>();
+  const deptCounts = new Map<string, number>();
+
+  for (const item of sorted) {
+    if (picked.length >= n) break;
+
+    const co = item.job.company;
+    const dept = item.job.departmentName || 'Other';
+
+    const coCount = companyCounts.get(co) || 0;
+    const deptCount = deptCounts.get(dept) || 0;
+
+    if (coCount >= MAX_PER_COMPANY) continue;
+    if (deptCount >= MAX_PER_DEPT) continue;
+
+    picked.push(item);
+    companyCounts.set(co, coCount + 1);
+    deptCounts.set(dept, deptCount + 1);
+  }
+
+  return picked;
 }
 
 export async function getFilterOptions(): Promise<FilterOptions> {
@@ -653,6 +765,7 @@ export async function getJobById(id: string): Promise<(Job & { description: stri
     departmentName: deptName,
     industry: industryName,
     datePosted: record.fields['Created Time'] || record.createdTime || '',
+    firstSeenAt: (record.fields['First Seen'] as string) || record.fields['Created Time'] || record.createdTime || '',
     jobUrl: record.fields['Job URL'] || '',
     applyUrl: record.fields['Apply URL'] || record.fields['Job URL'] || '',
     salary: record.fields['Salary'] || '',
@@ -1046,6 +1159,7 @@ export async function getJobsForCompanyNames(companyNames: string[]): Promise<Jo
       departmentName: deptName,
       industry: industryName,
       datePosted: record.fields['Created Time'] || record.createdTime || '',
+      firstSeenAt: (record.fields['First Seen'] as string) || record.fields['Created Time'] || record.createdTime || '',
       jobUrl: record.fields['Job URL'] || '',
       applyUrl: record.fields['Apply URL'] || record.fields['Job URL'] || '',
       salary: record.fields['Salary'] || '',
@@ -1173,6 +1287,7 @@ export async function getFeaturedJobs(): Promise<Job[]> {
       departmentName: deptName,
       industry: industryName,
       datePosted: record.fields['Created Time'] || record.createdTime || '',
+      firstSeenAt: (record.fields['First Seen'] as string) || record.fields['Created Time'] || record.createdTime || '',
       jobUrl: record.fields['Job URL'] || '',
       applyUrl: record.fields['Apply URL'] || record.fields['Job URL'] || '',
       salary: record.fields['Salary'] || '',
@@ -1296,6 +1411,7 @@ export async function getOrganicJobs(page: number = 1, pageSize: number = 25): P
       departmentName: deptName,
       industry: industryName,
       datePosted: record.fields['Created Time'] || record.createdTime || '',
+      firstSeenAt: (record.fields['First Seen'] as string) || record.fields['Created Time'] || record.createdTime || '',
       jobUrl: record.fields['Job URL'] || '',
       applyUrl: record.fields['Apply URL'] || record.fields['Job URL'] || '',
       salary: record.fields['Salary'] || '',
