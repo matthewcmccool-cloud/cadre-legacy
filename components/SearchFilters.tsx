@@ -86,7 +86,19 @@ export default function SearchFilters({ companies = [], investors = [], industri
     router.push(`/?${params.toString()}`);
   };
 
+  const currentSort = searchParams.get('sort') || 'featured';
   const currentDepartment = searchParams.get('functionName') || '';
+
+  const setSort = (mode: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (mode === 'featured') {
+      params.delete('sort');
+    } else {
+      params.set('sort', mode);
+    }
+    params.delete('page');
+    router.push(`/?${params.toString()}`);
+  };
 
   const handleTagClick = (tag: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -183,8 +195,27 @@ export default function SearchFilters({ companies = [], investors = [], industri
         </div>
       )}
 
-      {/* Department Tags */}
-      <div className="flex flex-wrap gap-1.5">
+      {/* Sort + Department Tags */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex items-center gap-0.5 mr-1.5">
+          {[
+            { key: 'featured', label: 'Featured' },
+            { key: 'recent', label: 'Most recent' },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setSort(opt.key)}
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-all ${
+                currentSort === opt.key
+                  ? 'bg-[#252526] text-[#e8e8e8]'
+                  : 'text-[#555] hover:text-[#888]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <span className="text-[#333] mr-0.5">|</span>
         {POPULAR_TAGS.map((tag) => (
           <button
             key={tag}
