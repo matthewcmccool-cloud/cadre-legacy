@@ -118,34 +118,34 @@ export default function ForInvestorsContent() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 pt-12 pb-20">
+    <div className="max-w-6xl mx-auto px-4 pt-8 pb-14">
       {/* ── Hero ──────────────────────────────────────────────── */}
-      <div className="max-w-2xl mb-20">
-        <p className="text-sm font-medium text-[#5e6ad2] mb-3 tracking-wide uppercase">
+      <div className="max-w-2xl mb-10">
+        <p className="text-sm font-medium text-[#5e6ad2] mb-2 tracking-wide uppercase">
           The Portfolio Hiring Pulse
         </p>
-        <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight mb-4">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight mb-3">
           Real-time hiring intelligence across your entire portfolio.
         </h1>
-        <p className="text-lg text-[#999] mb-8 leading-relaxed">
+        <p className="text-base text-[#999] mb-5 leading-relaxed">
           Trends, comparisons, and alerts that replace manual tracking.
           Built for talent partners, platform teams, and GPs.
         </p>
         <span
-          className="inline-block px-5 py-2.5 bg-[#252526] text-[#888] text-sm font-medium rounded-lg cursor-default"
+          className="inline-block px-5 py-2 bg-[#252526] text-[#888] text-sm font-medium rounded-lg cursor-default"
         >
           Coming soon
         </span>
       </div>
 
       {/* ── The Problem ───────────────────────────────────────── */}
-      <div className="mb-20">
-        <h2 className="text-lg font-semibold text-white mb-6">The problem</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="mb-10">
+        <h2 className="text-lg font-semibold text-white mb-4">The problem</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {PROBLEMS.map((problem) => (
             <div
               key={problem}
-              className="flex gap-3 p-4 rounded-lg bg-[#131314] border border-[#1a1a1b]"
+              className="flex gap-2.5 p-3 rounded-lg bg-[#131314] border border-[#1a1a1b]"
             >
               <span className="text-red-400/60 mt-0.5 flex-shrink-0">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,17 +159,17 @@ export default function ForInvestorsContent() {
       </div>
 
       {/* ── What You Get ──────────────────────────────────────── */}
-      <div className="mb-20">
-        <h2 className="text-lg font-semibold text-white mb-2">What you get</h2>
-        <p className="text-sm text-[#666] mb-8">Six tools built on one unified dataset.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="mb-10">
+        <h2 className="text-lg font-semibold text-white mb-1.5">What you get</h2>
+        <p className="text-sm text-[#666] mb-5">Six tools built on one unified dataset.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {FEATURES.map((feature, i) => (
             <div
               key={feature.title}
-              className="p-5 rounded-xl bg-[#131314] border border-[#1a1a1b]"
+              className="p-4 rounded-xl bg-[#131314] border border-[#1a1a1b]"
             >
               <span className="text-xs text-[#5e6ad2] font-medium">{i + 1}</span>
-              <h3 className="text-sm font-semibold text-white mt-2 mb-1.5">
+              <h3 className="text-sm font-semibold text-white mt-1.5 mb-1">
                 {feature.title}
               </h3>
               <p className="text-xs text-[#888] leading-relaxed">
@@ -181,33 +181,33 @@ export default function ForInvestorsContent() {
       </div>
 
       {/* ── Mock: Portfolio-Wide Insights ──────────────────────── */}
-      <div className="mb-20">
-        <h2 className="text-lg font-semibold text-white mb-2">Portfolio-Wide Insights</h2>
-        <p className="text-sm text-[#666] mb-6">
+      <div className="mb-10">
+        <h2 className="text-lg font-semibold text-white mb-1.5">Portfolio-Wide Insights</h2>
+        <p className="text-sm text-[#666] mb-4">
           Aggregate hiring activity across every portfolio company in one view.
         </p>
-        <div className="rounded-xl bg-[#131314] border border-[#1a1a1b] p-5 sm:p-6">
+        <div className="rounded-xl bg-[#131314] border border-[#1a1a1b] p-4 sm:p-5">
           {/* Summary cards */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-[#0e0e0f] rounded-lg p-4 border border-[#1a1a1b]">
+          <div className="grid grid-cols-3 gap-2.5 mb-4">
+            <div className="bg-[#0e0e0f] rounded-lg p-3 border border-[#1a1a1b]">
               <p className="text-xs text-[#666] mb-1">Open Roles</p>
               <p className="text-2xl font-bold text-white">1,247</p>
               <p className="text-xs text-green-400 mt-1">+8.3% this week</p>
             </div>
-            <div className="bg-[#0e0e0f] rounded-lg p-4 border border-[#1a1a1b]">
+            <div className="bg-[#0e0e0f] rounded-lg p-3 border border-[#1a1a1b]">
               <p className="text-xs text-[#666] mb-1">Hiring Velocity</p>
               <p className="text-2xl font-bold text-white">62</p>
               <p className="text-xs text-[#888] mt-1">new roles / week</p>
             </div>
-            <div className="bg-[#0e0e0f] rounded-lg p-4 border border-[#1a1a1b]">
+            <div className="bg-[#0e0e0f] rounded-lg p-3 border border-[#1a1a1b]">
               <p className="text-xs text-[#666] mb-1">Top Department</p>
               <p className="text-2xl font-bold text-white">Eng</p>
               <p className="text-xs text-[#888] mt-1">34% of all roles</p>
             </div>
           </div>
           {/* Department bar chart */}
-          <p className="text-xs text-[#666] mb-3">Hiring by department</p>
-          <div className="space-y-2">
+          <p className="text-xs text-[#666] mb-2">Hiring by department</p>
+          <div className="space-y-1.5">
             {[
               { dept: 'Engineering', pct: 34, count: 424 },
               { dept: 'Sales & GTM', pct: 22, count: 274 },
@@ -222,7 +222,7 @@ export default function ForInvestorsContent() {
             ].map((row) => (
               <div key={row.dept} className="flex items-center gap-3">
                 <span className="text-xs text-[#888] w-32 sm:w-36 truncate flex-shrink-0">{row.dept}</span>
-                <div className="flex-1 h-5 bg-[#0e0e0f] rounded overflow-hidden">
+                <div className="flex-1 h-4 bg-[#0e0e0f] rounded overflow-hidden">
                   <div
                     className="h-full bg-[#5e6ad2]/40 rounded"
                     style={{ width: `${Math.max((row.pct / 34) * 90, 3)}%` }}
@@ -233,9 +233,9 @@ export default function ForInvestorsContent() {
             ))}
           </div>
           {/* 4-week trend line */}
-          <div className="mt-6 pt-5 border-t border-[#1a1a1b]">
-            <p className="text-xs text-[#666] mb-3">Portfolio hiring trend (4 weeks)</p>
-            <svg viewBox="0 0 400 80" className="w-full h-20" preserveAspectRatio="none">
+          <div className="mt-4 pt-3 border-t border-[#1a1a1b]">
+            <p className="text-xs text-[#666] mb-2">Portfolio hiring trend (4 weeks)</p>
+            <svg viewBox="0 0 400 80" className="w-full h-16" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#5e6ad2" stopOpacity="0.2" />
@@ -267,24 +267,24 @@ export default function ForInvestorsContent() {
       </div>
 
       {/* ── Mock: Company Comparisons ──────────────────────────── */}
-      <div className="mb-20">
-        <h2 className="text-lg font-semibold text-white mb-2">Company Comparisons</h2>
-        <p className="text-sm text-[#666] mb-6">
+      <div className="mb-10">
+        <h2 className="text-lg font-semibold text-white mb-1.5">Company Comparisons</h2>
+        <p className="text-sm text-[#666] mb-4">
           Side-by-side hiring breakdown for any companies in the Cadre database.
         </p>
         <div className="rounded-xl bg-[#131314] border border-[#1a1a1b] overflow-hidden">
           {/* Header row */}
           <div className="grid grid-cols-4 gap-0 border-b border-[#1a1a1b]">
-            <div className="p-4 text-xs text-[#555]" />
-            <div className="p-4 text-center border-l border-[#1a1a1b]">
+            <div className="p-3 text-xs text-[#555]" />
+            <div className="p-3 text-center border-l border-[#1a1a1b]">
               <p className="text-sm font-medium text-white">Acme AI</p>
               <p className="text-xs text-[#666]">Series B</p>
             </div>
-            <div className="p-4 text-center border-l border-[#1a1a1b]">
+            <div className="p-3 text-center border-l border-[#1a1a1b]">
               <p className="text-sm font-medium text-white">Beacon Labs</p>
               <p className="text-xs text-[#666]">Series A</p>
             </div>
-            <div className="p-4 text-center border-l border-[#1a1a1b]">
+            <div className="p-3 text-center border-l border-[#1a1a1b]">
               <p className="text-sm font-medium text-white">Cortex</p>
               <p className="text-xs text-[#666]">Series C</p>
             </div>
@@ -298,18 +298,18 @@ export default function ForInvestorsContent() {
             { label: 'Hiring velocity', values: ['6/wk', '4/wk', '9/wk'] },
           ].map((row, i) => (
             <div key={row.label} className={`grid grid-cols-4 gap-0 ${i !== 4 ? 'border-b border-[#1a1a1b]' : ''}`}>
-              <div className="px-4 py-3 text-xs text-[#888]">{row.label}</div>
+              <div className="px-3 py-2.5 text-xs text-[#888]">{row.label}</div>
               {row.values.map((val, j) => (
-                <div key={j} className="px-4 py-3 text-center text-sm border-l border-[#1a1a1b]">
+                <div key={j} className="px-3 py-2.5 text-center text-sm border-l border-[#1a1a1b]">
                   <span className={row.colors ? row.colors[j] : 'text-[#e8e8e8]'}>{val}</span>
                 </div>
               ))}
             </div>
           ))}
           {/* Mini trend overlay */}
-          <div className="border-t border-[#1a1a1b] p-4">
-            <p className="text-xs text-[#555] mb-3">Hiring trend overlay</p>
-            <svg viewBox="0 0 400 60" className="w-full h-14" preserveAspectRatio="none">
+          <div className="border-t border-[#1a1a1b] p-3">
+            <p className="text-xs text-[#555] mb-2">Hiring trend overlay</p>
+            <svg viewBox="0 0 400 60" className="w-full h-12" preserveAspectRatio="none">
               {/* Grid */}
               <line x1="0" y1="15" x2="400" y2="15" stroke="#1a1a1b" strokeWidth="1" />
               <line x1="0" y1="30" x2="400" y2="30" stroke="#1a1a1b" strokeWidth="1" />
@@ -340,18 +340,18 @@ export default function ForInvestorsContent() {
       </div>
 
       {/* ── 10 Analytics Segments ─────────────────────────────── */}
-      <div className="mb-20">
-        <h2 className="text-lg font-semibold text-white mb-2">
+      <div className="mb-10">
+        <h2 className="text-lg font-semibold text-white mb-1.5">
           10 analytics segments
         </h2>
-        <p className="text-sm text-[#666] mb-6">
+        <p className="text-sm text-[#666] mb-4">
           All hiring data organized into departments that map to how VCs think about teams.
         </p>
         <div className="rounded-xl bg-[#131314] border border-[#1a1a1b] overflow-hidden">
           {SEGMENTS.map((seg, i) => (
             <div
               key={seg.name}
-              className={`flex items-center justify-between px-5 py-3 text-sm ${
+              className={`flex items-center justify-between px-4 py-2.5 text-sm ${
                 i !== SEGMENTS.length - 1 ? 'border-b border-[#1a1a1b]' : ''
               }`}
             >
@@ -363,9 +363,9 @@ export default function ForInvestorsContent() {
       </div>
 
       {/* ── Why Cadre ─────────────────────────────────────────── */}
-      <div className="mb-20">
-        <h2 className="text-lg font-semibold text-white mb-6">Why Cadre</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="mb-10">
+        <h2 className="text-lg font-semibold text-white mb-4">Why Cadre</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {WHY_CADRE.map((item) => (
             <div key={item.label} className="flex gap-3">
               <span className="text-green-400/60 mt-1 flex-shrink-0">
@@ -385,12 +385,12 @@ export default function ForInvestorsContent() {
       {/* ── Interest Form ─────────────────────────────────────── */}
       <div
         id="request-access"
-        className="rounded-xl bg-[#131314] border border-[#1a1a1b] p-6 sm:p-8 max-w-xl scroll-mt-8"
+        className="rounded-xl bg-[#131314] border border-[#1a1a1b] p-5 sm:p-6 max-w-xl scroll-mt-8"
       >
         <h2 className="text-lg font-semibold text-white mb-1">
           Request early access
         </h2>
-        <p className="text-sm text-[#666] mb-6">
+        <p className="text-sm text-[#666] mb-4">
           We&apos;re onboarding a small group of VC firms. No commitment — just tell
           us what you&apos;d use.
         </p>
@@ -403,8 +403,8 @@ export default function ForInvestorsContent() {
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 type="text"
                 required
@@ -422,7 +422,7 @@ export default function ForInvestorsContent() {
                 className="px-3 py-2.5 bg-[#0e0e0f] border border-[#252526] rounded-lg text-sm text-white placeholder-[#555] focus:outline-none focus:border-[#5e6ad2]/50"
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 type="text"
                 required
