@@ -42,12 +42,7 @@ export default async function Home({ searchParams }: PageProps) {
     <main className="min-h-screen bg-[#0e0e0f]">
       <Header />
 
-      <div className="max-w-6xl mx-auto px-4 pt-1 pb-8">
-        {/* Tagline */}
-        <p className="text-[#999] text-base font-medium mb-6">
-          Jobs at top VC-backed companies. Filter by investor, stage, and function.
-        </p>
-
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-8">
         <SearchFilters
           companies={filterOptions.companies}
           investors={filterOptions.investors}
