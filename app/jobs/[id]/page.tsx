@@ -13,10 +13,19 @@ interface JobDetailPageProps {
   params: { id: string };
 }
 
+// Extract Airtable record ID from slug like "staff-engineer-replit-rec149XolDMws2Zck"
+function extractRecordId(slug: string): string {
+  // Match Airtable record ID pattern at the end
+  const match = slug.match(/(rec[A-Za-z0-9]{10,})$/);
+  if (match) return match[1];
+  // Fallback: treat the whole thing as a record ID (backward compat)
+  return slug;
+}
+
 // Deduplicate getJobById between generateMetadata and page component
 const getCachedJob = cache(async (id: string) => {
   try {
-    return await getJobById(id);
+    return await getJobById(extractRecordId(id));
   } catch {
     return null;
   }
@@ -131,7 +140,7 @@ export async function generateMetadata({ params }: JobDetailPageProps): Promise<
       description,
       type: 'website',
       siteName: 'Cadre',
-      url: `https://cadre-ui-psi.vercel.app/jobs/${params.id}`,
+      url: `https://cadre-ui-psi.vercel.app/jobs/${encodeURIComponent(params.id)}`,
     },
     twitter: {
       card: 'summary',

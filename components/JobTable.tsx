@@ -13,10 +13,10 @@ function formatDate(dateString: string): { text: string; isNew: boolean } {
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays <= 3) return { text: 'New', isNew: true };
-  if (diffDays < 7) return { text: `${diffDays}d`, isNew: false };
-  if (diffDays < 30) return { text: `${Math.floor(diffDays / 7)}w`, isNew: false };
-  return { text: `${Math.floor(diffDays / 30)}mo`, isNew: false };
+  if (diffDays <= 2) return { text: 'New', isNew: true };
+  if (diffDays < 7) return { text: `${diffDays}d ago`, isNew: false };
+  if (diffDays < 30) return { text: `${Math.floor(diffDays / 7)}w ago`, isNew: false };
+  return { text: '', isNew: false }; // hide for 30+ day old jobs
 }
 
 const getDomain = (url: string | null | undefined) => {
@@ -111,7 +111,7 @@ export default function JobTable({ jobs }: JobTableProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
                 <Link
-                  href={`/jobs/${job.id}`}
+                  href={`/jobs/${toSlug(job.title)}-${toSlug(job.company)}-${job.id}`}
                   className="text-sm font-medium text-white group-hover:text-[#5e6ad2] truncate transition-colors"
                 >
                   {job.title}

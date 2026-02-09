@@ -256,6 +256,16 @@ export async function getJobs(filters?: {
     if (jobOffset) await new Promise(r => setTimeout(r, 200)); // rate limit
   } while (jobOffset);
 
+  // Deduplicate by Job URL (same job can be synced multiple times)
+  const seenUrls = new Set<string>();
+  const dedupedRecords = allRecords.filter(r => {
+    const url = r.fields['Job URL'] as string;
+    if (!url) return true; // keep records without URL
+    if (seenUrls.has(url)) return false;
+    seenUrls.add(url);
+    return true;
+  });
+
   const functionRecords = await fetchAirtable(TABLES.functions, {
     fields: ['Function', 'Department (Primary)'],
   });
@@ -298,7 +308,7 @@ export async function getJobs(filters?: {
     industryMap.set(r.id, r.fields['Industry Name'] || '');
   });
 
-  let jobs = allRecords.map(record => {
+  let jobs = dedupedRecords.map(record => {
     const companyField = record.fields['Companies'];
     let companyName = 'Unknown';
     let companyUrl = '';
@@ -319,7 +329,7 @@ export async function getJobs(filters?: {
       funcName = inferFunction(record.fields['Title'] as string || '');
     }
     if (!deptName) {
-      deptName = FUNCTION_TO_DEPARTMENT[funcName] || '';
+      deptName = FUNCTION_TO_DEPARTMENT[funcName] || 'General';
     }
 
     const investorIds = record.fields['Investors'] || [];
@@ -1133,7 +1143,7 @@ export async function getJobsForCompanyNames(companyNames: string[]): Promise<Jo
       funcName = inferFunction(jobTitle);
     }
     if (!deptName) {
-      deptName = FUNCTION_TO_DEPARTMENT[funcName] || '';
+      deptName = FUNCTION_TO_DEPARTMENT[funcName] || 'General';
     }
 
     const investorIds = record.fields['Investors'] || [];
@@ -1263,7 +1273,7 @@ export async function getFeaturedJobs(): Promise<Job[]> {
       funcName = inferFunction(record.fields['Title'] as string || '');
     }
     if (!deptName) {
-      deptName = FUNCTION_TO_DEPARTMENT[funcName] || '';
+      deptName = FUNCTION_TO_DEPARTMENT[funcName] || 'General';
     }
 
     const investorIds = record.fields['Investors'] || [];
@@ -1387,7 +1397,7 @@ export async function getOrganicJobs(page: number = 1, pageSize: number = 25): P
       funcName = inferFunction(record.fields['Title'] as string || '');
     }
     if (!deptName) {
-      deptName = FUNCTION_TO_DEPARTMENT[funcName] || '';
+      deptName = FUNCTION_TO_DEPARTMENT[funcName] || 'General';
     }
 
     const investorIds = record.fields['Investors'] || [];
