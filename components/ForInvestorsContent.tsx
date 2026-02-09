@@ -164,9 +164,12 @@ export default function ForInvestorsContent() {
             Trends, comparisons, and alerts that replace manual tracking.
             Built for talent partners, platform teams, and GPs.
           </p>
-          <span className="inline-block px-4 py-1.5 bg-[#252526] text-[#888] text-sm font-medium rounded-lg cursor-default">
-            Coming soon
-          </span>
+          <a
+            href="#request-access"
+            className="inline-block px-4 py-1.5 bg-[#5e6ad2] hover:bg-[#6e7ae2] text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Request early access
+          </a>
         </div>
       </Section>
 

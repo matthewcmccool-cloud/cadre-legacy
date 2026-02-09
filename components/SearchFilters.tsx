@@ -101,9 +101,10 @@ export default function SearchFilters({
         counts.set(inv, (counts.get(inv) || 0) + 1);
       }
     }
-    // Sort by count, then alphabetically
+    // Sort by count, then alphabetically — hide investors with 0 matching jobs
     return investors
       .map(name => ({ value: name, label: name, count: counts.get(name) || 0 }))
+      .filter(o => o.count > 0)
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
   }, [investors, jobs]);
 
@@ -155,13 +156,13 @@ export default function SearchFilters({
     router.push(`/?${params.toString()}`);
   };
 
-  const clearSearch = () => {
+  const clearSearch = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('search');
     params.delete('page');
     setSearch('');
     router.push(`/?${params.toString()}`);
-  };
+  }, [searchParams, router]);
 
   const setSort = (mode: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -190,7 +191,7 @@ export default function SearchFilters({
       filters.push({ param: 'posted', value: p, label: opt?.label || p });
     }
     if (searchParams.get('search')) {
-      filters.push({ param: 'search', value: searchParams.get('search')!, label: `"${searchParams.get('search')}"` });
+      filters.push({ param: 'search', value: searchParams.get('search')!, label: searchParams.get('search')! });
     }
     return filters;
   }, [selectedDepts, selectedCountries, selectedIndustries, selectedWorkModes, selectedInvestors, selectedPosted, searchParams]);
