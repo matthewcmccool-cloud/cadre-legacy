@@ -52,7 +52,7 @@ export async function GET() {
           `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${COMPANIES_TABLE}/${next.id}`,
           {
             method: 'PATCH',
-            body: JSON.stringify({ fields: { 'Jobs API URL': 'none' } }),
+                        body: JSON.stringify({ fields: { 'Jobs API URL': 'https://none.invalid' } }),
           }
         );
         result.steps.push('Marked company with Jobs API URL = "none" (no supported ATS found)');
