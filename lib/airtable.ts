@@ -1038,3 +1038,61 @@ export async function getStats(): Promise<{ jobCount: number; companyCount: numb
     investorCount: investorRecords.records.length,
   };
 }
+
+// ── Recently funded / recently added companies ──────────────────────
+// Returns companies sorted by most recently created in Airtable.
+// When we add a funding_rounds table, this will switch to use that.
+export interface RecentCompany {
+  id: string;
+  name: string;
+  slug: string;
+  stage?: string;
+  industry?: string;
+  investors: string[];
+  jobCount: number;
+  url?: string;
+}
+
+export async function getRecentCompanies(limit: number = 8): Promise<RecentCompany[]> {
+  // Fetch companies sorted by newest first
+  const companyResults = await fetchAirtable(TABLES.companies, {
+    sort: [{ field: 'Created Time', direction: 'desc' }],
+    maxRecords: limit * 2, // over-fetch in case some have no jobs
+    fields: ['Company', 'URL', 'VCs', 'Stage', 'Slug'],
+  });
+
+  // Resolve investor names
+  const investorRecords = await fetchAirtable(TABLES.investors, {
+    fields: ['Firm Name'],
+  });
+  const investorNameMap = new Map<string, string>();
+  investorRecords.records.forEach(r => {
+    investorNameMap.set(r.id, r.fields['Firm Name'] as string || '');
+  });
+
+  // Get job counts for these companies
+  const companyNames = companyResults.records.map(r => r.fields['Company'] as string).filter(Boolean);
+  const jobs = await getJobsForCompanyNames(companyNames);
+  const jobCountMap = new Map<string, number>();
+  for (const job of jobs) {
+    jobCountMap.set(job.company, (jobCountMap.get(job.company) || 0) + 1);
+  }
+
+  return companyResults.records
+    .map(r => {
+      const name = r.fields['Company'] as string || '';
+      const vcIds = (r.fields['VCs'] || []) as string[];
+      return {
+        id: r.id,
+        name,
+        slug: toSlug(name),
+        stage: r.fields['Stage'] as string || undefined,
+        industry: undefined, // Industry is a linked record — skip for now to avoid extra calls
+        investors: vcIds.map(id => investorNameMap.get(id) || '').filter(Boolean),
+        jobCount: jobCountMap.get(name) || 0,
+        url: r.fields['URL'] as string || undefined,
+      };
+    })
+    .filter(c => c.name && c.jobCount > 0)
+    .slice(0, limit);
+}
