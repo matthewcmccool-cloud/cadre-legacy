@@ -81,7 +81,7 @@ export default function CompanyDirectory({ companies }: CompanyDirectoryProps) {
       {/* Descriptor */}
       <div className="mb-4">
         <p className="text-sm text-[#888]">
-          <span className="text-[#ccc] font-medium">{companies.length.toLocaleString()} VC-backed companies</span>
+          <span className="text-[#ccc] font-medium">{companies.length.toLocaleString()} exceptional technology companies</span>
           {' '}&mdash; click any to see open roles.
         </p>
       </div>
