@@ -114,7 +114,7 @@ export default function FundingRoundsFeed({ companyNames }: FundingRoundsFeedPro
     <section className="mb-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium text-[#888]">Recent Fundraises</h2>
+          <h2 className="text-[11px] font-semibold text-white uppercase tracking-wider">RECENT FUNDRAISES</h2>
           {loading && (
             <div className="w-3 h-3 rounded-full border-2 border-[#5e6ad2] border-t-transparent animate-spin" />
           )}
