@@ -691,9 +691,9 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
   }
 
   // Get job count for this specific company using filterByFormula
-  const escaped = companyName.replace(/"/g, '\\"');
+  const escapedName = companyName.replace(/"/g, '\\"');
   const jobCountResult = await fetchAirtable(TABLES.jobs, {
-    filterByFormula: `FIND("${escaped}", ARRAYJOIN({Companies}, "||") & "")`,
+    filterByFormula: `FIND("${escapedName}", ARRAYJOIN({Companies}, "||") & "")`,
     fields: ['Job ID'],
   });
 
