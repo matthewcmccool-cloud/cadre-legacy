@@ -29,7 +29,7 @@ interface QueryBuilderProps {
   };
 }
 
-const fieldConfigs: Record<FieldType, { label: string; optionsKey?: keyof FilterOptions }> = {
+const fieldConfigs: Record<FieldType, { label: string; optionsKey?: 'functions' | 'departments' | 'locations' | 'investors' | 'industries' | 'companies' }> = {
   function: { label: 'Department', optionsKey: 'departments' },
   industry: { label: 'Industry', optionsKey: 'industries' },
   investor: { label: 'Investor', optionsKey: 'investors' },
