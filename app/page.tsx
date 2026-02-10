@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getJobs, getFilterOptions, getRecentCompanies } from '@/lib/airtable';
 import JobTable from '@/components/JobTable';
 import Pagination from '@/components/Pagination';
@@ -5,6 +6,7 @@ import SearchFilters from '@/components/SearchFilters';
 import RecentRounds from '@/components/RecentRounds';
 import FundingRoundsFeed from '@/components/FundingRoundsFeed';
 import CompanyTicker from '@/components/CompanyTicker';
+import InvestorTicker from '@/components/InvestorTicker';
 
 // ISR: regenerate page every 60 minutes in the background
 export const revalidate = 3600;
@@ -96,10 +98,10 @@ export default async function Home({ searchParams }: PageProps) {
         {/* ── Hero ─────────────────────────────────────────── */}
         <div className="mb-6">
           <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight tracking-tight">
-            Jobs at VC-backed startups
+            Every open role at VC-backed startups
           </h1>
           <p className="text-sm text-[#888] mt-1.5">
-            Discover roles at companies backed by top investors. Updated daily.
+            Search {jobsResult.totalCount.toLocaleString()}+ roles across {filterOptions.companies.length.toLocaleString()} companies backed by a16z, Sequoia, Benchmark &amp; {filterOptions.investors.length - 3}+ more.
           </p>
 
           {/* Stat cards — TBPN-style color blocks */}
@@ -110,19 +112,22 @@ export default async function Home({ searchParams }: PageProps) {
               </div>
               <div className="text-[11px] font-semibold text-white/70 uppercase tracking-wider">LIVE ROLES</div>
             </div>
-            <div className="bg-[#1a1a1b] rounded-lg px-4 py-3 border border-[#252526]">
+            <Link href="/companies" className="bg-[#1a1a1b] rounded-lg px-4 py-3 border border-[#252526] hover:border-[#5e6ad2]/40 hover:bg-[#1e1e1f] transition-all">
               <div className="text-xl sm:text-2xl font-bold text-white">{filterOptions.companies.length.toLocaleString()}</div>
               <div className="text-[11px] font-semibold text-[#999] uppercase tracking-wider">COMPANIES</div>
-            </div>
-            <div className="bg-[#1a1a1b] rounded-lg px-4 py-3 border border-[#252526]">
+            </Link>
+            <Link href="/investors" className="bg-[#1a1a1b] rounded-lg px-4 py-3 border border-[#252526] hover:border-[#5e6ad2]/40 hover:bg-[#1e1e1f] transition-all">
               <div className="text-xl sm:text-2xl font-bold text-white">{filterOptions.investors.length}</div>
               <div className="text-[11px] font-semibold text-[#999] uppercase tracking-wider">INVESTORS</div>
-            </div>
+            </Link>
           </div>
         </div>
 
         {/* ── Company Ticker ─────────────────────────────── */}
         <CompanyTicker companies={filterOptions.companyData} />
+
+        {/* ── Investor Ticker ──────────────────────────────── */}
+        <InvestorTicker investors={filterOptions.investors} />
 
         {/* ── Recent Fundraises (AI-powered) ─────────────── */}
         <FundingRoundsFeed companyNames={filterOptions.companies} />

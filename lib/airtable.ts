@@ -14,22 +14,28 @@ const airtableLimit = pLimit(4);
 export function inferFunction(title: string): string {
   const rules: [RegExp, string][] = [
     [/\bsolutions? engineer|sales engineer|pre.?sales/i, 'Solutions Engineering'],
-    [/\bdevrel|developer relation|developer advocate|developer evangel/i, 'Developer Relations'],
+    [/\bdevrel|developer relation|developer advocate|developer evangel|community manager/i, 'Developer Relations'],
     [/\brevenue op|rev\s?ops/i, 'Revenue Operations'],
-    [/\bbusiness develop|partnerships?|partner manager|bd |strategic allianc/i, 'BD & Partnerships'],
-    [/\bcustomer success|customer support|customer experience|support engineer|client success/i, 'Customer Success'],
-    [/\bproduct design|ux|ui designer|graphic design|brand design|creative director|ux research/i, 'Product Design / UX'],
-    [/\bproduct manag|head of product|vp.*product|director.*product|product lead|product owner|product strateg/i, 'Product Management'],
-    [/\bdata scien|machine learn|\bml\b|\bai\b|research scien|deep learn|nlp|computer vision|llm/i, 'AI & Research'],
-    [/\bengineer|software|developer|sre|devops|infrastructure|platform|full.?stack|backend|frontend|ios\b|android|mobile dev|architect/i, 'Engineering'],
-    [/\bsales|account exec|sdr\b|bdr\b|account manag|closing|quota/i, 'Sales'],
-    [/\bmarketing|growth|demand gen|content market|seo\b|brand manag|comms\b|communications|social media|pr manager/i, 'Marketing'],
-    [/\brecruit|talent|people ops|human resource|\bhr\b|people partner|head of people/i, 'People'],
-    [/\bfinance|account(ant|ing)|controller|tax\b|treasury|financial|fp&a|cfo/i, 'Finance & Accounting'],
-    [/\boperation|chief of staff|program manag|project manag|business ops|strategy|bizops/i, 'Business Operations'],
-    [/\blegal|counsel|compliance|regulatory|policy/i, 'Legal'],
-    [/\bsecurity|infosec|cyber|penetration/i, 'Engineering'],
-    [/\bdata analy|business intel|analytics/i, 'AI & Research'],
+    [/\bbusiness develop|partnerships?|partner manager|bd |strategic allianc|channel manager/i, 'BD & Partnerships'],
+    [/\bcustomer success|customer support|customer experience|support engineer|client success|technical support|help desk|service desk/i, 'Customer Success'],
+    [/\bproduct design|ux|ui designer|graphic design|brand design|creative director|ux research|visual design|interaction design|design system/i, 'Product Design / UX'],
+    [/\bproduct manag|head of product|vp.*product|director.*product|product lead|product owner|product strateg|technical product|product analys/i, 'Product Management'],
+    [/\bdata scien|machine learn|\bml\b|\bai\b|research scien|deep learn|nlp|computer vision|llm|gen\s?ai|prompt engineer|applied scien/i, 'AI & Research'],
+    [/\bengineer|software|developer|sre|devops|infrastructure|platform|full.?stack|backend|frontend|ios\b|android|mobile dev|architect|tech lead|cto\b|site reliab|cloud|database|dba\b|qa\b|quality assur|test\b|automation/i, 'Engineering'],
+    [/\bsales|account exec|sdr\b|bdr\b|account manag|closing|quota|commercial|new business|enterprise rep/i, 'Sales'],
+    [/\bmarketing|growth|demand gen|content market|seo\b|brand manag|comms\b|communications|social media|pr manager|content strateg|copywriter|content writer|editorial|email market|lifecycle market/i, 'Marketing'],
+    [/\brecruit|talent|people ops|human resource|\bhr\b|people partner|head of people|talent acqui|onboarding|dei\b|diversity/i, 'People'],
+    [/\bfinance|account(ant|ing)|controller|tax\b|treasury|financial|fp&a|cfo|payroll|billing|revenue account|audit/i, 'Finance & Accounting'],
+    [/\boperation|chief of staff|program manag|project manag|business ops|strategy|bizops|office manag|executive assist|admin|procurement|supply chain|facilities/i, 'Business Operations'],
+    [/\blegal|counsel|compliance|regulatory|policy|privacy|governance/i, 'Legal'],
+    [/\bsecurity|infosec|cyber|penetration|appsec|information security/i, 'Engineering'],
+    [/\bdata analy|business intel|analytics|data engineer|etl\b|bi\b.*engineer|data platform/i, 'AI & Research'],
+    // Catch-all: director/VP/head roles that didn't match above
+    [/\bdirector|vice president|\bvp\b|head of|general manager|\bgm\b|managing director/i, 'Business Operations'],
+    // Technical writer and docs
+    [/\btechnical writer|documentation|docs engineer/i, 'Engineering'],
+    // Coordinator / specialist / associate (broad catch-all)
+    [/\bcoordinator|specialist|associate|intern\b|fellow\b/i, 'Business Operations'],
   ];
   for (const [pattern, label] of rules) {
     if (pattern.test(title)) return label;
@@ -917,6 +923,85 @@ export async function getJobsForCompanyNames(companyNames: string[]): Promise<Jo
 
 // Keep old name as alias for any remaining references
 export const getJobsForCompanyIds = getJobsForCompanyNames;
+
+// ── Directory page data ─────────────────────────────────────────────
+
+export interface CompanyDirectoryItem {
+  name: string;
+  slug: string;
+  url?: string;
+  stage?: string;
+  investors: string[];
+}
+
+export async function getAllCompaniesForDirectory(): Promise<CompanyDirectoryItem[]> {
+  const [companyRecords, investorRecords] = await Promise.all([
+    fetchAllAirtable(TABLES.companies, {
+      fields: ['Company', 'URL', 'VCs', 'Stage'],
+    }),
+    fetchAllAirtable(TABLES.investors, {
+      fields: ['Firm Name'],
+    }),
+  ]);
+
+  const investorMap = new Map<string, string>();
+  investorRecords.forEach(r => {
+    investorMap.set(r.id, r.fields['Firm Name'] as string || '');
+  });
+
+  return companyRecords
+    .map(r => {
+      const name = r.fields['Company'] as string || '';
+      const vcIds = (r.fields['VCs'] || []) as string[];
+      return {
+        name,
+        slug: toSlug(name),
+        url: r.fields['URL'] as string || undefined,
+        stage: r.fields['Stage'] as string || undefined,
+        investors: vcIds.map(id => investorMap.get(id) || '').filter(Boolean),
+      };
+    })
+    .filter(c => c.name)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export interface InvestorDirectoryItem {
+  name: string;
+  slug: string;
+  companyCount: number;
+}
+
+export async function getAllInvestorsForDirectory(): Promise<InvestorDirectoryItem[]> {
+  const [investorRecords, companyRecords] = await Promise.all([
+    fetchAllAirtable(TABLES.investors, {
+      fields: ['Firm Name'],
+    }),
+    fetchAllAirtable(TABLES.companies, {
+      fields: ['VCs'],
+    }),
+  ]);
+
+  // Count portfolio companies per investor
+  const portfolioCounts = new Map<string, number>();
+  companyRecords.forEach(r => {
+    const vcIds = (r.fields['VCs'] || []) as string[];
+    for (const id of vcIds) {
+      portfolioCounts.set(id, (portfolioCounts.get(id) || 0) + 1);
+    }
+  });
+
+  return investorRecords
+    .map(r => {
+      const name = r.fields['Firm Name'] as string || '';
+      return {
+        name,
+        slug: toSlug(name),
+        companyCount: portfolioCounts.get(r.id) || 0,
+      };
+    })
+    .filter(i => i.name)
+    .sort((a, b) => b.companyCount - a.companyCount || a.name.localeCompare(b.name));
+}
 
 // Get featured jobs — placeholder until monetization fields are re-added
 export async function getFeaturedJobs(): Promise<Job[]> {
