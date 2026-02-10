@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { getJobs, getFilterOptions } from '@/lib/airtable';
+import { getJobs, getFilterOptions, getRecentCompanies } from '@/lib/airtable';
 import JobTable from '@/components/JobTable';
-
 import Pagination from '@/components/Pagination';
 import SearchFilters from '@/components/SearchFilters';
+import RecentRounds from '@/components/RecentRounds';
 
 // ISR: regenerate page every 60 minutes in the background
 export const revalidate = 3600;
@@ -49,13 +49,48 @@ export default async function Home({ searchParams }: PageProps) {
     company: searchParams.company,
   };
 
-  const [jobsResult, filterOptions] = await Promise.all([
+  const [jobsResult, filterOptions, recentCompanies] = await Promise.all([
     getJobs(filters),
     getFilterOptions(),
+    getRecentCompanies(8),
   ]);
+
+  // GEO: WebSite + ItemList structured data for LLM citation
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Cadre',
+    url: 'https://cadre-ui-psi.vercel.app',
+    description: `Job discovery platform for VC-backed companies. ${jobsResult.totalCount.toLocaleString()} open roles across ${filterOptions.companies.length.toLocaleString()} companies backed by ${filterOptions.investors.length} investors. Updated daily from Greenhouse, Lever, and Ashby.`,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: 'https://cadre-ui-psi.vercel.app/?search={search_term_string}',
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
+  const datasetSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Dataset',
+    name: 'VC-Backed Company Job Listings',
+    description: `Live database of ${jobsResult.totalCount.toLocaleString()} open roles at ${filterOptions.companies.length.toLocaleString()} venture-backed startups, sourced from ${filterOptions.investors.length} VC portfolios. Covers AI, crypto, fintech, healthtech, and more. Updated daily.`,
+    url: 'https://cadre-ui-psi.vercel.app',
+    keywords: ['VC jobs', 'startup jobs', 'AI startup hiring', 'venture capital portfolio jobs', 'remote startup jobs', 'tech startup careers'],
+    creator: { '@type': 'Organization', name: 'Cadre' },
+    temporalCoverage: new Date().toISOString().split('T')[0],
+    variableMeasured: [
+      { '@type': 'PropertyValue', name: 'Total Open Roles', value: jobsResult.totalCount },
+      { '@type': 'PropertyValue', name: 'Companies Tracked', value: filterOptions.companies.length },
+      { '@type': 'PropertyValue', name: 'Investors Tracked', value: filterOptions.investors.length },
+    ],
+  };
 
   return (
     <main className="min-h-screen bg-[#0e0e0f]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([websiteSchema, datasetSchema]) }}
+      />
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-6">
         {/* ── Hero ─────────────────────────────────────────── */}
         <div className="mb-5">
@@ -79,6 +114,9 @@ export default async function Home({ searchParams }: PageProps) {
             </span>
           </div>
         </div>
+
+        {/* ── Recently Added Companies ────────────────────── */}
+        <RecentRounds companies={recentCompanies} />
 
         {/* ── Search + Filters ─────────────────────────────── */}
         <SearchFilters
