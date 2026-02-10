@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Job } from '@/lib/airtable';
+import { Job, toSlug } from '@/lib/airtable';
 import CompanyLogo from '@/components/CompanyLogo';
 
 const POPULAR_TAGS = [
@@ -84,9 +84,6 @@ export default function CompanyPageContent({ company, jobs }: CompanyPageContent
     setSearch('');
     setPage(1);
   };
-
-  const toSlug = (name: string) =>
-    name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
   return (
     <>

@@ -65,7 +65,9 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
       job.title.toLowerCase().includes(tagLower) ||
       (job.departmentName && job.departmentName.toLowerCase().includes(tagLower));
 
-    const matchesRemote = !isRemote || job.remoteFirst;
+    const matchesRemote = !isRemote ||
+      job.remoteFirst ||
+      (job.location && job.location.toLowerCase().includes('remote'));
 
     return matchesSearch && matchesTag && matchesRemote;
   });
