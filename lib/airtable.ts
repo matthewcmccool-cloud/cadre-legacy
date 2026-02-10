@@ -271,7 +271,7 @@ interface LookupMaps {
 // and investors (201) since both exceed Airtable's 100-record page limit.
 async function buildLookupMaps(): Promise<LookupMaps> {
   const [functionRecords, investorRecords, industryRecords, companyRecords] = await Promise.all([
-    fetchAirtable(TABLES.functions, { fields: ['Function'] }),
+      fetchAirtable(TABLES.functions, { fields: ['Function'] }).catch(() => ({ records: [] })),
     fetchAllAirtable(TABLES.investors, { fields: ['Firm Name'] }),
     fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
     fetchAllAirtable(TABLES.companies, { fields: ['Company', 'URL'] }),
@@ -533,7 +533,7 @@ function diversifyAll(sorted: ScoredJob[]): Job[] {
 
 export async function getFilterOptions(): Promise<FilterOptions> {
   const [functionRecords, investorRecords, industryRecords, companyRecords] = await Promise.all([
-    fetchAirtable(TABLES.functions, { fields: ['Function', 'Department (Primary)'] }),
+      fetchAirtable(TABLES.functions, { fields: ['Function', 'Department (Primary)'] }).catch(() => ({ records: [] })),
     fetchAllAirtable(TABLES.investors, { fields: ['Firm Name'] }),
     fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
     fetchAllAirtable(TABLES.companies, { fields: ['Company'] }),
