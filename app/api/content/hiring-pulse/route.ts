@@ -16,8 +16,8 @@ export async function GET() {
   try {
     // Fetch recent jobs (last 7 days) and all jobs for totals
     const [recentResult, allResult, filterOptions] = await Promise.all([
-      getJobs({ posted: '7d', sort: 'recent', page: 1 }),
-      getJobs({ sort: 'recent', page: 1 }),
+            getJobs({ page: 1 }),
+            getJobs({ page: 1 }),
       getFilterOptions(),
     ]);
 
