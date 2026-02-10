@@ -19,7 +19,7 @@ type FilterType = 'function' | 'industry' | 'investor';
 const filterConfigs: Record<FilterType, {
   paramName: string;
   label: string;
-  optionsKey: keyof FilterOptions;
+    optionsKey: 'functions' | 'departments' | 'locations' | 'investors' | 'industries' | 'companies';
   colors: { bg: string; text: string; border: string };
 }> = {
   function: {
