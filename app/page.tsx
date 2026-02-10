@@ -106,24 +106,7 @@ export default async function Home({ searchParams }: PageProps) {
         />
       )}
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-6">
-        {/* ── Hero (jobs tab only) ──────────────────────────── */}
-        {activeTab === 'jobs' && (
-          <div className="mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-white leading-tight tracking-tight">
-              Curated roles at exceptional technology companies.
-            </h1>
-            <p className="text-sm text-[#888] mt-1.5">
-              Curated by the investors who back them.
-            </p>
-          </div>
-        )}
-
-        {/* ── Company Ticker (jobs tab only) ────────────────── */}
-        {activeTab === 'jobs' && (
-          <CompanyTicker companies={filterOptions.companyData} />
-        )}
-
-        {/* ── Tab Bar ───────────────────────────────────────── */}
+        {/* ── Tab Bar (always first — consistent across tabs) ── */}
         <HomepageTabs
           activeTab={activeTab}
           counts={{
@@ -135,6 +118,16 @@ export default async function Home({ searchParams }: PageProps) {
         {/* ── Jobs Tab Content ──────────────────────────────── */}
         {activeTab === 'jobs' && jobsResult && (
           <>
+            {/* Tagline — compact, sits below tabs */}
+            <div className="mb-4">
+              <p className="text-sm text-[#888]">
+                <span className="text-[#ccc] font-medium">Curated roles at exceptional technology companies</span>
+                {' '}&mdash; by the investors who back them.
+              </p>
+            </div>
+
+            <CompanyTicker companies={filterOptions.companyData} />
+
             <RecentRounds companies={recentCompanies} />
             <EmailCapture />
 
