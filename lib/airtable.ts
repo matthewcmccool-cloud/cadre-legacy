@@ -982,13 +982,14 @@ export async function getAllCompaniesForDirectory(): Promise<CompanyDirectoryIte
 export interface InvestorDirectoryItem {
   name: string;
   slug: string;
+  url?: string;
   companyCount: number;
 }
 
 export async function getAllInvestorsForDirectory(): Promise<InvestorDirectoryItem[]> {
   const [investorRecords, companyRecords] = await Promise.all([
     fetchAllAirtable(TABLES.investors, {
-      fields: ['Firm Name'],
+      fields: ['Firm Name', 'Website'],
     }),
     fetchAllAirtable(TABLES.companies, {
       fields: ['VCs'],
@@ -1007,9 +1008,11 @@ export async function getAllInvestorsForDirectory(): Promise<InvestorDirectoryIt
   return investorRecords
     .map(r => {
       const name = r.fields['Firm Name'] as string || '';
+      const url = r.fields['Website'] as string || undefined;
       return {
         name,
         slug: toSlug(name),
+        url,
         companyCount: portfolioCounts.get(r.id) || 0,
       };
     })

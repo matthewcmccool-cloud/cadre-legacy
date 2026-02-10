@@ -10,6 +10,15 @@ interface InvestorDirectoryProps {
 
 type SortMode = 'portfolio' | 'alpha';
 
+function getDomain(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace('www.', '');
+  } catch {
+    return null;
+  }
+}
+
 export default function InvestorDirectory({ investors }: InvestorDirectoryProps) {
   const [search, setSearch] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('portfolio');
@@ -98,20 +107,34 @@ export default function InvestorDirectory({ investors }: InvestorDirectoryProps)
 
       {/* Investor grid */}
       <div className="flex flex-wrap gap-2">
-        {filtered.map((investor) => (
-          <Link
-            key={investor.slug}
-            href={`/investors/${investor.slug}`}
-            className="inline-flex items-center gap-2 px-3 py-2 bg-[#1a1a1b] hover:bg-[#252526] rounded-lg text-sm text-[#e8e8e8] transition-colors group"
-          >
-            <span className="whitespace-nowrap">{investor.name}</span>
-            {investor.companyCount > 0 && (
-              <span className="text-[10px] text-[#555] font-medium">
-                {investor.companyCount} {investor.companyCount === 1 ? 'co' : 'cos'}
-              </span>
-            )}
-          </Link>
-        ))}
+        {filtered.map((investor) => {
+          const domain = getDomain(investor.url);
+          return (
+            <Link
+              key={investor.slug}
+              href={`/investors/${investor.slug}`}
+              className="inline-flex items-center gap-2 px-3 py-2 bg-[#1a1a1b] hover:bg-[#252526] rounded-lg text-sm text-[#e8e8e8] transition-colors group"
+            >
+              {domain ? (
+                <img
+                  src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
+                  alt=""
+                  className="w-4 h-4 rounded-sm opacity-70 group-hover:opacity-100 transition-opacity"
+                />
+              ) : (
+                <div className="w-4 h-4 rounded-sm bg-[#252526] flex items-center justify-center text-[8px] font-bold text-[#555]">
+                  {investor.name.charAt(0)}
+                </div>
+              )}
+              <span className="whitespace-nowrap">{investor.name}</span>
+              {investor.companyCount > 0 && (
+                <span className="text-[10px] text-[#555] font-medium">
+                  {investor.companyCount} {investor.companyCount === 1 ? 'co' : 'cos'}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </div>
 
       {filtered.length === 0 && (
