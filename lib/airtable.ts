@@ -931,17 +931,19 @@ export interface CompanyDirectoryItem {
   slug: string;
   url?: string;
   stage?: string;
+  industry?: string;
   investors: string[];
 }
 
 export async function getAllCompaniesForDirectory(): Promise<CompanyDirectoryItem[]> {
-  const [companyRecords, investorRecords] = await Promise.all([
+  const [companyRecords, investorRecords, industryRecords] = await Promise.all([
     fetchAllAirtable(TABLES.companies, {
-      fields: ['Company', 'URL', 'VCs', 'Stage'],
+      fields: ['Company', 'URL', 'VCs', 'Stage', 'Industry'],
     }),
     fetchAllAirtable(TABLES.investors, {
       fields: ['Firm Name'],
     }),
+    fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
   ]);
 
   const investorMap = new Map<string, string>();
@@ -949,15 +951,22 @@ export async function getAllCompaniesForDirectory(): Promise<CompanyDirectoryIte
     investorMap.set(r.id, r.fields['Firm Name'] as string || '');
   });
 
+  const industryMap = new Map<string, string>();
+  industryRecords.records.forEach(r => {
+    industryMap.set(r.id, r.fields['Industry Name'] as string || '');
+  });
+
   return companyRecords
     .map(r => {
       const name = r.fields['Company'] as string || '';
       const vcIds = (r.fields['VCs'] || []) as string[];
+      const industryIds = (r.fields['Industry'] || []) as string[];
       return {
         name,
         slug: toSlug(name),
         url: r.fields['URL'] as string || undefined,
         stage: r.fields['Stage'] as string || undefined,
+        industry: industryIds.length > 0 ? industryMap.get(industryIds[0]) || undefined : undefined,
         investors: vcIds.map(id => investorMap.get(id) || '').filter(Boolean),
       };
     })

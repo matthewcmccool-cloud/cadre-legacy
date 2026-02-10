@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Job } from '@/lib/airtable';
+import { Job, toSlug } from '@/lib/airtable';
 import CompanyLogo from '@/components/CompanyLogo';
 
 const POPULAR_TAGS = [
@@ -87,8 +87,17 @@ export default function CompanyPageContent({ company, jobs }: CompanyPageContent
 
   return (
     <>
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-1.5 text-sm text-[#555] mt-8">
+        <Link href="/" className="text-[#888] hover:text-white transition-colors">Jobs</Link>
+        <span>/</span>
+        <Link href="/companies" className="text-[#888] hover:text-white transition-colors">Companies</Link>
+        <span>/</span>
+        <span className="text-[#999]">{company.name}</span>
+      </nav>
+
       {/* Company header */}
-      <div className="mt-8 mb-6">
+      <div className="mt-4 mb-6">
         <div className="flex items-center gap-4 mb-3">
           {companyDomain && (
             <CompanyLogo
@@ -130,10 +139,21 @@ export default function CompanyPageContent({ company, jobs }: CompanyPageContent
             </span>
           )}
           {company.investors.length > 0 && (
-            <span className="px-2.5 py-1 bg-[#252526] rounded text-xs text-[#888]">
-              Backed by {company.investors.slice(0, 3).join(', ')}
-              {company.investors.length > 3 && ` +${company.investors.length - 3} more`}
-            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs text-[#555]">Backed by</span>
+              {company.investors.slice(0, 4).map((inv) => (
+                <Link
+                  key={inv}
+                  href={`/investors/${toSlug(inv)}`}
+                  className="px-2 py-0.5 bg-[#1a1a1b] hover:bg-[#252526] rounded text-xs text-[#e8e8e8] transition-colors"
+                >
+                  {inv}
+                </Link>
+              ))}
+              {company.investors.length > 4 && (
+                <span className="text-xs text-[#555]">+{company.investors.length - 4} more</span>
+              )}
+            </div>
           )}
         </div>
 

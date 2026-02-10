@@ -55,13 +55,14 @@ export default async function InvestorPage({ params }: InvestorPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(investorSchema) }}
       />
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Back link */}
-        <Link
-          href="/"
-          className="text-[#888] hover:text-white text-sm inline-flex items-center gap-1 transition-colors"
-        >
-          ← Back to jobs
-        </Link>
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-1.5 text-sm text-[#555]">
+          <Link href="/" className="text-[#888] hover:text-white transition-colors">Jobs</Link>
+          <span>/</span>
+          <Link href="/investors" className="text-[#888] hover:text-white transition-colors">Investors</Link>
+          <span>/</span>
+          <span className="text-[#999]">{investor.name}</span>
+        </nav>
 
         <InvestorPageContent investor={investor} jobs={jobs} />
       </div>

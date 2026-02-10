@@ -187,13 +187,14 @@ export default async function JobDetailPage({ params }: JobDetailPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Back link — matching other pages */}
-        <Link
-          href="/"
-          className="text-[#888] hover:text-white text-sm inline-flex items-center gap-1 transition-colors"
-        >
-          ← Back to jobs
-        </Link>
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-1.5 text-sm text-[#555]">
+          <Link href="/" className="text-[#888] hover:text-white transition-colors">Jobs</Link>
+          <span>/</span>
+          <Link href={`/companies/${toSlug(job.company)}`} className="text-[#888] hover:text-white transition-colors">{job.company}</Link>
+          <span>/</span>
+          <span className="text-[#999] truncate max-w-[200px]">{job.title}</span>
+        </nav>
 
         {/* Job header */}
         <div className="mt-8 mb-6">
