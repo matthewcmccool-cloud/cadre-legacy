@@ -272,7 +272,7 @@ interface LookupMaps {
 async function buildLookupMaps(): Promise<LookupMaps> {
   const [functionRecords, investorRecords, industryRecords, companyRecords] = await Promise.all([
     fetchAirtable(TABLES.functions, { fields: ['Function'] }),
-    fetchAllAirtable(TABLES.investors, { fields: ['Company'] }),
+    fetchAllAirtable(TABLES.investors, { fields: ['Firm Name'] }),
     fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
     fetchAllAirtable(TABLES.companies, { fields: ['Company', 'URL'] }),
   ]);
@@ -288,7 +288,7 @@ async function buildLookupMaps(): Promise<LookupMaps> {
   functionRecords.records.forEach(r => functionMap.set(r.id, r.fields['Function'] || ''));
 
   const investorMap = new Map<string, string>();
-  investorRecords.forEach(r => investorMap.set(r.id, r.fields['Company'] || ''));
+  investorRecords.forEach(r => investorMap.set(r.id, r.fields['Firm Name'] || ''));
 
   const industryMap = new Map<string, string>();
   industryRecords.records.forEach(r => industryMap.set(r.id, r.fields['Industry Name'] || ''));
@@ -685,7 +685,7 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
     });
     const investorMap = new Map<string, string>();
     investorRecords.forEach(r => {
-      investorMap.set(r.id, r.fields['Company'] || '');
+      investorMap.set(r.id, r.fields['Firm Name'] || '');
     });
     investorNames = vcIds
       .map((id: string) => investorMap.get(id) || '')
@@ -738,11 +738,11 @@ export interface Investor {
 export async function getInvestorBySlug(slug: string): Promise<Investor | null> {
   // Fetch ALL investors — there are 201+, must paginate past 100-record limit
   const investorRecords = await fetchAllAirtable(TABLES.investors, {
-    fields: ['Company', 'Bio', 'Location', 'Website', 'LinkedIn'],
+    fields: ['Firm Name', 'Bio', 'Location', 'Website', 'LinkedIn'],
   });
 
   const investor = investorRecords.find(r => {
-    const name = r.fields['Company'] as string || '';
+    const name = r.fields['Firm Name'] as string || '';
     const investorSlug = toSlug(name);
     return investorSlug === slug;
   });
@@ -958,7 +958,7 @@ export async function getStats(): Promise<{ jobCount: number; companyCount: numb
   const [jobResult, companyRecords, investorRecords] = await Promise.all([
     fetchAirtable(TABLES.jobs, { fields: ['Job ID'] }),
     fetchAllAirtable(TABLES.companies, { fields: ['Company'] }),
-    fetchAllAirtable(TABLES.investors, { fields: ['Company'] }),
+    fetchAllAirtable(TABLES.investors, { fields: ['Firm Name'] }),
   ]);
 
   return {
