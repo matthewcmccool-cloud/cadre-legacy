@@ -745,9 +745,8 @@ export async function getInvestorBySlug(slug: string): Promise<Investor | null> 
     return investorSlug === slug;
   });
 
-  const investor = results.records[0];
-  if (!investor) {
-    return null;
+      if (!investor) {  
+  return null;
   }
 
   const investorName = investor.fields['Firm Name'] as string || '';
