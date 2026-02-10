@@ -7,6 +7,7 @@ import { inferFunction } from '@/lib/airtable';
 const COMPANIES_TABLE = 'tbl4dA7iDr7mjF6Gt';
 const JOBS_TABLE = 'Job Listings';
 const FUNCTIONS_TABLE = 'tbl94EXkSIEmhqyYy';
+const INVESTORS_TABLE = 'tblH6MmoXCn3Ve0K2';
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -550,6 +551,178 @@ async function enrichCompanyMetadata(
 }
 
 // ---------------------------------------------------------------------------
+// Investor enrichment — match Perplexity results against existing DB records
+// ---------------------------------------------------------------------------
+
+// Common abbreviations/aliases that Perplexity might return
+const INVESTOR_ALIASES: Record<string, string> = {
+  'a16z': 'andreessen horowitz',
+  'andressen horowitz': 'andreessen horowitz',
+  'yc': 'y combinator',
+  'ycombinator': 'y combinator',
+  'gv': 'google ventures',
+  'dst': 'dst global',
+  'nea': 'new enterprise associates',
+  'kpcb': 'kleiner perkins',
+};
+
+function normalizeInvestorName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[.,]/g, '')
+    .replace(
+      /\s+(capital|ventures|partners|management|group|fund|investments|llc|lp|inc\.?|co\.?)$/gi,
+      ''
+    )
+    .trim();
+}
+
+function matchInvestor(
+  perplexityName: string,
+  investorMap: Map<string, { id: string; name: string }>
+): string | null {
+  const normalized = normalizeInvestorName(perplexityName);
+  const aliased = INVESTOR_ALIASES[normalized] || normalized;
+
+  // Pass 1: Exact match on normalized names
+  const exact = investorMap.get(aliased);
+  if (exact) return exact.id;
+
+  // Pass 2: Contains match (min 4 chars to avoid false positives like "GV")
+  if (aliased.length >= 4) {
+    let containsMatch: string | null = null;
+    investorMap.forEach((investor, key) => {
+      if (!containsMatch && key.length >= 4 && (key.includes(aliased) || aliased.includes(key))) {
+        containsMatch = investor.id;
+      }
+    });
+    if (containsMatch) return containsMatch;
+  }
+
+  return null;
+}
+
+async function fetchAllInvestors(): Promise<
+  Map<string, { id: string; name: string }>
+> {
+  const map = new Map<string, { id: string; name: string }>();
+  let offset: string | undefined;
+
+  do {
+    const params = new URLSearchParams();
+    params.append('fields[]', 'Company');
+    params.append('pageSize', '100');
+    if (offset) params.append('offset', offset);
+
+    const data = await airtableFetch(
+      `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${INVESTORS_TABLE}?${params.toString()}`
+    );
+
+    for (const record of data.records || []) {
+      const name = record.fields?.Company || '';
+      if (name) {
+        map.set(normalizeInvestorName(name), { id: record.id, name });
+      }
+    }
+
+    offset = data.offset;
+    if (offset) await delay(200);
+  } while (offset);
+
+  return map;
+}
+
+async function findInvestorsViaPerplexity(companyName: string): Promise<string[]> {
+  const apiKey = process.env.PERPLEXITY_API_KEY;
+  if (!apiKey) return [];
+
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'sonar',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You identify venture capital investors in startups. Return ONLY a JSON array of investor/VC firm names. No descriptions, no funding amounts — just the firm names. Example: ["Sequoia Capital", "Andreessen Horowitz", "Y Combinator"]',
+        },
+        {
+          role: 'user',
+          content: `Who are the venture capital investors and backers of ${companyName}? Return a JSON array of VC firm names only.`,
+        },
+      ],
+      max_tokens: 300,
+      temperature: 0.1,
+    }),
+  });
+
+  const text = await response.text();
+  if (!response.ok) return [];
+
+  const data = JSON.parse(text);
+  const content = data.choices?.[0]?.message?.content || '';
+
+  // Strip markdown fences
+  const cleaned = content
+    .replace(/```(?:json)?\s*/gi, '')
+    .replace(/```/g, '')
+    .trim();
+  const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+  if (!arrMatch) return [];
+
+  try {
+    const parsed = JSON.parse(arrMatch[0]);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item: any) => typeof item === 'string' && item.length > 0);
+    }
+  } catch {}
+
+  return [];
+}
+
+async function enrichInvestors(
+  companyId: string,
+  companyName: string,
+  existingVCs: string[]
+): Promise<{ linked: string[]; skipped: string[] }> {
+  const investorMap = await fetchAllInvestors();
+
+  const perplexityNames = await findInvestorsViaPerplexity(companyName);
+  if (perplexityNames.length === 0) return { linked: [], skipped: [] };
+
+  // Track already-linked investor IDs to avoid duplicates
+  const existingSet = new Set(existingVCs);
+  const linked: string[] = [];
+  const skipped: string[] = [];
+  const matchedIds: string[] = [...existingVCs];
+
+  for (const name of perplexityNames) {
+    const investorId = matchInvestor(name, investorMap);
+    if (investorId && !existingSet.has(investorId)) {
+      matchedIds.push(investorId);
+      existingSet.add(investorId);
+      let dbInvestorName = name;
+      investorMap.forEach((v) => { if (v.id === investorId) dbInvestorName = v.name; });
+      linked.push(dbInvestorName);
+    } else if (!investorId) {
+      skipped.push(name);
+    }
+  }
+
+  // Update company's VCs field if we found new matches
+  if (linked.length > 0) {
+    await updateCompany(companyId, { VCs: matchedIds });
+  }
+
+  return { linked, skipped };
+}
+
+// ---------------------------------------------------------------------------
 // Result types
 // ---------------------------------------------------------------------------
 
@@ -567,6 +740,8 @@ export interface OnboardResult {
   jobsNew: number;
   jobsDuplicate: number;
   jobsCreated: number;
+  investorsLinked: number;
+  investorsSkipped: string[];
   companyEnriched: boolean;
   steps: string[];
   runtime: string;
@@ -623,6 +798,8 @@ export async function onboardCompany(
     jobsNew: 0,
     jobsDuplicate: 0,
     jobsCreated: 0,
+    investorsLinked: 0,
+    investorsSkipped: [],
     companyEnriched: false,
     steps: [],
     runtime: '',
@@ -708,7 +885,18 @@ export async function onboardCompany(
     result.steps.push(`Fetched ${rawJobs.length} jobs from ${atsInfo.platform}`);
 
     if (rawJobs.length === 0) {
-      // Still try to enrich company even if no jobs
+      // Still try to enrich investors + metadata even if no jobs
+      if (elapsed() < maxRuntimeMs) {
+        const existingVCs = company.fields['VCs'] || [];
+        if (!Array.isArray(existingVCs) || existingVCs.length === 0) {
+          const investorResult = await enrichInvestors(companyId, companyName, existingVCs || []);
+          result.investorsLinked = investorResult.linked.length;
+          result.investorsSkipped = investorResult.skipped;
+          if (investorResult.linked.length > 0) {
+            result.steps.push(`Linked ${investorResult.linked.length} investors: ${investorResult.linked.join(', ')}`);
+          }
+        }
+      }
       if (elapsed() < maxRuntimeMs) {
         if (!company.fields.Stage || !company.fields.Size) {
           const enrichment = await enrichCompanyMetadata(companyName);
@@ -742,7 +930,32 @@ export async function onboardCompany(
       result.steps.push(`Created ${created} job records in Airtable`);
     }
 
-    // Step 6: Enrich company metadata if missing
+    // Step 6: Link investors from existing DB records
+    if (elapsed() < maxRuntimeMs) {
+      const existingVCs = company.fields['VCs'] || [];
+      if (!Array.isArray(existingVCs) || existingVCs.length === 0) {
+        const investorResult = await enrichInvestors(companyId, companyName, existingVCs || []);
+        result.investorsLinked = investorResult.linked.length;
+        result.investorsSkipped = investorResult.skipped;
+        if (investorResult.linked.length > 0) {
+          result.steps.push(
+            `Linked ${investorResult.linked.length} investors: ${investorResult.linked.join(', ')}`
+          );
+        }
+        if (investorResult.skipped.length > 0) {
+          result.steps.push(
+            `Skipped ${investorResult.skipped.length} (not in DB): ${investorResult.skipped.join(', ')}`
+          );
+        }
+        if (investorResult.linked.length === 0 && investorResult.skipped.length === 0) {
+          result.steps.push('No investors found via Perplexity');
+        }
+      } else {
+        result.steps.push(`Company already has ${existingVCs.length} VCs linked — skipped`);
+      }
+    }
+
+    // Step 7: Enrich company metadata if missing
     if (elapsed() < maxRuntimeMs) {
       if (!company.fields.Stage || !company.fields.Size) {
         const enrichment = await enrichCompanyMetadata(companyName);
