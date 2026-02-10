@@ -171,6 +171,11 @@ async function fetchAirtable(
   const text = await response.text();
 
   if (!response.ok) {
+        // Handle expired pagination tokens gracefully
+        if (response.status === 422 && text.includes('LIST_RECORDS_ITERATOR_NOT_AVAILABLE')) {
+                console.warn(`Airtable pagination expired for ${table}, returning partial results`);
+                return { records: [] };
+              }
     throw new Error(`Airtable error: ${response.status} for table ${table}${text ? ': ' + text : ''}`);
   }
 
