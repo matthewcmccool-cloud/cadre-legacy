@@ -584,7 +584,7 @@ export async function findNextUnprocessedCompany(): Promise<{
   const params = new URLSearchParams();
   params.append(
     'filterByFormula',
-    "AND({Company} != '', {Jobs API URL} = '')"
+        "AND({Company} != '', LEN({Jobs API URL}) = 0)"
   );
   params.append('pageSize', '2');
   params.append('fields[]', 'Company');
