@@ -1,8 +1,18 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+const NAV_ITEMS = [
+  { href: '/', label: 'Jobs' },
+  { href: '/companies', label: 'Companies' },
+  { href: '/investors', label: 'Investors' },
+  { href: '/analytics', label: 'Analytics' },
+];
 
 export default function Header() {
+  const pathname = usePathname();
+
   return (
     <header className="bg-[#0e0e0f] border-b border-[#1a1a1b]">
       <div className="max-w-6xl mx-auto px-4 py-4">
@@ -12,6 +22,28 @@ export default function Header() {
               Cadre
             </span>
           </Link>
+
+          <nav className="flex items-center gap-1">
+            {NAV_ITEMS.map(({ href, label }) => {
+              const isActive = href === '/'
+                ? pathname === '/'
+                : pathname.startsWith(href);
+
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'text-white bg-[#1a1a1b]'
+                      : 'text-[#888] hover:text-[#e8e8e8] hover:bg-[#1a1a1b]/50'
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       </div>
     </header>

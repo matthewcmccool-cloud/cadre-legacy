@@ -23,6 +23,7 @@ export default function CompanyDirectory({ companies }: CompanyDirectoryProps) {
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState('');
   const [investorFilter, setInvestorFilter] = useState('');
+  const [industryFilter, setIndustryFilter] = useState('');
 
   // Build investor options from data
   const investorOptions = useMemo(() => {
@@ -38,36 +39,50 @@ export default function CompanyDirectory({ companies }: CompanyDirectoryProps) {
       .map(([name, count]) => ({ name, count }));
   }, [companies]);
 
+  // Build industry options from data
+  const industryOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const c of companies) {
+      if (c.industry) {
+        counts.set(c.industry, (counts.get(c.industry) || 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+  }, [companies]);
+
   const filtered = useMemo(() => {
     return companies.filter(c => {
       if (search) {
         const q = search.toLowerCase();
         if (!c.name.toLowerCase().includes(q) &&
-            !c.investors.some(inv => inv.toLowerCase().includes(q))) {
+            !c.investors.some(inv => inv.toLowerCase().includes(q)) &&
+            !(c.industry && c.industry.toLowerCase().includes(q))) {
           return false;
         }
       }
       if (stageFilter && c.stage !== stageFilter) return false;
       if (investorFilter && !c.investors.includes(investorFilter)) return false;
+      if (industryFilter && c.industry !== industryFilter) return false;
       return true;
     });
-  }, [companies, search, stageFilter, investorFilter]);
+  }, [companies, search, stageFilter, investorFilter, industryFilter]);
+
+  const hasActiveFilters = stageFilter || investorFilter || industryFilter;
 
   return (
     <>
       {/* Header */}
       <div className="mt-8 mb-6">
-        <Link href="/" className="text-[#888] hover:text-white text-sm inline-flex items-center gap-1 transition-colors mb-4">
-          ← Back to jobs
-        </Link>
-        <h1 className="text-2xl font-semibold tracking-tight mt-3">Companies</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Companies</h1>
         <p className="text-sm text-[#888] mt-1">
           {companies.length.toLocaleString()} VC-backed companies tracked on Cadre. Click any to see open roles.
         </p>
       </div>
 
       {/* Search + Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999]"
@@ -81,7 +96,7 @@ export default function CompanyDirectory({ companies }: CompanyDirectoryProps) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search companies or investors..."
+            placeholder="Search companies, investors, industries..."
             className="w-full pl-10 pr-10 py-2.5 bg-[#1a1a1b] text-[#e8e8e8] placeholder-[#999] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/50 transition-all"
           />
           {search && (
@@ -96,6 +111,17 @@ export default function CompanyDirectory({ companies }: CompanyDirectoryProps) {
             </button>
           )}
         </div>
+
+        <select
+          value={industryFilter}
+          onChange={(e) => setIndustryFilter(e.target.value)}
+          className="px-3 py-2.5 bg-[#1a1a1b] text-[#e8e8e8] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/50 border-none appearance-none cursor-pointer"
+        >
+          <option value="">All Industries</option>
+          {industryOptions.map(({ name, count }) => (
+            <option key={name} value={name}>{name} ({count})</option>
+          ))}
+        </select>
 
         <select
           value={stageFilter}
@@ -121,8 +147,17 @@ export default function CompanyDirectory({ companies }: CompanyDirectoryProps) {
       </div>
 
       {/* Active filters */}
-      {(stageFilter || investorFilter) && (
+      {hasActiveFilters && (
         <div className="flex flex-wrap gap-2 mb-4">
+          {industryFilter && (
+            <button
+              onClick={() => setIndustryFilter('')}
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#5e6ad2]/10 rounded text-xs text-[#5e6ad2]"
+            >
+              {industryFilter}
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          )}
           {stageFilter && (
             <button
               onClick={() => setStageFilter('')}
@@ -141,6 +176,12 @@ export default function CompanyDirectory({ companies }: CompanyDirectoryProps) {
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           )}
+          <button
+            onClick={() => { setStageFilter(''); setInvestorFilter(''); setIndustryFilter(''); }}
+            className="text-xs text-[#555] hover:text-[#888] transition-colors"
+          >
+            Clear all
+          </button>
         </div>
       )}
 
@@ -184,7 +225,7 @@ export default function CompanyDirectory({ companies }: CompanyDirectoryProps) {
       {filtered.length === 0 && (
         <div className="text-center py-16">
           <p className="text-[#888]">No companies found matching your filters.</p>
-          <p className="text-[#999] text-sm mt-1">Try adjusting your search criteria.</p>
+          <p className="text-[#999] text-sm mt-1">Try adjusting your search or clearing filters.</p>
         </div>
       )}
     </>
