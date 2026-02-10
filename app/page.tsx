@@ -4,8 +4,7 @@ import Pagination from '@/components/Pagination';
 import SearchFilters from '@/components/SearchFilters';
 import RecentRounds from '@/components/RecentRounds';
 import FundingRoundsFeed from '@/components/FundingRoundsFeed';
-import InvestorTicker from '@/components/InvestorTicker';
-import EmailCapture from '@/components/EmailCapture';
+import CompanyTicker from '@/components/CompanyTicker';
 
 // ISR: regenerate page every 60 minutes in the background
 export const revalidate = 3600;
@@ -122,11 +121,8 @@ export default async function Home({ searchParams }: PageProps) {
           </div>
         </div>
 
-        {/* ── Investor Ticker ────────────────────────────── */}
-        <InvestorTicker investors={filterOptions.investors} />
-
-        {/* ── Email Capture ────────────────────────────────── */}
-        <EmailCapture />
+        {/* ── Company Ticker ─────────────────────────────── */}
+        <CompanyTicker companies={filterOptions.companyData} />
 
         {/* ── Recent Fundraises (AI-powered) ─────────────── */}
         <FundingRoundsFeed companyNames={filterOptions.companies} />
