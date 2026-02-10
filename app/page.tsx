@@ -73,7 +73,7 @@ export default async function Home({ searchParams }: PageProps) {
     '@type': 'WebSite',
     name: 'Cadre',
     url: 'https://cadre-ui-psi.vercel.app',
-    description: `Job discovery platform for VC-backed companies. ${(jobsResult?.totalCount ?? 0).toLocaleString()} open roles across ${filterOptions.companies.length.toLocaleString()} companies backed by ${filterOptions.investors.length} investors. Updated daily from Greenhouse, Lever, and Ashby.`,
+    description: `Curated roles at exceptional technology companies. ${(jobsResult?.totalCount ?? 0).toLocaleString()} open roles across ${filterOptions.companies.length.toLocaleString()} companies backed by ${filterOptions.investors.length} investors. Updated daily.`,
     potentialAction: {
       '@type': 'SearchAction',
       target: 'https://cadre-ui-psi.vercel.app/?search={search_term_string}',
@@ -84,8 +84,8 @@ export default async function Home({ searchParams }: PageProps) {
   const datasetSchema = {
     '@context': 'https://schema.org',
     '@type': 'Dataset',
-    name: 'VC-Backed Company Job Listings',
-    description: `Live database of ${(jobsResult?.totalCount ?? 0).toLocaleString()} open roles at ${filterOptions.companies.length.toLocaleString()} venture-backed startups, sourced from ${filterOptions.investors.length} VC portfolios. Covers AI, crypto, fintech, healthtech, and more. Updated daily.`,
+    name: 'Curated Technology Company Job Listings',
+    description: `Live database of ${(jobsResult?.totalCount ?? 0).toLocaleString()} curated roles at ${filterOptions.companies.length.toLocaleString()} exceptional technology companies, sourced from ${filterOptions.investors.length} investor portfolios. Updated daily.`,
     url: 'https://cadre-ui-psi.vercel.app',
     keywords: ['VC jobs', 'startup jobs', 'AI startup hiring', 'venture capital portfolio jobs', 'remote startup jobs', 'tech startup careers'],
     creator: { '@type': 'Organization', name: 'Cadre' },
@@ -153,7 +153,7 @@ export default async function Home({ searchParams }: PageProps) {
 
             <div className="mt-6 pt-4 border-t border-[#1a1a1b] flex items-center justify-between">
               <p className="text-xs text-[#555]">
-                Cadre · VC-backed startup jobs, updated daily
+                Cadre · Curated roles at exceptional technology companies
               </p>
               <p className="text-xs text-[#444]">
                 Page {jobsResult.page} of {jobsResult.totalPages}
