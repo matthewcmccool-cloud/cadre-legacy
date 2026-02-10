@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { getJobs, getFilterOptions, getRecentCompanies } from '@/lib/airtable';
 import JobTable from '@/components/JobTable';
 import Pagination from '@/components/Pagination';
@@ -116,10 +115,10 @@ export default async function Home({ searchParams }: PageProps) {
               <div className="text-xl sm:text-2xl font-bold text-white">{filterOptions.companies.length.toLocaleString()}</div>
               <div className="text-[11px] font-semibold text-[#999] uppercase tracking-wider">COMPANIES</div>
             </div>
-            <Link href="/for-investors" className="bg-[#1a1a1b] hover:bg-[#252526] rounded-lg px-4 py-3 border border-[#252526] transition-colors">
+            <div className="bg-[#1a1a1b] rounded-lg px-4 py-3 border border-[#252526]">
               <div className="text-xl sm:text-2xl font-bold text-white">{filterOptions.investors.length}</div>
               <div className="text-[11px] font-semibold text-[#999] uppercase tracking-wider">INVESTORS</div>
-            </Link>
+            </div>
           </div>
         </div>
 
@@ -158,13 +157,10 @@ export default async function Home({ searchParams }: PageProps) {
           searchParams={searchParams}
         />
 
-        {/* ── Footer CTA ───────────────────────────────────── */}
+        {/* ── Footer ───────────────────────────────────────── */}
         <div className="mt-6 pt-4 border-t border-[#1a1a1b] flex items-center justify-between">
           <p className="text-xs text-[#555]">
-            Are you an investor?{' '}
-            <Link href="/for-investors" className="text-[#5e6ad2] hover:text-[#7b83e0] transition-colors">
-              Learn about Cadre for Investors
-            </Link>
+            Cadre · VC-backed startup jobs, updated daily
           </p>
           <p className="text-xs text-[#444]">
             Page {jobsResult.page} of {jobsResult.totalPages}
