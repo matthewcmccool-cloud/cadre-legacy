@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server';
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
-const COMPANIES_TABLE = 'Companies';
+const COMPANIES_TABLE = 'tbl4dA7iDr7mjF6Gt'; // Use table ID, not name
 const BATCH_SIZE = 15;
+const MAX_RUNTIME_MS = 8000; // Stay under Vercel's 10s timeout
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -39,8 +40,10 @@ async function findAtsUrl(companyName: string): Promise<string | null> {
     let content = data.choices?.[0]?.message?.content?.trim();
     
     if (!content || content === 'null' || content.toLowerCase().includes('unknown')) return null;
-    
-    const urlMatch = content.match(/https?:\/\/[^\s'"<>]+/);
+
+    // Strip markdown code fences that Perplexity sometimes wraps around URLs
+    const cleaned = content.replace(/```(?:\w+)?\s*/gi, '').replace(/```/g, '').trim();
+    const urlMatch = cleaned.match(/https?:\/\/[^\s'"<>]+/);
     return urlMatch ? urlMatch[0] : null;
   } catch (error) {
     console.error('Error finding ATS URL:', error);
@@ -76,8 +79,10 @@ export async function GET() {
     const companies = data.records || [];
     totalCompanies = companies.length;
 
-    // Process each company
+    // Process each company, respecting timeout
     for (const company of companies) {
+      if (Date.now() - startTime > MAX_RUNTIME_MS) break;
+
       const companyName = company.fields?.Company;
       if (!companyName) {
         errors++;

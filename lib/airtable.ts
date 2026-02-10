@@ -11,7 +11,7 @@ const airtableLimit = pLimit(4);
 // (Sales & GTM, Marketing, Engineering, etc.) lives in Airtable's
 // Department column on the Function table.
 // Order matters — specific roles first, broad catch-alls last.
-function inferFunction(title: string): string {
+export function inferFunction(title: string): string {
   const rules: [RegExp, string][] = [
     [/\bsolutions? engineer|sales engineer|pre.?sales/i, 'Solutions Engineering'],
     [/\bdevrel|developer relation|developer advocate|developer evangel/i, 'Developer Relations'],
@@ -117,7 +117,7 @@ async function fetchAirtable(
   table: string,
   options?: {
     filterByFormula?: string;
-    sort?: Array<{ field: string; direction: 'asc' | 'desc' }>;  
+    sort?: Array<{ field: string; direction: 'asc' | 'desc' }>;
     maxRecords?: number;
     fields?: string[];
     offset?: string;
@@ -128,7 +128,7 @@ async function fetchAirtable(
 
   // Build URL with query params from options object
   const params = new URLSearchParams();
-  
+
   if (options?.filterByFormula) {
     params.append('filterByFormula', options.filterByFormula);
   }
@@ -163,7 +163,7 @@ async function fetchAirtable(
 
   // Read body only once to avoid Response.clone error
   const text = await response.text();
-  
+
   if (!response.ok) {
     throw new Error(`Airtable error: ${response.status} for table ${table}${text ? ': ' + text : ''}`);
   }
@@ -209,58 +209,21 @@ export interface JobsResult {
   totalPages: number;
 }
 
-// ── Shared helpers ──────────────────────────────────────────────────
-// These eliminate the 5x duplication of location parsing, record mapping,
-// and lookup-map building that previously existed across getJobs(),
-// getJobById(), getJobsForCompanyNames(), getFeaturedJobs(), getOrganicJobs().
+// ---------------------------------------------------------------------------
+// Shared utilities for job record mapping
+// Eliminates duplication across getJobs, getJobById, getJobsForCompanyNames,
+// getFeaturedJobs, and getOrganicJobs.
+// ---------------------------------------------------------------------------
 
-interface LookupMaps {
-  companyMap: Map<string, string>;
-  companyUrlMap: Map<string, string>;
-  investorMap: Map<string, string>;
-  functionMap: Map<string, string>;
-  departmentMap: Map<string, string>;
-  industryMap: Map<string, string>;
-}
+// Standard fields to request when fetching job records
+const JOB_FIELDS = [
+  'Job ID', 'Title', 'Companies', 'Function', 'Location',
+  'Date Posted', 'Job URL', 'Apply URL', 'Salary', 'Investors',
+  'Company Industry (Lookup)', 'Raw JSON',
+];
 
-/** Fetch all four reference tables in parallel and return ID→name maps. */
-async function buildLookupMaps(): Promise<LookupMaps> {
-  const [functionRecords, investorRecords, industryRecords, companyRecords] = await Promise.all([
-    fetchAirtable(TABLES.functions, { fields: ['Function', 'Department (Primary)'] }),
-    fetchAllAirtable(TABLES.investors, { fields: ['Firm Name'] }),
-    fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
-    fetchAllAirtable(TABLES.companies, { fields: ['Company', 'URL'] }),
-  ]);
-
-  const companyMap = new Map<string, string>();
-  const companyUrlMap = new Map<string, string>();
-  companyRecords.forEach(r => {
-    companyMap.set(r.id, (r.fields['Company'] as string) || '');
-    companyUrlMap.set(r.id, (r.fields['URL'] as string) || '');
-  });
-
-  const functionMap = new Map<string, string>();
-  const departmentMap = new Map<string, string>();
-  functionRecords.records.forEach(r => {
-    functionMap.set(r.id, r.fields['Function'] || '');
-    departmentMap.set(r.id, r.fields['Department (Primary)'] || '');
-  });
-
-  const investorMap = new Map<string, string>();
-  investorRecords.forEach(r => {
-    investorMap.set(r.id, r.fields['Firm Name'] || '');
-  });
-
-  const industryMap = new Map<string, string>();
-  industryRecords.records.forEach(r => {
-    industryMap.set(r.id, r.fields['Industry Name'] || '');
-  });
-
-  return { companyMap, companyUrlMap, investorMap, functionMap, departmentMap, industryMap };
-}
-
-/** Extract location string from a job record's Raw JSON or Location field. */
-function parseLocationFromRecord(record: AirtableRecord): string {
+// Extract location from Raw JSON or the Location field, with remote fallback
+function extractLocation(record: AirtableRecord): { location: string; remoteFirst: boolean } {
   let location = '';
   const remoteFirst = record.fields['Remote First'] || false;
 
@@ -280,7 +243,7 @@ function parseLocationFromRecord(record: AirtableRecord): string {
         }
       }
     } catch (e) {
-      // Ignore parse errors
+      // Ignore JSON parse errors from malformed Raw JSON
     }
   }
 
@@ -293,14 +256,52 @@ function parseLocationFromRecord(record: AirtableRecord): string {
     }
   }
 
-  return location;
+  return { location, remoteFirst };
 }
 
-/** Map an Airtable job record to a Job object using pre-built lookup maps. */
+interface LookupMaps {
+  companyMap: Map<string, string>;
+  companyUrlMap: Map<string, string>;
+  functionMap: Map<string, string>;
+  investorMap: Map<string, string>;
+  industryMap: Map<string, string>;
+}
+
+// Build all lookup maps in parallel. Uses fetchAllAirtable for companies (1,343)
+// and investors (201) since both exceed Airtable's 100-record page limit.
+async function buildLookupMaps(): Promise<LookupMaps> {
+  const [functionRecords, investorRecords, industryRecords, companyRecords] = await Promise.all([
+    fetchAirtable(TABLES.functions, { fields: ['Function'] }),
+    fetchAllAirtable(TABLES.investors, { fields: ['Company'] }),
+    fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
+    fetchAllAirtable(TABLES.companies, { fields: ['Company', 'URL'] }),
+  ]);
+
+  const companyMap = new Map<string, string>();
+  const companyUrlMap = new Map<string, string>();
+  companyRecords.forEach(r => {
+    companyMap.set(r.id, (r.fields['Company'] as string) || '');
+    companyUrlMap.set(r.id, (r.fields['URL'] as string) || '');
+  });
+
+  const functionMap = new Map<string, string>();
+  functionRecords.records.forEach(r => functionMap.set(r.id, r.fields['Function'] || ''));
+
+  const investorMap = new Map<string, string>();
+  investorRecords.forEach(r => investorMap.set(r.id, r.fields['Company'] || ''));
+
+  const industryMap = new Map<string, string>();
+  industryRecords.records.forEach(r => industryMap.set(r.id, r.fields['Industry Name'] || ''));
+
+  return { companyMap, companyUrlMap, functionMap, investorMap, industryMap };
+}
+
+// Map a raw Airtable job record to a Job object using pre-built lookup maps
 function mapRecordToJob(record: AirtableRecord, maps: LookupMaps): Job {
   const companyField = record.fields['Companies'];
   let companyName = 'Unknown';
   let companyUrl = '';
+
   if (typeof companyField === 'string') {
     companyName = companyField;
   } else if (Array.isArray(companyField) && companyField.length > 0) {
@@ -310,16 +311,11 @@ function mapRecordToJob(record: AirtableRecord, maps: LookupMaps): Job {
 
   const functionIds = record.fields['Function'] || [];
   let funcName = '';
-  let deptName = '';
   if (Array.isArray(functionIds) && functionIds.length > 0) {
     funcName = maps.functionMap.get(functionIds[0]) || '';
-    deptName = maps.departmentMap.get(functionIds[0]) || '';
   }
   if (!funcName) {
     funcName = inferFunction(record.fields['Title'] as string || '');
-  }
-  if (!deptName) {
-    deptName = FUNCTION_TO_DEPARTMENT[funcName] || 'General';
   }
 
   const investorIds = record.fields['Investors'] || [];
@@ -329,8 +325,10 @@ function mapRecordToJob(record: AirtableRecord, maps: LookupMaps): Job {
 
   const industryIds = record.fields['Company Industry (Lookup)'] || [];
   const industryName = Array.isArray(industryIds) && industryIds.length > 0
-    ? maps.industryMap.get(industryIds[0]) || (typeof industryIds[0] === 'string' ? industryIds[0] : '')
+    ? maps.industryMap.get(industryIds[0]) || ''
     : '';
+
+  const { location, remoteFirst } = extractLocation(record);
 
   return {
     id: record.id,
@@ -339,194 +337,112 @@ function mapRecordToJob(record: AirtableRecord, maps: LookupMaps): Job {
     company: companyName,
     companyUrl,
     investors: investorNames,
-    location: parseLocationFromRecord(record),
-    remoteFirst: record.fields['Remote First'] || false,
+    location,
+    remoteFirst,
     functionName: funcName,
-    departmentName: deptName,
     industry: industryName,
-    datePosted: record.fields['Created Time'] || record.createdTime || '',
-    firstSeenAt: (record.fields['Created Time'] as string) || record.createdTime || '',
+    datePosted: record.fields['Date Posted'] || '',
     jobUrl: record.fields['Job URL'] || '',
     applyUrl: record.fields['Apply URL'] || record.fields['Job URL'] || '',
     salary: record.fields['Salary'] || '',
   };
 }
 
-/** Standard set of job fields to request from Airtable. */
-const JOB_FIELDS = [
-  'Job ID', 'Title', 'Companies', 'Function', 'Location',
-  'Created Time', 'Job URL', 'Apply URL', 'Salary', 'Investors',
-  'Company Industry (Lookup)', 'Raw JSON',
-];
+// ---------------------------------------------------------------------------
+// Main data fetching functions
+// ---------------------------------------------------------------------------
 
 export async function getJobs(filters?: {
   functionName?: string;
-  department?: string;
   industry?: string;
   investor?: string;
   location?: string;
-  country?: string;
-  workMode?: string;
-  posted?: string;
   remoteOnly?: boolean;
   search?: string;
   company?: string;
   page?: number;
-  sort?: 'featured' | 'recent';
 }): Promise<JobsResult> {
   const pageSize = 25;
   const page = filters?.page || 1;
 
-  const formulaParts: string[] = [];
+  try {
+    const formulaParts: string[] = [];
 
-  if (filters?.search) {
-    const s = filters.search.replace(/'/g, "\\'");
-    formulaParts.push('OR(FIND(LOWER(\'' + s + '\'), LOWER({Title})), FIND(LOWER(\'' + s + '\'), LOWER(ARRAYJOIN({Companies}))))');
+    if (filters?.search) {
+      const s = filters.search.replace(/'/g, "\\'");
+      formulaParts.push('OR(FIND(LOWER(\'' + s + '\'), LOWER({Title})), FIND(LOWER(\'' + s + '\'), LOWER(ARRAYJOIN({Companies}))))');
+    }
+
+    const filterByFormula = formulaParts.length > 0
+      ? 'AND(' + formulaParts.join(', ') + ')'
+      : '';
+
+    // Fetch job records and lookup maps in parallel for better latency
+    const [allRecordsResult, maps] = await Promise.all([
+      fetchAirtable(TABLES.jobs, {
+        filterByFormula,
+        sort: [{ field: 'Date Posted', direction: 'desc' }],
+        maxRecords: 100,
+        fields: JOB_FIELDS,
+      }),
+      buildLookupMaps(),
+    ]);
+
+    let jobs = allRecordsResult.records.map(record => mapRecordToJob(record, maps));
+
+    // Client-side filters: these fields are derived from linked records / Raw JSON
+    // and can't be pushed into Airtable's filterByFormula efficiently.
+    if (filters?.functionName) {
+      const selected = filters.functionName.split(',').map(f => f.trim().toLowerCase());
+      jobs = jobs.filter(job =>
+        selected.some(fn => job.functionName.toLowerCase() === fn)
+      );
+    }
+
+    if (filters?.industry) {
+      const selected = filters.industry.split(',').map(i => i.trim().toLowerCase());
+      jobs = jobs.filter(job =>
+        selected.some(ind => job.industry.toLowerCase() === ind)
+      );
+    }
+
+    if (filters?.investor) {
+      const selected = filters.investor.split(',').map(inv => inv.trim().toLowerCase());
+      jobs = jobs.filter(job =>
+        job.investors.some(inv =>
+          selected.some(s => inv.toLowerCase() === s)
+        )
+      );
+    }
+
+    if (filters?.company) {
+      jobs = jobs.filter(job =>
+        job.company.toLowerCase().includes(filters.company!.toLowerCase())
+      );
+    }
+
+    if (filters?.location) {
+      jobs = jobs.filter(job =>
+        job.location.toLowerCase().includes(filters.location!.toLowerCase())
+      );
+    }
+
+    if (filters?.remoteOnly) {
+      jobs = jobs.filter(job =>
+        job.remoteFirst || job.location.toLowerCase().includes('remote')
+      );
+    }
+
+    const totalCount = jobs.length;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const startIndex = (page - 1) * pageSize;
+    const paginatedJobs = jobs.slice(startIndex, startIndex + pageSize);
+
+    return { jobs: paginatedJobs, totalCount, page, pageSize, totalPages };
+  } catch (error) {
+    console.error('getJobs error:', error);
+    return { jobs: [], totalCount: 0, page, pageSize, totalPages: 0 };
   }
-
-
-  const filterByFormula = formulaParts.length > 0
-    ? 'AND(' + formulaParts.join(', ') + ')'
-    : '';
-
-  // Fetch up to 500 jobs (paginated — Airtable returns max 100 per page)
-  const TARGET_RECORDS = 500;
-  const allRecords: AirtableRecord[] = [];
-  let jobOffset: string | undefined;
-  do {
-    const batch = await fetchAirtable(TABLES.jobs, {
-      filterByFormula,
-      sort: [{ field: 'Created Time', direction: 'desc' }],
-      fields: JOB_FIELDS,
-      offset: jobOffset,
-    });
-    allRecords.push(...batch.records);
-    jobOffset = batch.offset;
-    if (allRecords.length >= TARGET_RECORDS) break;
-    if (jobOffset) await new Promise(r => setTimeout(r, 200)); // rate limit
-  } while (jobOffset);
-
-  // Deduplicate by Job URL (same job can be synced multiple times)
-  const seenUrls = new Set<string>();
-  const dedupedRecords = allRecords.filter(r => {
-    const url = r.fields['Job URL'] as string;
-    if (!url) return true; // keep records without URL
-    if (seenUrls.has(url)) return false;
-    seenUrls.add(url);
-    return true;
-  });
-
-  const maps = await buildLookupMaps();
-  let jobs = dedupedRecords.map(record => mapRecordToJob(record, maps));
-
-  // ── Department filter (new multi-select or legacy functionName) ──
-  const deptFilter = filters?.department || filters?.functionName;
-  if (deptFilter) {
-    const selectedDepts = deptFilter.split(',').map(f => f.trim().toLowerCase());
-    jobs = jobs.filter(job =>
-      selectedDepts.some(d => job.departmentName.toLowerCase() === d)
-    );
-  }
-
-  // ── Industry filter ────────────────────────────────────────────
-  if (filters?.industry) {
-    const selectedIndustries = filters.industry.split(',').map(i => i.trim().toLowerCase());
-    jobs = jobs.filter(job =>
-      selectedIndustries.some(ind => job.industry.toLowerCase() === ind)
-    );
-  }
-
-  // ── Investor filter ────────────────────────────────────────────
-  if (filters?.investor) {
-    const selectedInvestors = filters.investor.split(',').map(inv => inv.trim().toLowerCase());
-    jobs = jobs.filter(job =>
-      job.investors.some(inv =>
-        selectedInvestors.some(selected => inv.toLowerCase() === selected)
-      )
-    );
-  }
-
-  // ── Country filter (uses location parser) ──────────────────────
-  if (filters?.country) {
-    const selectedCountries = filters.country.split(',').map(c => c.trim().toLowerCase());
-    jobs = jobs.filter(job => {
-      const jobCountry = parseCountry(job.location).toLowerCase();
-      return selectedCountries.some(c => jobCountry === c);
-    });
-  }
-
-  // ── Work mode filter ───────────────────────────────────────────
-  if (filters?.workMode) {
-    const selectedModes = filters.workMode.split(',').map(m => m.trim().toLowerCase());
-    jobs = jobs.filter(job => {
-      const mode = parseWorkMode(job.location, job.remoteFirst);
-      return selectedModes.includes(mode);
-    });
-  }
-
-  // ── Posted date filter ─────────────────────────────────────────
-  if (filters?.posted && filters.posted !== 'all') {
-    jobs = jobs.filter(job => matchesPostedFilter(job.datePosted, filters.posted!));
-  }
-
-  // ── Legacy: company name filter ────────────────────────────────
-  if (filters?.company) {
-    jobs = jobs.filter(job =>
-      job.company.toLowerCase().includes(filters.company!.toLowerCase())
-    );
-  }
-
-  // ── Legacy: location string filter ─────────────────────────────
-  if (filters?.location) {
-    jobs = jobs.filter(job =>
-      job.location.toLowerCase().includes(filters.location!.toLowerCase())
-    );
-  }
-
-  // ── Legacy: remote toggle ──────────────────────────────────────
-  if (filters?.remoteOnly) {
-    jobs = jobs.filter(job =>
-      job.remoteFirst || job.location.toLowerCase().includes('remote')
-    );
-  }
-
-  // ── Feed scoring & diversity ─────────────────────────────────────
-  const sortMode = filters?.sort || 'featured';
-
-  if (sortMode === 'featured') {
-    // Score every job
-    const now = Date.now();
-    const scored = jobs.map(job => ({
-      job,
-      freshness: computeFreshness(job, now),
-      interest: computeInterest(job),
-    })).map(s => ({
-      ...s,
-      overall: s.freshness + s.interest,
-    }));
-
-    // Sort by overall score (deterministic tie-break on id)
-    scored.sort((a, b) => b.overall - a.overall || a.job.id.localeCompare(b.job.id));
-
-    // Interleave ALL jobs with diversity constraints (not just first page)
-    jobs = diversifyAll(scored);
-  }
-  // else 'recent' — keep existing Created Time desc order from Airtable
-
-  const totalCount = jobs.length;
-  const totalPages = Math.ceil(totalCount / pageSize);
-
-  // Paginate
-  const startIndex = (page - 1) * pageSize;
-  const paginatedJobs = jobs.slice(startIndex, startIndex + pageSize);
-
-  return {
-    jobs: paginatedJobs,
-    totalCount,
-    page,
-    pageSize,
-    totalPages,
-  };
 }
 
 // ── Feed scoring helpers ───────────────────────────────────────────
@@ -672,7 +588,6 @@ export async function getJobById(id: string): Promise<(Job & { description: stri
     throw new Error('Missing Airtable environment variables');
   }
 
-  // Fetch the job record by ID
   const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(TABLES.jobs)}/${id}`;
   const response = await airtableLimit(() =>
     fetch(url, {
@@ -692,16 +607,14 @@ export async function getJobById(id: string): Promise<(Job & { description: stri
 
   const record = JSON.parse(text);
 
-  // Check if record exists and has fields
   if (!record || !record.fields) {
     return null;
   }
 
-  // Build lookup maps and map record to Job
   const maps = await buildLookupMaps();
   const job = mapRecordToJob(record, maps);
 
-  // Extract job description — unique to detail page
+  // Extract job description from multiple sources
   let description = '';
   if (record.fields['content']) {
     description = record.fields['content'] as string;
@@ -756,25 +669,31 @@ export async function getCompanyBySlug(slug: string): Promise<Company | null> {
     return null;
   }
 
-  // Resolve investor names from VCs linked record IDs on the company
-  const vcIds = (company.fields['VCs'] || []) as string[];
+  const companyName = company.fields['Company'] as string || '';
+
+  // Resolve investor names from the company's VCs linked field directly,
+  // instead of the expensive all-jobs scan that was here before.
+  const vcIds = company.fields['VCs'] || [];
   let investorNames: string[] = [];
-  if (vcIds.length > 0) {
-    const investorRecords = await fetchAirtable(TABLES.investors, {
-      fields: ['Firm Name'],
+
+  if (Array.isArray(vcIds) && vcIds.length > 0) {
+    // Fetch all investors to resolve IDs to names (>100 investors, must paginate)
+    const investorRecords = await fetchAllAirtable(TABLES.investors, {
+      fields: ['Company'],
     });
     const investorMap = new Map<string, string>();
-    investorRecords.records.forEach(r => {
-      investorMap.set(r.id, r.fields['Firm Name'] || '');
+    investorRecords.forEach(r => {
+      investorMap.set(r.id, r.fields['Company'] || '');
     });
-    investorNames = vcIds.map(id => investorMap.get(id) || '').filter(Boolean);
+    investorNames = vcIds
+      .map((id: string) => investorMap.get(id) || '')
+      .filter(Boolean);
   }
 
-  // Count jobs for this company using filterByFormula
-  const companyName = company.fields['Company'] as string || '';
-  const escapedName = companyName.replace(/"/g, '\\"');
+  // Get job count for this specific company using filterByFormula
+  const escaped = companyName.replace(/"/g, '\\"');
   const jobCountResult = await fetchAirtable(TABLES.jobs, {
-    filterByFormula: `FIND("${escapedName}", ARRAYJOIN({Companies}, "||") & "")`,
+    filterByFormula: `FIND("${escaped}", ARRAYJOIN({Companies}, "||") & "")`,
     fields: ['Job ID'],
   });
 
@@ -815,12 +734,15 @@ export interface Investor {
 
 // Fetch a single investor by slug
 export async function getInvestorBySlug(slug: string): Promise<Investor | null> {
-  // Look up investor directly by Slug formula field (1 API call instead of 4+)
-  const escaped = slug.replace(/'/g, "\\'");
-  const results = await fetchAirtable(TABLES.investors, {
-    filterByFormula: `{Slug}='${escaped}'`,
-    maxRecords: 1,
-    fields: ['Firm Name', 'Bio', 'Location', 'Website', 'LinkedIn'],
+  // Fetch ALL investors — there are 201+, must paginate past 100-record limit
+  const investorRecords = await fetchAllAirtable(TABLES.investors, {
+    fields: ['Company', 'Bio', 'Location', 'Website', 'LinkedIn'],
+  });
+
+  const investor = investorRecords.find(r => {
+    const name = r.fields['Company'] as string || '';
+    const investorSlug = toSlug(name);
+    return investorSlug === slug;
   });
 
   const investor = results.records[0];
@@ -963,7 +885,7 @@ export async function getJobsForCompanyNames(companyNames: string[]): Promise<Jo
 
     const records = await fetchAllAirtable(TABLES.jobs, {
       filterByFormula,
-      sort: [{ field: 'Created Time', direction: 'desc' }],
+      sort: [{ field: 'Date Posted', direction: 'desc' }],
       fields: JOB_FIELDS,
     });
     allMatchingRecords.push(...records);
@@ -987,26 +909,30 @@ export const getJobsForCompanyIds = getJobsForCompanyNames;
 
 // Get featured jobs — placeholder until monetization fields are re-added
 export async function getFeaturedJobs(): Promise<Job[]> {
-  const allRecordsResult = await fetchAirtable(TABLES.jobs, {
-    filterByFormula: 'FALSE()',
-    sort: [{ field: 'Created Time', direction: 'desc' }],
-    maxRecords: 10,
-    fields: JOB_FIELDS,
-  });
+  const [allRecordsResult, maps] = await Promise.all([
+    fetchAirtable(TABLES.jobs, {
+      filterByFormula: 'FALSE()',
+      sort: [{ field: 'Date Posted', direction: 'desc' }],
+      maxRecords: 10,
+      fields: JOB_FIELDS,
+    }),
+    buildLookupMaps(),
+  ]);
 
-  const maps = await buildLookupMaps();
   return allRecordsResult.records.map(record => mapRecordToJob(record, maps));
 }
 
-// Get organic jobs sorted by Created Time
+// Get organic jobs sorted by Date Posted
 export async function getOrganicJobs(page: number = 1, pageSize: number = 25): Promise<JobsResult> {
-  const allRecordsResult = await fetchAirtable(TABLES.jobs, {
-    sort: [{ field: 'Created Time', direction: 'desc' }],
-    maxRecords: 100,
-    fields: JOB_FIELDS,
-  });
+  const [allRecordsResult, maps] = await Promise.all([
+    fetchAirtable(TABLES.jobs, {
+      sort: [{ field: 'Date Posted', direction: 'desc' }],
+      maxRecords: 100,
+      fields: JOB_FIELDS,
+    }),
+    buildLookupMaps(),
+  ]);
 
-  const maps = await buildLookupMaps();
   const jobs = allRecordsResult.records.map(record => mapRecordToJob(record, maps));
 
   const totalCount = jobs.length;
@@ -1025,17 +951,19 @@ export async function getOrganicJobs(page: number = 1, pageSize: number = 25): P
 
 // Get stats for the homepage
 export async function getStats(): Promise<{ jobCount: number; companyCount: number; investorCount: number }> {
-  // Fetch counts from each table
-  const [jobRecords, companyRecords, investorRecords] = await Promise.all([
-    fetchAirtable(TABLES.jobs, { fields: ['Job ID'], maxRecords: 1000 }),
-    fetchAirtable(TABLES.companies, { fields: ['Company'] }),
-    fetchAirtable(TABLES.investors, { fields: ['Firm Name'] }),
+  // Companies and investors are small enough to count exactly via pagination.
+  // Jobs table (16k+) is too large to paginate within Vercel's 10s timeout,
+  // so we fetch just the first page. A pre-computed counter would fix this.
+  const [jobResult, companyRecords, investorRecords] = await Promise.all([
+    fetchAirtable(TABLES.jobs, { fields: ['Job ID'] }),
+    fetchAllAirtable(TABLES.companies, { fields: ['Company'] }),
+    fetchAllAirtable(TABLES.investors, { fields: ['Company'] }),
   ]);
 
   return {
-    jobCount: jobRecords.records.length,
-    companyCount: companyRecords.records.length,
-    investorCount: investorRecords.records.length,
+    jobCount: jobResult.records.length,
+    companyCount: companyRecords.length,
+    investorCount: investorRecords.length,
   };
 }
 

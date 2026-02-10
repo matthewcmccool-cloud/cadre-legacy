@@ -7,6 +7,7 @@ const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 const COMPANIES_TABLE = 'tbl4dA7iDr7mjF6Gt';
 const BATCH_SIZE = 15;
 const RATE_LIMIT_DELAY = 1000;
+const MAX_RUNTIME_MS = 8000; // Stay under Vercel's 10s timeout
 
 interface CompanyRecord {
   id: string;
@@ -146,9 +147,10 @@ async function callPerplexity(companyName: string): Promise<EnrichmentResult | n
     const data = JSON.parse(pText);
     const content = data.choices?.[0]?.message?.content || '';
     
-    // Try to find a JSON block, then parse
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    const jsonText = jsonMatch ? jsonMatch[0] : content;
+    // Strip markdown code fences that Perplexity often wraps around JSON
+    const cleaned = content.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    const jsonText = jsonMatch ? jsonMatch[0] : cleaned;
     
     try {
       const parsed = JSON.parse(jsonText);
@@ -189,27 +191,29 @@ async function updateAirtableRecord(recordId: string, fields: { Stage?: string; 
 
 // Main GET handler
 export async function GET(req: NextRequest) {
+  const startTime = Date.now();
   const summary = {
     totalFetched: 0,
     processed: 0,
     updated: 0,
     errors: [] as { id: string; company?: string; error: string }[],
   };
-  
+
   try {
     // Fetch companies needing enrichment
     const companies = await getCompaniesNeedingEnrichment();
     summary.totalFetched = companies.length;
-    
+
     if (companies.length === 0) {
       return NextResponse.json({
         ...summary,
         message: 'No companies found needing enrichment',
       });
     }
-    
-    // Process each company
+
+    // Process each company, respecting timeout
     for (const record of companies) {
+      if (Date.now() - startTime > MAX_RUNTIME_MS) break;
       const companyName = record.fields.Company;
       
       if (!companyName) {
