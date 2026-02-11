@@ -37,7 +37,7 @@ export default function BillingSettings() {
               href="/pricing"
               className="mt-4 inline-block px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-500 rounded-md transition-colors"
             >
-              Upgrade to Pro — $79/month →
+              Upgrade to Pro — $99/month →
             </Link>
           </>
         )}
@@ -52,7 +52,7 @@ export default function BillingSettings() {
                 Trial ends in {trialDaysRemaining} day{trialDaysRemaining !== 1 ? 's' : ''}
               </p>
             )}
-            <p className="text-xs text-zinc-500 mt-1">After trial: $79/month</p>
+            <p className="text-xs text-zinc-500 mt-1">After trial: $99/month</p>
             <button
               onClick={openPortal}
               disabled={loading}
@@ -66,7 +66,7 @@ export default function BillingSettings() {
         {status === 'active' && !isTrialing && (
           <>
             <p className="text-sm text-zinc-100">
-              Current plan: <span className="font-medium">Pro ($79/month)</span>
+              Current plan: <span className="font-medium">Pro ($99/month)</span>
             </p>
             <div className="flex flex-col gap-2 mt-4">
               <button
@@ -81,7 +81,7 @@ export default function BillingSettings() {
                 disabled={loading}
                 className="text-sm text-zinc-400 hover:text-zinc-300 transition-colors disabled:opacity-50 text-left"
               >
-                Switch to annual ($63/month) →
+                Switch to annual ($79/month) →
               </button>
             </div>
           </>

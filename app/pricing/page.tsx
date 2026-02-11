@@ -29,7 +29,7 @@ export default function PricingPage() {
   const { isPro, status } = useSubscription();
   const [loading, setLoading] = useState(false);
 
-  const price = billing === 'monthly' ? '$79' : '$63';
+  const price = billing === 'monthly' ? '$99' : '$79';
   const period = '/mo';
 
   const handleCTA = async () => {
@@ -99,7 +99,7 @@ export default function PricingPage() {
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
-            Monthly {billing === 'monthly' && '$79'}
+            Monthly {billing === 'monthly' && '$99'}
           </button>
           <button
             onClick={() => setBilling('annual')}
@@ -109,7 +109,7 @@ export default function PricingPage() {
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
-            Annual {billing === 'annual' && '$63/mo'}
+            Annual {billing === 'annual' && '$79/mo'}
           </button>
         </div>
 

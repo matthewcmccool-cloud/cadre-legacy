@@ -130,7 +130,7 @@ export default function FundraisesPageContent({ fundraises, industries }: Fundra
 
                     {/* Line 2: Investors */}
                     {(f.leadInvestors.length > 0 || f.coInvestors.length > 0) && (
-                      <p className="mt-1.5 text-sm text-zinc-400 ml-[42px]">
+                      <p className="mt-1.5 text-sm text-zinc-400 sm:ml-[42px]">
                         {f.leadInvestors.length > 0 && (
                           <>
                             Led by{' '}

@@ -6,6 +6,58 @@ Track what ships, what breaks, what's next. Updated after every Claude Code sess
 
 ## February 11, 2026
 
+### Session: Prompt 17 — Post-Build Audit & Consistency Pass
+
+**1. Pricing consistency** (Monthly $99, Annual $79):
+- `app/pricing/page.tsx`: $79→$99 monthly, $63→$79 annual (toggle labels and price calc)
+- `app/pricing/layout.tsx`: Meta tag $79/month→$99/month
+- `app/settings/billing/page.tsx`: 4 references updated ($79→$99 monthly, $63→$79 annual)
+
+**2. Dead imports / unused components removed** (9 files):
+- `components/ComingSoon.tsx` — removed (never imported)
+- `components/EmailCapture.tsx` — removed (never imported)
+- `components/FundingRoundsFeed.tsx` — removed (never imported)
+- `components/HomepageTabs.tsx` — removed (never imported)
+- `components/RecentRounds.tsx` — removed (never imported)
+- `components/SearchBar.tsx` — removed (superseded by CommandPalette)
+- `components/InvestorTicker.tsx` — removed (never imported)
+- `components/ProGate.tsx` — removed (never imported)
+- `components/QueryBuilder.tsx` — removed (never imported)
+- `lib/filters.ts`: removed unused `parseFilters()` function
+- `lib/supabase.ts`: removed unused `createClerkSupabaseClient()` and `createSupabaseClient()`
+
+**3. Console.log cleanup** (7 statements removed):
+- `app/api/backfill-functions/route.ts`: 2 console.log removed
+- `app/api/stripe/webhook/route.ts`: 3 console.log removed
+- `app/api/enrich-companies/route.ts`: 1 console.log removed
+- `app/api/webhooks/clerk/route.ts`: 1 console.log removed
+- Kept: 48 console.error + 3 console.warn (valid error logging)
+
+**4. Environment variables** (`.env.example` — updated):
+- Added missing `CLERK_WEBHOOK_SECRET` (was used in code but absent from template)
+- Added missing `SYNC_SECRET` for cron auth
+- Reorganized into Required vs Optional sections
+- All 8 optional vars documented with feature context
+
+**5. Mobile responsiveness**:
+- `components/FundraisesPageContent.tsx`: Fixed hardcoded `ml-[42px]` → `sm:ml-[42px]` (prevents overflow on 375px)
+- Verified: Header bottom tab bar, SearchFilters mobile button, ManageFollowsPanel full-width, Settings stacked tabs, Feed sidebar hidden, Compare desktop-only message — all correct
+
+**6. Loading states** (4 new loading.tsx files):
+- `app/feed/loading.tsx` — signal card + summary + card skeletons
+- `app/companies/loading.tsx` — search + company chip skeletons
+- `app/investors/loading.tsx` — search + investor chip skeletons
+- `app/fundraises/loading.tsx` — filter pills + card skeletons
+
+**7. Error handling**: Verified — global `error.tsx` catches page errors, `not-found.tsx` handles 404s, all client fetch calls use try/catch or .catch()
+
+**8. TypeScript strict mode**: `npx tsc --noEmit` — zero errors before and after all changes
+
+- **Broke:** Nothing. Zero TypeScript errors.
+- **Files changed:** 20 files (9 removed, 4 new loading.tsx, 7 updated)
+
+---
+
 ### Session: Prompt 16 — Polish Pass (Skeletons, Errors, Mobile, SEO)
 - **Shipped:**
   - **Skeleton components** (`components/Skeletons.tsx` — new): CompanyChipSkeleton, FeedCardSkeleton, SparklineSkeleton, StatSkeleton

@@ -71,7 +71,6 @@ export async function POST(req: Request) {
         .from('alert_preferences')
         .upsert({ user_id: id }, { onConflict: 'user_id' });
 
-      console.log(`User ${id} created in Supabase with default preferences`);
     }
   }
 

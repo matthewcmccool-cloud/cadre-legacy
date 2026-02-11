@@ -54,7 +54,6 @@ export async function POST(req: Request) {
           })
           .eq('clerk_id', userId);
 
-        console.log(`Subscription ${event.type}: user=${userId} plan=${plan}`);
         break;
       }
 
@@ -68,7 +67,6 @@ export async function POST(req: Request) {
           .update({ plan: 'free', trial_ends_at: null })
           .eq('clerk_id', userId);
 
-        console.log(`Subscription deleted: user=${userId} → free`);
         break;
       }
 
@@ -88,7 +86,6 @@ export async function POST(req: Request) {
             .update({ plan: 'past_due' })
             .eq('stripe_subscription_id', subscriptionId);
 
-          console.log(`Payment failed: subscription=${subscriptionId} → past_due`);
         }
         break;
       }
