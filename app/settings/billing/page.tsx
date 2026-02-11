@@ -1,12 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSubscription } from '@/hooks/useSubscription';
+import { trackStartTrial, trackSubscribe } from '@/lib/analytics';
 
 export default function BillingSettings() {
   const { status, isPro, isTrialing, trialDaysRemaining } = useSubscription();
   const [loading, setLoading] = useState(false);
+
+  // Track conversion events from Stripe redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('trial') === 'started' && isTrialing) {
+      trackStartTrial();
+    }
+    if (status === 'active' && !isTrialing) {
+      // Fire subscribe once per session when user first sees active status
+      const key = 'cadre_subscribe_tracked';
+      if (!sessionStorage.getItem(key)) {
+        trackSubscribe();
+        sessionStorage.setItem(key, '1');
+      }
+    }
+  }, [status, isTrialing]);
 
   const openPortal = async () => {
     setLoading(true);

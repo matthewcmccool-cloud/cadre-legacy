@@ -17,6 +17,7 @@ interface FilterDropdownProps {
   multiSelect?: boolean;
   disabled?: boolean;
   disabledFooter?: React.ReactNode;
+  onDisabledOpen?: () => void;
 }
 
 export default function FilterDropdown({
@@ -28,6 +29,7 @@ export default function FilterDropdown({
   multiSelect = true,
   disabled = false,
   disabledFooter,
+  onDisabledOpen,
 }: FilterDropdownProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -81,7 +83,11 @@ export default function FilterDropdown({
     <div ref={ref} className="relative">
       {/* Trigger button */}
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          const opening = !open;
+          setOpen(opening);
+          if (opening && disabled && onDisabledOpen) onDisabledOpen();
+        }}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
           activeCount > 0
             ? 'bg-[#5e6ad2]/15 text-[#5e6ad2] border border-[#5e6ad2]/30'

@@ -7,6 +7,7 @@ import FilterDropdown, { type FilterOption } from './FilterDropdown';
 import ActiveFilters from './ActiveFilters';
 import { parseCountry, parseWorkMode } from '@/lib/location-parser';
 import { useSubscription } from '@/hooks/useSubscription';
+import { trackSearch, trackUpgradePromptShown, trackUpgradePromptClicked } from '@/lib/analytics';
 
 const DEPARTMENTS = [
   'Sales & GTM', 'Marketing', 'Engineering', 'AI & Research', 'Product',
@@ -159,6 +160,7 @@ export default function SearchFilters({
     const params = new URLSearchParams(searchParams.toString());
     if (search) {
       params.set('search', search);
+      trackSearch(search);
     } else {
       params.delete('search');
     }
@@ -229,11 +231,12 @@ export default function SearchFilters({
         disabled={!isPro}
         disabledFooter={
           !isPro ? (
-            <Link href="/pricing" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
+            <Link href="/pricing" className="text-xs text-purple-400 hover:text-purple-300 transition-colors" onClick={() => trackUpgradePromptClicked()}>
               Start free trial to unlock →
             </Link>
           ) : undefined
         }
+        onDisabledOpen={() => { if (!isPro) trackUpgradePromptShown(); }}
       />
     </>
   );

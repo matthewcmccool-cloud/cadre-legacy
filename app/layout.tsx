@@ -5,6 +5,7 @@ import { dark } from '@clerk/themes';
 import Providers from '@/components/Providers';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AnalyticsProvider from '@/components/AnalyticsProvider';
 import './globals.css';
 
 const BASE_URL = 'https://cadre-ui-psi.vercel.app';
@@ -42,11 +43,19 @@ export default function RootLayout({
   return (
     <ClerkProvider appearance={{ baseTheme: dark, variables: { colorPrimary: '#5e6ad2' } }}>
       <html lang="en">
+        <head>
+          <script
+            defer
+            data-domain="cadre-ui-psi.vercel.app"
+            src="https://plausible.io/js/script.js"
+          />
+        </head>
         <body>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
           />
+          <AnalyticsProvider />
           <Suspense>
             <Providers>
               <Header />

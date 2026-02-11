@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { SearchResult } from '@/lib/airtable';
+import { trackSearch } from '@/lib/analytics';
 
 const getDomain = (url: string | null | undefined) => {
   if (!url) return null;
@@ -58,6 +59,7 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
+      trackSearch(query.trim());
       fetch(`/api/search?q=${encodeURIComponent(query.trim())}`)
         .then((res) => res.json())
         .then((data: SearchResult) => {

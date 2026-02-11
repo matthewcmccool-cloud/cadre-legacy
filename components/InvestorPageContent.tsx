@@ -6,6 +6,7 @@ import { Job } from '@/lib/airtable';
 import FollowPortfolioButton from '@/components/FollowPortfolioButton';
 import { useFollows } from '@/hooks/useFollows';
 import { useSubscription } from '@/hooks/useSubscription';
+import { trackViewInvestor } from '@/lib/analytics';
 
 interface InvestorPageContentProps {
   investor: {
@@ -36,6 +37,10 @@ const COLLAPSED_HEIGHT = 80;
 export default function InvestorPageContent({ investor, jobs }: InvestorPageContentProps) {
   const [search, setSearch] = useState('');
   const [companiesExpanded, setCompaniesExpanded] = useState(false);
+
+  useEffect(() => {
+    trackViewInvestor(investor.slug);
+  }, [investor.slug]);
   const [needsExpand, setNeedsExpand] = useState(false);
   const companiesRef = useRef<HTMLDivElement>(null);
   const { isFollowing } = useFollows();

@@ -1,10 +1,11 @@
 'use client';
 
 import { useUser, useClerk } from '@clerk/nextjs';
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import SignInModal from '@/components/SignInModal';
 import OnboardingModal from '@/components/OnboardingModal';
+import { trackSignUp, trackSignIn } from '@/lib/analytics';
 
 interface SignInContext {
   companyName?: string;
@@ -30,6 +31,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [signInContext, setSignInContext] = useState<SignInContext>({});
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [pendingFollowCompanyId, setPendingFollowCompanyId] = useState<string | null>(null);
+  const signInTrackedRef = useRef(false);
+
+  // Track sign_in for returning users (fires once per session)
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || signInTrackedRef.current) return;
+    if (searchParams.get('onboarding') === 'true') return; // new signup, not sign_in
+    signInTrackedRef.current = true;
+    trackSignIn();
+  }, [isLoaded, isSignedIn, searchParams]);
 
   const openSignIn = useCallback((context?: SignInContext) => {
     setSignInContext(context || {});
@@ -46,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
     if (searchParams.get('onboarding') === 'true') {
+      trackSignUp();
       // Read pending follow from localStorage
       try {
         const pending = localStorage.getItem('cadre_pending_follow');

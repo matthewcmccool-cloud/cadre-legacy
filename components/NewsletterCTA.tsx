@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { trackNewsletterSignup } from '@/lib/analytics';
 
 export default function NewsletterCTA() {
   const [email, setEmail] = useState('');
@@ -18,6 +19,7 @@ export default function NewsletterCTA() {
         body: JSON.stringify({ email }),
       });
       if (!res.ok) throw new Error();
+      trackNewsletterSignup();
       setStatus('success');
       setEmail('');
     } catch {

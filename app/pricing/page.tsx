@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
+import { trackStartTrial } from '@/lib/analytics';
 
 const PRO_FEATURES = [
   'Daily and real-time alerts for followed companies',
@@ -65,6 +66,7 @@ export default function PricingPage() {
       });
       const data = await res.json();
       if (data.url) {
+        trackStartTrial();
         window.location.href = data.url;
       }
     } catch (err) {

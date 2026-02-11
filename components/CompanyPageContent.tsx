@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Job, toSlug } from '@/lib/airtable';
+import { trackViewCompany } from '@/lib/analytics';
 import CompanyLogo from '@/components/CompanyLogo';
 import FollowButton from '@/components/FollowButton';
 import HiringActivity from '@/components/HiringActivity';
@@ -61,6 +62,10 @@ function formatDate(dateString: string): string {
 export default function CompanyPageContent({ company, jobs, similarCompanies = [] }: CompanyPageContentProps) {
   const [search, setSearch] = useState('');
   const companyDomain = getDomain(company.url);
+
+  useEffect(() => {
+    trackViewCompany(company.id);
+  }, [company.id]);
 
   const filteredJobs = jobs.filter((job) => {
     if (!search) return true;
