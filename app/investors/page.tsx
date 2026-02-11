@@ -28,7 +28,7 @@ export default async function InvestorsPage() {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'VC Firms Tracked on Cadre',
-    description: `Browse ${investors.length} VC firms and their portfolio company job listings.`,
+    description: `Browse ${investors.length} VC firms and their portfolio company jobs.`,
     url: `${BASE_URL}/investors`,
     numberOfItems: investors.length,
   };
