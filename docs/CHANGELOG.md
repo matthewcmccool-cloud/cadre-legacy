@@ -6,6 +6,22 @@ Track what ships, what breaks, what's next. Updated after every Claude Code sess
 
 ## February 11, 2026
 
+### Session: Prompt 7 — Investor Detail Page Redesign
+- **Shipped:**
+  - Rewrote `InvestorPageContent.tsx` — complete investor page redesign with new layout matching company page style.
+  - **FollowPortfolioButton** (`components/FollowPortfolioButton.tsx` — new) — "Follow Portfolio (N companies)" button with three states: anonymous (triggers sign-in modal), not following (outlined), all followed (filled `bg-purple-600`, hover shows "Unfollow Portfolio"). Calls `followPortfolio()` from `useFollows`. Toast notifications on success/failure.
+  - **Top section** — investor name + `FollowPortfolioButton` side-by-side, subtitle "Venture Capital · [Location]", website/LinkedIn links, bio.
+  - **Portfolio Overview** — three stat cards (`bg-zinc-900 rounded-lg border border-zinc-800`): portfolio companies, open roles, new roles this week.
+  - **Portfolio Companies** — chip grid sorted by role count descending. Followed companies get subtle purple left border (`border-l-2 border-l-purple-500`). Collapsible to ~2 rows with "Show all N companies" expand button.
+  - **Portfolio Hiring Activity** (Pro-gated) — Pro users see placeholder "coming soon" card. Free users see blurred skeleton cards behind `backdrop-blur` overlay with "Unlock portfolio hiring intelligence → Start free trial" CTA linking to `/pricing`.
+  - **Open Roles** — searchable role list with company favicon, title, company name, location, department. Consistent style with company page role list.
+  - Updated `app/investors/[slug]/page.tsx` — background `bg-zinc-950`, breadcrumbs updated to Discover/Investors path with zinc design tokens.
+- **Broke:** Nothing. Zero TypeScript errors.
+- **Next:** Prompt 8 (Fundraises Page)
+- **Files changed:** `components/InvestorPageContent.tsx`, `components/FollowPortfolioButton.tsx` (new), `app/investors/[slug]/page.tsx`
+
+---
+
 ### Session: Prompt 6 — Company Detail Page Redesign
 - **Shipped:**
   - Rewrote `CompanyPageContent.tsx` — complete company page redesign with new layout.

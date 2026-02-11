@@ -52,19 +52,19 @@ export default async function InvestorPage({ params }: InvestorPageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-[#0e0e0f] text-white">
+    <main className="min-h-screen bg-zinc-950">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(investorSchema) }}
       />
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 pb-12">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1.5 text-sm text-[#555]">
-          <Link href="/" className="text-[#888] hover:text-white transition-colors">Jobs</Link>
+        <nav className="flex items-center gap-1.5 text-sm text-zinc-600 mt-6">
+          <Link href="/discover" className="text-zinc-500 hover:text-zinc-300 transition-colors">Discover</Link>
           <span>/</span>
-          <Link href="/investors" className="text-[#888] hover:text-white transition-colors">Investors</Link>
+          <Link href="/discover?view=investors" className="text-zinc-500 hover:text-zinc-300 transition-colors">Investors</Link>
           <span>/</span>
-          <span className="text-[#999]">{investor.name}</span>
+          <span className="text-zinc-400">{investor.name}</span>
         </nav>
 
         <InvestorPageContent investor={investor} jobs={jobs} />
