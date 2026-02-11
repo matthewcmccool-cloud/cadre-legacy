@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getStats } from '@/lib/airtable';
+import { getStats } from '@/lib/data';
 import FeedPageContent from '@/components/FeedPageContent';
 
 export const metadata: Metadata = {

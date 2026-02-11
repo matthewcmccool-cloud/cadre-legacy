@@ -1,4 +1,4 @@
-import { getJobById, toSlug } from '@/lib/airtable';
+import { getJobById, toSlug } from '@/lib/data';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';

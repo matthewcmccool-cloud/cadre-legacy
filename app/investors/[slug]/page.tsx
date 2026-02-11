@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getInvestorBySlug, getJobsForCompanyNames } from '@/lib/airtable';
+import { getInvestorBySlug, getJobsForCompanyNames } from '@/lib/data';
 import InvestorPageContent from '@/components/InvestorPageContent';
 import type { Metadata } from 'next';
 

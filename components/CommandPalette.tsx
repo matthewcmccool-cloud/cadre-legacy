@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import type { SearchResult } from '@/lib/airtable';
+import type { SearchResult } from '@/lib/data';
 import { trackSearch } from '@/lib/analytics';
 import Favicon from '@/components/Favicon';
 

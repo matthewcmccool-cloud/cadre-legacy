@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getJobs, getFilterOptions, getRecentCompanies, getAllCompaniesForDirectory, getAllInvestorsForDirectory } from '@/lib/airtable';
+import { getJobs, getFilterOptions, getRecentCompanies, getAllCompaniesForDirectory, getAllInvestorsForDirectory } from '@/lib/data';
 import JobTable from '@/components/JobTable';
 import Pagination from '@/components/Pagination';
 import SearchFilters from '@/components/SearchFilters';

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFollows } from '@/hooks/useFollows';
-import type { OnboardingCompany, OnboardingInvestor } from '@/lib/airtable';
+import type { OnboardingCompany, OnboardingInvestor } from '@/lib/data';
 import Favicon from '@/components/Favicon';
 
 interface OnboardingModalProps {

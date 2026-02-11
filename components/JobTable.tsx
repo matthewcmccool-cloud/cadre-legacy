@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Job } from '@/lib/airtable';
+import { Job } from '@/lib/data';
 import Favicon from '@/components/Favicon';
 
 interface JobTableProps {

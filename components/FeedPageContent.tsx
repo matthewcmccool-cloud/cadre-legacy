@@ -7,7 +7,7 @@ import LiveTicker from '@/components/LiveTicker';
 import ManageFollowsPanel from '@/components/ManageFollowsPanel';
 import { FeedCardSkeleton } from '@/components/Skeletons';
 import Favicon from '@/components/Favicon';
-import type { FeedDataResult as FeedData, FeedCompanyItem as FeedCompany } from '@/lib/airtable';
+import type { FeedDataResult as FeedData, FeedCompanyItem as FeedCompany } from '@/lib/data';
 
 const PAGE_SIZE = 20;
 

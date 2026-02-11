@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getOnboardingData } from '@/lib/airtable';
+import { getOnboardingData } from '@/lib/data';
 
 export const revalidate = 3600;
 

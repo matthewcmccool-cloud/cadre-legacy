@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Job, toSlug } from '@/lib/airtable';
+import { Job, toSlug } from '@/lib/data';
 import Favicon from '@/components/Favicon';
 import { trackViewCompany } from '@/lib/analytics';
 import CompanyLogo from '@/components/CompanyLogo';

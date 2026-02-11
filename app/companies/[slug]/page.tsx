@@ -1,4 +1,4 @@
-import { getCompanyBySlug, getJobsByCompany, getSimilarCompanies } from '@/lib/airtable';
+import { getCompanyBySlug, getJobsByCompany, getSimilarCompanies } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import CompanyPageContent from '@/components/CompanyPageContent';
 import type { Metadata } from 'next';

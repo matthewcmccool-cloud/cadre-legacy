@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
-import { Job } from '@/lib/airtable';
+import { Job } from '@/lib/data';
 import Favicon from '@/components/Favicon';
 import FollowPortfolioButton from '@/components/FollowPortfolioButton';
 import { useFollows } from '@/hooks/useFollows';

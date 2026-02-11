@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
-import { getStats } from '@/lib/airtable';
+import { getStats } from '@/lib/data';
 import LiveTicker from '@/components/LiveTicker';
 import NewsletterCTA from '@/components/NewsletterCTA';
 export const metadata: Metadata = {

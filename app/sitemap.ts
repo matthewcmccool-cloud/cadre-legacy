@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getAllCompaniesForDirectory, getAllInvestorsForDirectory, getFilterOptions, getJobs } from '@/lib/airtable';
+import { getAllCompaniesForDirectory, getAllInvestorsForDirectory, getFilterOptions, getJobs } from '@/lib/data';
 
 const BASE_URL = 'https://cadre-ui-psi.vercel.app';
 

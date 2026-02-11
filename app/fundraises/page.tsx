@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getFundraises, getFilterOptions } from '@/lib/airtable';
+import { getFundraises, getFilterOptions } from '@/lib/data';
 import FundraisesPageContent from '@/components/FundraisesPageContent';
 
 export const metadata: Metadata = {

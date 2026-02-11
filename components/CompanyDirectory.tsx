@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
-import { CompanyDirectoryItem } from '@/lib/airtable';
+import { CompanyDirectoryItem } from '@/lib/data';
 import Favicon from '@/components/Favicon';
 import FilterDropdown, { type FilterOption } from './FilterDropdown';
 

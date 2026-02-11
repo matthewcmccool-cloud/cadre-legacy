@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { searchAll } from '@/lib/airtable';
+import { searchAll } from '@/lib/data';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

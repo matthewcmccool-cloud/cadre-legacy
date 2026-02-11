@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { createSupabaseAdmin } from '@/lib/supabase';
-import { getJobs } from '@/lib/airtable';
+import { getJobs } from '@/lib/data';
 
 export async function GET(req: Request) {
   const { userId } = await auth();

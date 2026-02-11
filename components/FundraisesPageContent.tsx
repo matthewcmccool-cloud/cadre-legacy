@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { toSlug } from '@/lib/airtable';
-import type { FundraiseItem } from '@/lib/airtable';
+import { toSlug } from '@/lib/data';
+import type { FundraiseItem } from '@/lib/data';
 import FollowButton from '@/components/FollowButton';
 import Favicon from '@/components/Favicon';
 

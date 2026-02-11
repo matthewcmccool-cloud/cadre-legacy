@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useFollows } from '@/hooks/useFollows';
 import { useToast } from '@/hooks/useToast';
-import type { OnboardingCompany } from '@/lib/airtable';
+import type { OnboardingCompany } from '@/lib/data';
 import Favicon from '@/components/Favicon';
 
 interface ManageFollowsPanelProps {

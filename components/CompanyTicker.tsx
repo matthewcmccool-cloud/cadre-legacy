@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CompanyTickerItem } from '@/lib/airtable';
+import { CompanyTickerItem } from '@/lib/data';
 import Favicon from '@/components/Favicon';
 
 interface CompanyTickerProps {
