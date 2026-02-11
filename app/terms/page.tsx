@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service',
+  title: 'Terms of Service | Cadre',
+  description: 'Cadre terms of service. Rules and conditions for using the platform.',
+  alternates: { canonical: 'https://cadre-ui-psi.vercel.app/terms' },
 };
 
 export default function TermsPage() {

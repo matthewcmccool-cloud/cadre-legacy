@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy',
+  title: 'Privacy Policy | Cadre',
+  description: 'Cadre privacy policy. How we collect, use, and protect your data.',
+  alternates: { canonical: 'https://cadre-ui-psi.vercel.app/privacy' },
 };
 
 export default function PrivacyPage() {
