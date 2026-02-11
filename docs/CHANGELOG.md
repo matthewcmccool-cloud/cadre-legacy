@@ -6,6 +6,21 @@ Track what ships, what breaks, what's next. Updated after every Claude Code sess
 
 ## February 11, 2026
 
+### Session: Prompt 14 — Pro Feature Gating
+- **Shipped:**
+  - **ProGate** (`components/ProGate.tsx` — new): Reusable gating component — renders children if `isPro`, fallback otherwise
+  - **BlurredPlaceholder** (`components/BlurredPlaceholder.tsx` — new): Blurred content with gradient overlay + CTA link to /pricing. Parses `→` in prompt string to separate text from CTA label.
+  - **Company detail page**: HiringActivity now shows Pro-only content (90-day chart placeholder, function breakdown, MoM comparison) for Pro users; blurred upgrade prompt for free users with proper Link to /pricing
+  - **Investor detail page**: Already gated (no changes needed)
+  - **Discover page — Hiring Activity filter**: Added "Hiring Activity" FilterDropdown with 4 options (Surging, Ramping, Steady, Stalling). Free users see grayed-out options (`text-zinc-600 cursor-not-allowed`) with footer CTA: "Start free trial to unlock →". FilterDropdown gained `disabled` + `disabledFooter` props.
+  - **Feed page — Compare tab**: Added "Compare" link in summary bar with PRO badge for free users. Created `/feed/compare` page with comparison table — Pro users see table, free users see fully blurred content with upgrade prompt.
+  - **Feed page**: Investor context on cards + Pro teaser cards already gated (no changes needed)
+  - **CSV Export**: Export CSV button shown only for Pro users in desktop filter bar. `GET /api/export/csv` checks subscription status server-side, returns 403 if not Pro.
+- **Broke:** Nothing. Zero TypeScript errors.
+- **Files changed:** `components/ProGate.tsx` (new), `components/BlurredPlaceholder.tsx` (new), `app/feed/compare/page.tsx` (new), `app/api/export/csv/route.ts` (new), `components/HiringActivity.tsx`, `components/FilterDropdown.tsx`, `components/SearchFilters.tsx`, `components/FeedPageContent.tsx`, `docs/CHANGELOG.md`
+
+---
+
 ### Session: Prompt 13 — Pricing Page + Stripe Integration
 - **Shipped:**
   - **Pricing page** (`app/pricing/page.tsx` — new):

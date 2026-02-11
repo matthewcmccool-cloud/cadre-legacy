@@ -333,15 +333,24 @@ export default function FeedPageContent({ stats }: { stats: StatsProps }) {
         {/* Summary bar */}
         {data && (
           <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-zinc-400">
-              Following{' '}
-              <span className="font-semibold text-zinc-100">{data.totalFollowed}</span>{' '}
-              companies · {' '}
-              <span className="font-semibold text-zinc-100">{data.totalRoles.toLocaleString()}</span>{' '}
-              open roles · {' '}
-              <span className="font-semibold text-zinc-100">{data.newThisWeek}</span>{' '}
-              new this week
-            </p>
+            <div className="flex items-center gap-4">
+              <p className="text-sm text-zinc-400">
+                Following{' '}
+                <span className="font-semibold text-zinc-100">{data.totalFollowed}</span>{' '}
+                companies · {' '}
+                <span className="font-semibold text-zinc-100">{data.totalRoles.toLocaleString()}</span>{' '}
+                open roles · {' '}
+                <span className="font-semibold text-zinc-100">{data.newThisWeek}</span>{' '}
+                new this week
+              </p>
+              <Link
+                href="/feed/compare"
+                className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-400 hover:text-zinc-100 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors"
+              >
+                Compare
+                {!isPro && <span className="text-[10px] text-purple-400 ml-1">PRO</span>}
+              </Link>
+            </div>
             <button
               onClick={() => setManagePanelOpen(true)}
               className="text-xs text-zinc-400 hover:text-zinc-100 transition-colors hidden sm:block"

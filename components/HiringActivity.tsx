@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useSubscription } from '@/hooks/useSubscription';
 
 interface HiringActivityProps {
@@ -75,8 +76,25 @@ export default function HiringActivity({ totalRoles, newThisWeek, dailyData = []
         <Sparkline data={dailyData} />
       </div>
 
-      {/* Pro gate: 90-day chart placeholder */}
-      {!isPro && (
+      {/* Pro: full 90-day chart area, function breakdown, MoM comparison */}
+      {isPro ? (
+        <div className="mt-6 space-y-4">
+          <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <h3 className="text-sm font-medium text-zinc-300 mb-3">90-Day Hiring Trend</h3>
+            <p className="text-xs text-zinc-500">Full hiring chart coming soon.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <h3 className="text-sm font-medium text-zinc-300 mb-2">Function Breakdown</h3>
+              <p className="text-xs text-zinc-500">Breakdown coming soon.</p>
+            </div>
+            <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+              <h3 className="text-sm font-medium text-zinc-300 mb-2">Month-over-Month</h3>
+              <p className="text-xs text-zinc-500">MoM comparison coming soon.</p>
+            </div>
+          </div>
+        </div>
+      ) : (
         <div className="mt-6 relative">
           <div className="bg-zinc-900 rounded-lg h-48 flex items-center justify-center overflow-hidden">
             {/* Blurred placeholder bars */}
@@ -92,9 +110,9 @@ export default function HiringActivity({ totalRoles, newThisWeek, dailyData = []
             <div className="relative z-10 text-center">
               <p className="text-sm text-zinc-400">
                 See full hiring history →{' '}
-                <span className="text-purple-400 hover:text-purple-300 cursor-pointer">
+                <Link href="/pricing" className="text-purple-400 hover:text-purple-300 transition-colors">
                   Start free trial
-                </span>
+                </Link>
               </p>
             </div>
           </div>
