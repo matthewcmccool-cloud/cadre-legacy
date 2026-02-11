@@ -6,6 +6,29 @@ Track what ships, what breaks, what's next. Updated after every Claude Code sess
 
 ## February 11, 2026
 
+### Session: Prompt 13 — Pricing Page + Stripe Integration
+- **Shipped:**
+  - **Pricing page** (`app/pricing/page.tsx` — new):
+    - Centered layout (max-w-lg), "Cadre Pro" title, subtitle
+    - Billing toggle: Monthly $79 / Annual $63/mo with pill toggle (bg-zinc-800 selected)
+    - CTA: "Start 14-day free trial →" (bg-purple-600), adapts to auth/subscription state
+    - "What you get" section: 8 Pro features (✓ in text-emerald-400, text-zinc-300)
+    - "Always free" section: 5 free features (✓ in text-zinc-500, text-zinc-400)
+    - Footer: "Questions? Contact matt@cadre.careers"
+  - **Stripe lib** (`lib/stripe.ts` — new): Shared Stripe client + price ID config
+  - **POST /api/checkout** (`app/api/checkout/route.ts` — new): Creates Stripe Checkout session with 14-day trial, mode subscription, customer_email from Clerk, userId in metadata
+  - **GET /api/billing/portal** (`app/api/billing/portal/route.ts` — new): Creates Stripe Customer Portal session, looks up customer by email
+  - **POST /api/stripe/webhook** (`app/api/stripe/webhook/route.ts` — new): Verifies webhook signature, handles `customer.subscription.created/updated/deleted` and `invoice.payment_failed`. Updates `users` table in Supabase with plan, stripe_customer_id, stripe_subscription_id, trial_ends_at
+  - **GET /api/subscription** (`app/api/subscription/route.ts` — new): Returns { status, isPro, isTrialing, trialDaysRemaining } from Supabase users table
+  - **SubscriptionProvider** (`hooks/useSubscription.tsx` — updated): Now fetches real subscription status from `/api/subscription` on auth. Falls back to free state if not signed in or on error.
+  - **stripe** npm package installed
+- **Broke:** Nothing. Zero TypeScript errors.
+- **Env vars needed:** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID`, `NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID`
+- **Supabase schema note:** `users` table needs columns: `stripe_customer_id`, `stripe_subscription_id`, `trial_ends_at`
+- **Files changed:** `app/pricing/page.tsx` (new), `lib/stripe.ts` (new), `app/api/checkout/route.ts` (new), `app/api/billing/portal/route.ts` (new), `app/api/stripe/webhook/route.ts` (new), `app/api/subscription/route.ts` (new), `hooks/useSubscription.tsx`, `docs/CHANGELOG.md`
+
+---
+
 ### Session: Prompt 12 — Command Palette Search
 - **Shipped:**
   - **CommandPalette** (`components/CommandPalette.tsx` — new):
