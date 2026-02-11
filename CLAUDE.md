@@ -62,7 +62,7 @@ api/
 
 **Companies** (~1,343 records): Name, Slug, Website, Logo URL, Stage, About, VCs (linked), Industry, ATS Platform, jobsApiUrl
 **Investors** (~201 records): Name, Slug, Website, Logo URL, Portfolio Companies (linked)
-**Job Listings** (~16,000+ records): Title, Company (linked), Location, Posted Date, Job URL, Job Description, Function, Industry, content (raw HTML from ATS)
+**Jobs** (~16,000+ records): Title, Company (linked), Location, Posted Date, Job URL, Job Description, Function, Industry, content (raw HTML from ATS)
 **Industries**: Name, Slug
 
 ## Critical Rules
