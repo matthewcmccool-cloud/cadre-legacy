@@ -1159,3 +1159,58 @@ export async function getRecentCompanies(limit: number = 8): Promise<RecentCompa
     .filter(c => c.name)
     .slice(0, limit);
 }
+
+// ── Similar companies (shared industry + investor) ──────────────────
+export interface SimilarCompanyItem {
+  name: string;
+  slug: string;
+  url?: string;
+  jobCount: number;
+}
+
+export async function getSimilarCompanies(
+  companyName: string,
+  industry: string | undefined,
+  investorNames: string[],
+  limit: number = 8,
+): Promise<SimilarCompanyItem[]> {
+  if (!industry) return [];
+
+  // Fetch all companies in the same industry
+  const records = await fetchAllAirtable(TABLES.companies, {
+    fields: ['Company', 'URL', 'VCs', 'Stage'],
+    filterByFormula: `AND({Industry} = '${industry.replace(/'/g, "\\'")}', {Company} != '${companyName.replace(/'/g, "\\'")}')`,
+  });
+
+  // Resolve investor IDs to names so we can find shared investors
+  const investorRecords = await fetchAllAirtable(TABLES.investors, {
+    fields: ['Firm Name'],
+  });
+  const investorMap = new Map<string, string>();
+  investorRecords.forEach(r => {
+    investorMap.set(r.id, r.fields['Firm Name'] as string || '');
+  });
+
+  const investorSet = new Set(investorNames);
+
+  // Score by shared investors, then by name
+  const scored = records
+    .map(r => {
+      const name = r.fields['Company'] as string || '';
+      const vcIds = (r.fields['VCs'] || []) as string[];
+      const resolvedInvestors = vcIds.map(id => investorMap.get(id) || '').filter(Boolean);
+      const sharedCount = resolvedInvestors.filter(inv => investorSet.has(inv)).length;
+      return {
+        name,
+        slug: toSlug(name),
+        url: r.fields['URL'] as string || undefined,
+        jobCount: 0,
+        sharedCount,
+      };
+    })
+    .filter(c => c.name)
+    .sort((a, b) => b.sharedCount - a.sharedCount || a.name.localeCompare(b.name))
+    .slice(0, limit);
+
+  return scored.map(({ sharedCount, ...rest }) => rest);
+}

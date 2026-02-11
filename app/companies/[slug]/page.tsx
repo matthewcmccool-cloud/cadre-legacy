@@ -1,4 +1,4 @@
-import { getCompanyBySlug, getJobsByCompany } from '@/lib/airtable';
+import { getCompanyBySlug, getJobsByCompany, getSimilarCompanies } from '@/lib/airtable';
 import { notFound } from 'next/navigation';
 import CompanyPageContent from '@/components/CompanyPageContent';
 import type { Metadata } from 'next';
@@ -39,7 +39,10 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
     notFound();
   }
 
-  const jobs = await getJobsByCompany(company.name);
+  const [jobs, similarCompanies] = await Promise.all([
+    getJobsByCompany(company.name),
+    getSimilarCompanies(company.name, company.industry, company.investors, 8).catch(() => []),
+  ]);
 
   // GEO: Company structured data for LLM citation
   const companySchema = {
@@ -58,13 +61,13 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-[#0e0e0f]">
+    <main className="min-h-screen bg-zinc-950">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(companySchema) }}
       />
       <div className="max-w-5xl mx-auto px-4 pb-12">
-        <CompanyPageContent company={company} jobs={jobs} />
+        <CompanyPageContent company={company} jobs={jobs} similarCompanies={similarCompanies} />
       </div>
     </main>
   );

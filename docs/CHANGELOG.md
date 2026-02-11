@@ -6,6 +6,23 @@ Track what ships, what breaks, what's next. Updated after every Claude Code sess
 
 ## February 11, 2026
 
+### Session: Prompt 6 — Company Detail Page Redesign
+- **Shipped:**
+  - Rewrote `CompanyPageContent.tsx` — complete company page redesign with new layout.
+  - **Breadcrumbs** — `Discover / Companies / {name}` with link navigation.
+  - **Top section** — company logo (favicon), name + `FollowButton` side-by-side, description, metadata chips (`rounded-full`, industry links to `/industry/` page), external links (Website/LinkedIn/X), investor badges linking to `/investors/`.
+  - **FollowButton** (`components/FollowButton.tsx` — new) — reusable follow/unfollow button with three states: anonymous (triggers sign-in modal), not following (outlined `border-zinc-700`), following (filled `bg-purple-600`, hover shows "Unfollow" in `bg-zinc-600`). Uses `useAuth()` and `useFollows()` hooks.
+  - **HiringActivity** (`components/HiringActivity.tsx` — new) — hiring stats section with total roles + new this week counts. SVG sparkline (120x24px, `stroke-purple-500` with gradient fill). Pro gate: 90-day chart blurred behind `backdrop-blur-md` overlay with "Start free trial" CTA when `!isPro`. Uses `useSubscription()`.
+  - **Open Roles** — searchable role list (filter input appears when >5 roles). Each role links to `/jobs/[id]`, shows title, location, department, relative posted date, chevron.
+  - **Similar Companies** — chip grid of related companies with favicons, name, role count. Appears at bottom when available.
+  - **`getSimilarCompanies()`** added to `lib/airtable.ts` — queries companies with same industry, scores by shared investors, returns top N matches. Gracefully catches errors.
+  - Updated `app/companies/[slug]/page.tsx` — parallel fetch of jobs + similarCompanies via `Promise.all`. Passes `similarCompanies` prop to `CompanyPageContent`. Background changed from `bg-[#0e0e0f]` to `bg-zinc-950` for consistency.
+- **Broke:** Nothing. Zero TypeScript errors.
+- **Next:** Prompt 7 (Investor Page Redesign)
+- **Files changed:** `components/CompanyPageContent.tsx`, `components/FollowButton.tsx` (new), `components/HiringActivity.tsx` (new), `lib/airtable.ts`, `app/companies/[slug]/page.tsx`
+
+---
+
 ### Session: Prompt 5 — Discover Page with View Mode Switching
 - **Shipped:**
   - Created `/discover` route (`app/discover/page.tsx`) — unified browsing page with three view modes: Companies (default), Jobs, Investors.
