@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useFollows } from '@/hooks/useFollows';
 import { useToast } from '@/hooks/useToast';
 import type { OnboardingCompany } from '@/lib/airtable';
+import Favicon from '@/components/Favicon';
 
 interface ManageFollowsPanelProps {
   isOpen: boolean;
@@ -39,11 +40,7 @@ function CompanyRow({ company, isFollowed, onToggle, exiting }: CompanyRowProps)
         {isFollowed ? '★' : '☆'}
       </span>
       {domain ? (
-        <img
-          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=24`}
-          alt=""
-          className="w-6 h-6 rounded flex-shrink-0"
-        />
+        <Favicon domain={domain} size={24} className="w-6 h-6 rounded flex-shrink-0" />
       ) : (
         <div className="w-6 h-6 rounded bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-500 flex-shrink-0">
           {company.name.charAt(0)}

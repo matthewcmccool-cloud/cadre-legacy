@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { CompanyTickerItem } from '@/lib/airtable';
+import Favicon from '@/components/Favicon';
 
 interface CompanyTickerProps {
   companies: CompanyTickerItem[];
@@ -89,11 +90,7 @@ export default function CompanyTicker({ companies }: CompanyTickerProps) {
               className="flex items-center gap-1.5 shrink-0 group"
             >
               {domain ? (
-                <img
-                  src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
-                  alt=""
-                  className="w-4 h-4 rounded-sm opacity-60 group-hover:opacity-100 transition-opacity"
-                />
+                <Favicon domain={domain} size={32} className="w-4 h-4 rounded-sm opacity-60 group-hover:opacity-100 transition-opacity" />
               ) : (
                 <div className="w-4 h-4 rounded-sm bg-[#252526] flex items-center justify-center text-[8px] font-bold text-[#555]">
                   {company.name.charAt(0)}

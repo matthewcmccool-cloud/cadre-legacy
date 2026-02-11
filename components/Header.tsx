@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -126,10 +127,13 @@ export default function Header() {
                       className="flex items-center justify-center w-8 h-8 rounded-full bg-zinc-800 text-zinc-300 text-sm font-medium hover:bg-zinc-700 transition-colors overflow-hidden"
                     >
                       {user?.imageUrl ? (
-                        <img
+                        <Image
                           src={user.imageUrl}
                           alt=""
+                          width={32}
+                          height={32}
                           className="w-8 h-8 rounded-full object-cover"
+                          unoptimized
                         />
                       ) : (
                         <span>{user?.firstName?.[0] || user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || '?'}</span>

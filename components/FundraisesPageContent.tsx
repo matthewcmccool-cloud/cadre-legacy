@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { toSlug } from '@/lib/airtable';
 import type { FundraiseItem } from '@/lib/airtable';
 import FollowButton from '@/components/FollowButton';
+import Favicon from '@/components/Favicon';
 
 type TimeFilter = 'all' | 'week' | 'month';
 
@@ -107,11 +108,7 @@ export default function FundraisesPageContent({ fundraises, industries }: Fundra
                     {/* Line 1: Logo + company + raised */}
                     <div className="flex items-center gap-2.5">
                       {domain ? (
-                        <img
-                          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
-                          alt=""
-                          className="w-8 h-8 rounded flex-shrink-0"
-                        />
+                        <Favicon domain={domain} size={32} className="w-8 h-8 rounded flex-shrink-0" />
                       ) : (
                         <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500 flex-shrink-0">
                           {f.companyName.charAt(0)}

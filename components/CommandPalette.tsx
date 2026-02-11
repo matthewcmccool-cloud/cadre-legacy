@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { SearchResult } from '@/lib/airtable';
 import { trackSearch } from '@/lib/analytics';
+import Favicon from '@/components/Favicon';
 
 const getDomain = (url: string | null | undefined) => {
   if (!url) return null;
@@ -178,11 +179,7 @@ export default function CommandPalette({ isOpen, onClose }: CommandPaletteProps)
                           }`}
                         >
                           {domain ? (
-                            <img
-                              src={`https://www.google.com/s2/favicons?domain=${domain}&sz=20`}
-                              alt=""
-                              className="w-5 h-5 rounded-sm flex-shrink-0"
-                            />
+                            <Favicon domain={domain} size={20} className="w-5 h-5 rounded-sm flex-shrink-0" />
                           ) : (
                             <div className="w-5 h-5 rounded-sm bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-zinc-500 flex-shrink-0">
                               {c.name.charAt(0)}

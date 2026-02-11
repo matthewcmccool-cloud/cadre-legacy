@@ -25,5 +25,7 @@ export async function GET() {
   const companyIds = (followsData || []).map((f) => f.company_id);
   const feedData = await getFeedDataForCompanyIds(companyIds);
 
-  return NextResponse.json(feedData);
+  return NextResponse.json(feedData, {
+    headers: { 'Cache-Control': 'private, no-cache, no-store' },
+  });
 }

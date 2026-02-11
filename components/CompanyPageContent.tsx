@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Job, toSlug } from '@/lib/airtable';
+import Favicon from '@/components/Favicon';
 import { trackViewCompany } from '@/lib/analytics';
 import CompanyLogo from '@/components/CompanyLogo';
 import FollowButton from '@/components/FollowButton';
@@ -281,11 +282,7 @@ export default function CompanyPageContent({ company, jobs, similarCompanies = [
                   className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-sm text-zinc-200 border border-zinc-800 transition-colors"
                 >
                   {domain ? (
-                    <img
-                      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
-                      alt=""
-                      className="w-4 h-4 rounded-sm"
-                    />
+                    <Favicon domain={domain} size={32} className="w-4 h-4 rounded-sm" />
                   ) : (
                     <div className="w-4 h-4 rounded-sm bg-zinc-700 flex items-center justify-center text-[8px] font-bold text-zinc-400">
                       {sc.name.charAt(0)}

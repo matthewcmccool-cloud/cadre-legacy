@@ -11,7 +11,9 @@ export async function GET(request: Request) {
 
   try {
     const results = await searchAll(q);
-    return NextResponse.json(results);
+    return NextResponse.json(results, {
+      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' },
+    });
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json({ error: 'Search failed' }, { status: 500 });

@@ -6,6 +6,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import LiveTicker from '@/components/LiveTicker';
 import ManageFollowsPanel from '@/components/ManageFollowsPanel';
 import { FeedCardSkeleton } from '@/components/Skeletons';
+import Favicon from '@/components/Favicon';
 import type { FeedDataResult as FeedData, FeedCompanyItem as FeedCompany } from '@/lib/airtable';
 
 const PAGE_SIZE = 20;
@@ -82,11 +83,7 @@ function CompanyFeedCard({ company, isPro }: { company: FeedCompany; isPro: bool
       {/* Header: logo + company + timestamp */}
       <div className="flex items-start gap-3">
         {domain ? (
-          <img
-            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
-            alt=""
-            className="w-8 h-8 rounded flex-shrink-0 mt-0.5"
-          />
+          <Favicon domain={domain} size={32} className="w-8 h-8 rounded flex-shrink-0 mt-0.5" />
         ) : (
           <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500 flex-shrink-0 mt-0.5">
             {company.name.charAt(0)}

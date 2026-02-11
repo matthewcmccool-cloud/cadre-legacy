@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { Job } from '@/lib/airtable';
+import Favicon from '@/components/Favicon';
 import FollowPortfolioButton from '@/components/FollowPortfolioButton';
 import { useFollows } from '@/hooks/useFollows';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -274,14 +275,7 @@ export default function InvestorPageContent({ investor, jobs }: InvestorPageCont
                   {/* Company Logo */}
                   <div className="flex-shrink-0">
                     {companyDomain ? (
-                      <img
-                        src={`https://www.google.com/s2/favicons?domain=${companyDomain}&sz=32`}
-                        alt=""
-                        className="w-6 h-6 rounded"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
+                      <Favicon domain={companyDomain} size={32} className="w-6 h-6 rounded" />
                     ) : (
                       <div className="w-6 h-6 rounded bg-zinc-800" />
                     )}

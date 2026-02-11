@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFollows } from '@/hooks/useFollows';
 import type { OnboardingCompany, OnboardingInvestor } from '@/lib/airtable';
+import Favicon from '@/components/Favicon';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -46,11 +47,7 @@ function CompanyChip({
       }`}
     >
       {domain ? (
-        <img
-          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=16`}
-          alt=""
-          className="w-4 h-4 rounded-sm flex-shrink-0"
-        />
+        <Favicon domain={domain} size={16} className="w-4 h-4 rounded-sm flex-shrink-0" />
       ) : (
         <span className="w-4 h-4 rounded-sm bg-zinc-700 flex items-center justify-center text-[10px] font-bold text-zinc-500 flex-shrink-0">
           {company.name.charAt(0)}

@@ -30,5 +30,8 @@ export async function GET() {
     trialDaysRemaining = Math.max(0, Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24)));
   }
 
-  return NextResponse.json({ status, isPro, isTrialing, trialDaysRemaining });
+  return NextResponse.json(
+    { status, isPro, isTrialing, trialDaysRemaining },
+    { headers: { 'Cache-Control': 'private, no-cache, no-store' } },
+  );
 }
