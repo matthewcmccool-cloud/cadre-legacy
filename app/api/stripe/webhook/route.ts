@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdmin } from '@/lib/supabase';
+import { triggerEvent, addTag, removeTag } from '@/lib/loops';
 import type Stripe from 'stripe';
 
 export async function POST(req: Request) {
@@ -54,6 +55,27 @@ export async function POST(req: Request) {
           })
           .eq('clerk_id', userId);
 
+        // Trigger Loops transactional emails based on plan state
+        const { data: userData } = await supabase
+          .from('users')
+          .select('email')
+          .eq('clerk_id', userId)
+          .single();
+
+        if (userData?.email) {
+          if (plan === 'trialing') {
+            const trialEnd = subscription.trial_end
+              ? new Date(subscription.trial_end * 1000).toISOString()
+              : '';
+            await triggerEvent(userData.email, 'trial_started', { trialEndsAt: trialEnd });
+          } else if (plan === 'active') {
+            await triggerEvent(userData.email, 'subscription_confirmed');
+            await addTag(userData.email, 'pro');
+          } else if (plan === 'canceled') {
+            await removeTag(userData.email, 'pro');
+          }
+        }
+
         break;
       }
 
@@ -66,6 +88,16 @@ export async function POST(req: Request) {
           .from('users')
           .update({ plan: 'free', trial_ends_at: null })
           .eq('clerk_id', userId);
+
+        // Remove pro tag in Loops
+        const { data: deletedUser } = await supabase
+          .from('users')
+          .select('email')
+          .eq('clerk_id', userId)
+          .single();
+        if (deletedUser?.email) {
+          await removeTag(deletedUser.email, 'pro');
+        }
 
         break;
       }
