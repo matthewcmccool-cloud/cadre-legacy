@@ -6,6 +6,30 @@ Track what ships, what breaks, what's next. Updated after every Claude Code sess
 
 ## February 11, 2026
 
+### Session: Prompt 12 — Command Palette Search
+- **Shipped:**
+  - **CommandPalette** (`components/CommandPalette.tsx` — new):
+    - Full-screen overlay (`bg-black/60`) with centered modal (`bg-zinc-900 border border-zinc-800 rounded-xl max-w-lg`)
+    - Animation: fade-in backdrop + scale-up modal, 150ms
+    - Search input: magnifying glass icon + "Search companies, investors, roles..." placeholder, auto-focus, `bg-transparent` no border
+    - Results grouped by type with section headers (`text-xs text-zinc-500 uppercase tracking-wide`)
+    - Companies: logo 20px + name + industry + stage, max 3
+    - Investors: name, max 3
+    - Jobs: title + company name, max 3
+    - Keyboard navigation: ↑↓ to highlight (`bg-zinc-800`), Enter to navigate, ESC to close
+    - Mouse hover highlights rows, click navigates to entity page
+    - No results: "No results for '[query]'" centered
+    - Footer: "ESC to close" right-aligned (`text-xs text-zinc-600`)
+    - Debounced search (200ms) with loading spinner
+  - **`searchAll()`** added to `lib/airtable.ts` — searches companies by name, investors by Firm Name, jobs by Job Title via Airtable `SEARCH(LOWER(...))` formula. Resolves industry names for companies and company names for jobs. Sorts by relevance (prefix match first). Returns max 3 per type.
+  - **`GET /api/search?q=`** (`app/api/search/route.ts` — new) — public search endpoint
+  - **Header wired up**: ⌘K (Mac) / Ctrl+K (Windows) global shortcut, desktop search button, mobile search icon all open CommandPalette. Removed TODO comments.
+  - **CSS animations**: `animate-fade-in`, `animate-scale-in` in `globals.css`
+- **Broke:** Nothing. Zero TypeScript errors.
+- **Files changed:** `components/CommandPalette.tsx` (new), `app/api/search/route.ts` (new), `lib/airtable.ts`, `components/Header.tsx`, `app/globals.css`, `docs/CHANGELOG.md`
+
+---
+
 ### Session: Prompt 11 — Manage Follows Panel + Toast System
 - **Shipped:**
   - **ToastProvider + useToast hook** (`hooks/useToast.tsx` — new):

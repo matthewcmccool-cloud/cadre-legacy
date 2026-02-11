@@ -1538,3 +1538,119 @@ export async function getFeedDataForCompanyIds(companyIds: string[]): Promise<Fe
     topFunctions,
   };
 }
+
+// ── Global Search ──
+// Searches companies, investors, and jobs by name/title.
+
+export interface SearchResult {
+  companies: { name: string; slug: string; url?: string; industry?: string; stage?: string }[];
+  investors: { name: string; slug: string }[];
+  jobs: { id: string; title: string; company: string; companySlug: string }[];
+}
+
+export async function searchAll(query: string): Promise<SearchResult> {
+  const q = query.trim();
+  if (!q) return { companies: [], investors: [], jobs: [] };
+
+  const escaped = q.replace(/"/g, '\\"');
+
+  // Search all three in parallel using Airtable SEARCH formula
+  const [companyResults, investorResults, jobResults] = await Promise.all([
+    fetchAirtable(TABLES.companies, {
+      filterByFormula: `SEARCH(LOWER("${escaped}"), LOWER({Company}))`,
+      maxRecords: 10,
+      fields: ['Company', 'URL', 'Stage', 'Industry', 'Slug'],
+    }),
+    fetchAirtable(TABLES.investors, {
+      filterByFormula: `SEARCH(LOWER("${escaped}"), LOWER({Firm Name}))`,
+      maxRecords: 10,
+      fields: ['Firm Name'],
+    }),
+    fetchAirtable(TABLES.jobs, {
+      filterByFormula: `SEARCH(LOWER("${escaped}"), LOWER({Job Title}))`,
+      maxRecords: 10,
+      fields: ['Job Title', 'Companies'],
+    }),
+  ]);
+
+  // Resolve industry names for companies
+  let industryMap = new Map<string, string>();
+  const allIndustryIds = new Set<string>();
+  companyResults.records.forEach((r: { fields: Record<string, unknown> }) => {
+    const ids = (r.fields['Industry'] || []) as string[];
+    ids.forEach(id => allIndustryIds.add(id));
+  });
+  if (allIndustryIds.size > 0) {
+    const indResult = await fetchAirtable(TABLES.industries, { fields: ['Industry Name'] });
+    indResult.records.forEach((r: { id: string; fields: Record<string, unknown> }) => {
+      industryMap.set(r.id, r.fields['Industry Name'] as string || '');
+    });
+  }
+
+  // Resolve company names for jobs (linked field)
+  const companyIdsFromJobs = new Set<string>();
+  jobResults.records.forEach((r: { fields: Record<string, unknown> }) => {
+    const ids = (r.fields['Companies'] || []) as string[];
+    ids.forEach(id => companyIdsFromJobs.add(id));
+  });
+  const jobCompanyMap = new Map<string, string>();
+  if (companyIdsFromJobs.size > 0) {
+    // Fetch company names for linked records — use existing company results if possible
+    const allCompanyRecords = await fetchAllAirtable(TABLES.companies, {
+      fields: ['Company'],
+    });
+    allCompanyRecords.forEach(r => {
+      jobCompanyMap.set(r.id, r.fields['Company'] as string || '');
+    });
+  }
+
+  const ql = q.toLowerCase();
+
+  // Sort: exact prefix match first, then contains
+  const sortByRelevance = <T extends { sortName: string }>(items: T[]): T[] => {
+    return items.sort((a, b) => {
+      const aPrefix = a.sortName.toLowerCase().startsWith(ql) ? 0 : 1;
+      const bPrefix = b.sortName.toLowerCase().startsWith(ql) ? 0 : 1;
+      return aPrefix - bPrefix || a.sortName.localeCompare(b.sortName);
+    });
+  };
+
+  const companies = sortByRelevance(
+    companyResults.records.map((r: { id: string; fields: Record<string, unknown> }) => {
+      const name = r.fields['Company'] as string || '';
+      const industryIds = (r.fields['Industry'] || []) as string[];
+      return {
+        name,
+        slug: r.fields['Slug'] as string || toSlug(name),
+        url: r.fields['URL'] as string || undefined,
+        industry: industryIds.length > 0 ? industryMap.get(industryIds[0]) || undefined : undefined,
+        stage: r.fields['Stage'] as string || undefined,
+        sortName: name,
+      };
+    })
+  ).slice(0, 3).map(({ sortName, ...rest }) => rest);
+
+  const investors = sortByRelevance(
+    investorResults.records.map((r: { fields: Record<string, unknown> }) => {
+      const name = r.fields['Firm Name'] as string || '';
+      return { name, slug: toSlug(name), sortName: name };
+    })
+  ).slice(0, 3).map(({ sortName, ...rest }) => rest);
+
+  const jobs = sortByRelevance(
+    jobResults.records.map((r: { id: string; fields: Record<string, unknown> }) => {
+      const title = r.fields['Job Title'] as string || '';
+      const companyIds = (r.fields['Companies'] || []) as string[];
+      const companyName = companyIds.length > 0 ? jobCompanyMap.get(companyIds[0]) || '' : '';
+      return {
+        id: r.id,
+        title,
+        company: companyName,
+        companySlug: toSlug(companyName),
+        sortName: title,
+      };
+    })
+  ).slice(0, 3).map(({ sortName, ...rest }) => rest);
+
+  return { companies, investors, jobs };
+}
