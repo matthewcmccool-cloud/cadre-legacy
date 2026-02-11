@@ -6,6 +6,25 @@ Track what ships, what breaks, what's next. Updated after every Claude Code sess
 
 ## February 11, 2026
 
+### Session: Prompt 15 — Settings Page
+- **Shipped:**
+  - **Settings layout** (`app/settings/layout.tsx` — new): Desktop left sidebar tabs + mobile stacked tabs, URL-routed (/settings, /settings/alerts, /settings/billing)
+  - **Account tab** (`app/settings/page.tsx` — new): Email (read-only from Clerk), auth method detection (Google vs email), "Delete account" with confirmation modal → calls `DELETE /api/account`
+  - **Alerts tab** (`app/settings/alerts/page.tsx` — new):
+    - Toggle components (w-9 h-5, purple-600 on, zinc-700 off, CSS only)
+    - Weekly digest: toggle (default on)
+    - Daily digest: toggle with PRO badge, time picker dropdown (hourly, 9 AM default), disabled for free users with upgrade CTA
+    - Real-time alerts: PRO badge, 4 sub-toggles (new roles, fundraises, surges, stalls), upgrade CTA for free users
+    - Newsletter: toggle (default on)
+    - Immediate save on toggle change (PUT /api/preferences), "Saved" fade confirmation
+  - **Billing tab** (`app/settings/billing/page.tsx` — new): Conditionally renders based on subscription status: Free (upgrade CTA), Trialing (trial days remaining + manage billing), Active (manage billing + switch to annual), Canceled (reactivate link), Past Due (update payment). "Manage billing" opens Stripe Portal via `/api/billing/portal`.
+  - **GET/PUT /api/preferences** (`app/api/preferences/route.ts` — new): Fetches/upserts alert_preferences in Supabase, maps snake_case DB columns to camelCase API fields
+  - **DELETE /api/account** (`app/api/account/route.ts` — new): Deletes follows, alert_preferences, user record from Supabase, then deletes Clerk user
+- **Broke:** Nothing. Zero TypeScript errors.
+- **Files changed:** `app/settings/layout.tsx` (new), `app/settings/page.tsx` (new), `app/settings/alerts/page.tsx` (new), `app/settings/billing/page.tsx` (new), `app/api/preferences/route.ts` (new), `app/api/account/route.ts` (new), `docs/CHANGELOG.md`
+
+---
+
 ### Session: Prompt 14 — Pro Feature Gating
 - **Shipped:**
   - **ProGate** (`components/ProGate.tsx` — new): Reusable gating component — renders children if `isPro`, fallback otherwise
