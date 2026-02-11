@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState, useMemo, useCallback } from 'react';
 import FilterDropdown, { type FilterOption } from './FilterDropdown';
 import ActiveFilters from './ActiveFilters';
@@ -50,6 +50,7 @@ export default function SearchFilters({
   totalCount = 0,
 }: SearchFiltersProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -77,7 +78,7 @@ export default function SearchFilters({
       params.delete(key);
     }
     params.delete('page');
-    router.push(`/?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   }, [searchParams, router]);
 
   // ── Build dropdown options with counts from job data ────────────
@@ -153,7 +154,7 @@ export default function SearchFilters({
       params.delete('search');
     }
     params.delete('page');
-    router.push(`/?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const clearSearch = useCallback(() => {
@@ -161,7 +162,7 @@ export default function SearchFilters({
     params.delete('search');
     params.delete('page');
     setSearch('');
-    router.push(`/?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   }, [searchParams, router]);
 
   // ── Active filters for chip row ─────────────────────────────────
@@ -196,8 +197,8 @@ export default function SearchFilters({
 
   const handleClearAll = useCallback(() => {
     setSearch('');
-    router.push('/');
-  }, [router]);
+    router.push(pathname);
+  }, [router, pathname]);
 
   // ── Count active filters for mobile button ──────────────────────
   const activeCount = activeFilters.length;

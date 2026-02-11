@@ -6,6 +6,24 @@ Track what ships, what breaks, what's next. Updated after every Claude Code sess
 
 ## February 11, 2026
 
+### Session: Prompt 5 — Discover Page with View Mode Switching
+- **Shipped:**
+  - Created `/discover` route (`app/discover/page.tsx`) — unified browsing page with three view modes: Companies (default), Jobs, Investors.
+  - **ViewSwitcher** (`components/ViewSwitcher.tsx` — new) — pill-style toggle bar (`bg-zinc-900 rounded-lg`), active pill `bg-zinc-800 text-zinc-100`, inactive `text-zinc-500`. Each pill shows count. URL-driven via `?view=` param.
+  - Discover page fetches view-specific data in parallel via `Promise.all` — only loads data for the active view. ISR at 60 minutes.
+  - Companies view renders existing `CompanyDirectory` component (chip grid, search, stage/investor/industry filters).
+  - Jobs view renders existing `SearchFilters` + `JobTable` + `Pagination` (full filter bar, department/location/industry/work mode/investor/posted).
+  - Investors view renders existing `InvestorDirectory` (chip grid, search, industry/stage filters, sort).
+  - **Updated `Pagination.tsx`** — uses `usePathname()` instead of hardcoded `/`. Now works on any route (`/discover`, `/`, future routes).
+  - **Updated `SearchFilters.tsx`** — uses `usePathname()` for all `router.push()` calls and `handleClearAll()`. No longer hardcoded to `/`.
+  - **Redirects** — `next.config.js` redirects `/?tab=companies` → `/discover?view=companies` and `/?tab=investors` → `/discover?view=investors` (permanent 301).
+  - Homepage (`/`) already redirects signed-in users to `/discover` (from Prompt 4).
+- **Broke:** Nothing. Zero TypeScript errors. All existing components reused without modification to their internal logic.
+- **Next:** Prompt 6 (Company Page Redesign)
+- **Files changed:** `app/discover/page.tsx` (new), `components/ViewSwitcher.tsx` (new), `components/Pagination.tsx`, `components/SearchFilters.tsx`, `next.config.js`
+
+---
+
 ### Session: Prompt 4 — Homepage Redesign
 - **Shipped:**
   - Rewrote `app/page.tsx` — complete homepage redesign for anonymous visitors.
