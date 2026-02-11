@@ -6,6 +6,30 @@ Track what ships, what breaks, what's next. Updated after every Claude Code sess
 
 ## February 11, 2026
 
+### Session: Prompt 10 — My Feed
+- **Shipped:**
+  - **Feed page** (`app/feed/page.tsx` — new) — protected by middleware (auth required), server component fetches stats for ticker
+  - **FeedPageContent** (`components/FeedPageContent.tsx` — new) — full client component with:
+    - **LiveTicker** at top (reuses homepage ticker with platform stats)
+    - **This Week's Signal** card — dismissable with X, same content as homepage
+    - **Summary bar**: "Following N companies · N open roles · N new this week" with bold numbers
+    - **Activity feed**: Company cards with logo, name, latest job posting, expand/collapse for multiple roles, Pro-only investor context line
+    - **Pro Teaser cards**: inserted every ~10 cards for free users ("🔒 N of your companies are surging → Start free trial")
+    - **Right sidebar** (desktop only, `w-72`): Quick Stats (following/roles/new), Top Functions (horizontal mini bars with %), Recently Funded companies
+    - **Empty state**: "Not following any companies" with link to Discover
+    - **Load more** pagination (20 per page)
+    - **"Manage" link** in summary bar (top right, `text-xs text-zinc-400`)
+    - Mobile: full-width cards, sidebar hidden
+  - **`GET /api/feed`** (`app/api/feed/route.ts` — new) — auth-protected, fetches user's follows from Supabase, enriches with Airtable company + job data via `getFeedDataForCompanyIds()`
+  - **`getFeedDataForCompanyIds()`** added to `lib/airtable.ts` — takes array of company IDs, returns enriched companies with recent jobs, investors, industry, stage, plus aggregated stats (total roles, new this week, top functions)
+  - **Homepage redirect** updated: signed-in users now redirect to `/feed` instead of `/discover`
+- **Broke:** Nothing. Zero TypeScript errors.
+- **Note:** feed_events Supabase table exists but isn't populated yet. MVP feed uses Airtable company + jobs data directly. When OpenClaw populates feed_events, the API route can be enhanced.
+- **Next:** Prompt 11 (Manage Follows Panel + Toast System)
+- **Files changed:** `app/feed/page.tsx` (new), `components/FeedPageContent.tsx` (new), `app/api/feed/route.ts` (new), `lib/airtable.ts`, `app/page.tsx`, `docs/CHANGELOG.md`
+
+---
+
 ### Session: Prompt 9 — Onboarding Flow (Playlist)
 - **Shipped:**
   - **OnboardingModal** (`components/OnboardingModal.tsx` — new) — full-screen overlay that appears after sign-up:

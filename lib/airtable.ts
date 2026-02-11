@@ -1391,3 +1391,150 @@ export async function getOnboardingData(): Promise<OnboardingData> {
 
   return { popularCompanies, topInvestors, allCompanies };
 }
+
+// ── Feed Data ──
+// Returns enriched company data for a user's followed company IDs,
+// plus summary stats for the feed page.
+
+export interface FeedCompanyItem {
+  id: string;
+  name: string;
+  slug: string;
+  url?: string;
+  stage?: string;
+  industry?: string;
+  investors: string[];
+  jobCount: number;
+  recentJobs: { id: string; title: string; location: string; function?: string; postedDate?: string }[];
+}
+
+export interface FeedDataResult {
+  companies: FeedCompanyItem[];
+  totalFollowed: number;
+  totalRoles: number;
+  newThisWeek: number;
+  topFunctions: { name: string; count: number; pct: number }[];
+}
+
+export async function getFeedDataForCompanyIds(companyIds: string[]): Promise<FeedDataResult> {
+  if (companyIds.length === 0) {
+    return { companies: [], totalFollowed: 0, totalRoles: 0, newThisWeek: 0, topFunctions: [] };
+  }
+
+  const followedIds = new Set(companyIds);
+
+  const [companyRecords, investorRecords, industryRecords] = await Promise.all([
+    fetchAllAirtable(TABLES.companies, {
+      fields: ['Company', 'URL', 'VCs', 'Stage', 'Industry', 'Job Listings', 'Slug'],
+    }),
+    fetchAllAirtable(TABLES.investors, {
+      fields: ['Firm Name'],
+    }),
+    fetchAirtable(TABLES.industries, { fields: ['Industry Name'] }),
+  ]);
+
+  const investorMap = new Map<string, string>();
+  investorRecords.forEach(r => {
+    investorMap.set(r.id, r.fields['Firm Name'] as string || '');
+  });
+
+  const industryMap = new Map<string, string>();
+  industryRecords.records.forEach((r: { id: string; fields: Record<string, unknown> }) => {
+    industryMap.set(r.id, r.fields['Industry Name'] as string || '');
+  });
+
+  const followed = companyRecords.filter(r => followedIds.has(r.id));
+
+  // Collect job IDs
+  const allJobIds: string[] = [];
+  const companyJobIdsMap = new Map<string, string[]>();
+  for (const r of followed) {
+    const jobIds = (r.fields['Job Listings'] || []) as string[];
+    companyJobIdsMap.set(r.id, jobIds.slice(0, 10));
+    allJobIds.push(...jobIds.slice(0, 10));
+  }
+
+  // Fetch recent jobs (up to 100)
+  const jobIdSet = new Set(allJobIds.slice(0, 200));
+  let jobRecords: { id: string; fields: Record<string, unknown> }[] = [];
+  if (jobIdSet.size > 0) {
+    const jobResult = await fetchAirtable(TABLES.jobs, {
+      fields: ['Job Title', 'Location', 'Function', 'Date Posted', 'Job ID'],
+      sort: [{ field: 'Date Posted', direction: 'desc' }],
+      maxRecords: 100,
+    });
+    jobRecords = jobResult.records.filter(r => jobIdSet.has(r.id));
+  }
+
+  const jobMap = new Map<string, { id: string; fields: Record<string, unknown> }>();
+  for (const r of jobRecords) {
+    jobMap.set(r.id, r);
+  }
+
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  let newThisWeek = 0;
+  const functionCounts = new Map<string, number>();
+  let totalRoles = 0;
+
+  const companies: FeedCompanyItem[] = followed
+    .map(r => {
+      const name = r.fields['Company'] as string || '';
+      const vcIds = (r.fields['VCs'] || []) as string[];
+      const industryIds = (r.fields['Industry'] || []) as string[];
+      const allJobsCount = ((r.fields['Job Listings'] || []) as string[]).length;
+      const jobIds = companyJobIdsMap.get(r.id) || [];
+
+      totalRoles += allJobsCount;
+
+      const recentJobs = jobIds
+        .map(jid => jobMap.get(jid))
+        .filter(Boolean)
+        .map(j => {
+          const postedDate = j!.fields['Date Posted'] as string || '';
+          const fn = j!.fields['Function'] as string || '';
+          if (fn) functionCounts.set(fn, (functionCounts.get(fn) || 0) + 1);
+          if (postedDate && new Date(postedDate) >= weekAgo) newThisWeek++;
+          return {
+            id: j!.id,
+            title: j!.fields['Job Title'] as string || 'Untitled Role',
+            location: j!.fields['Location'] as string || 'Remote',
+            function: fn || undefined,
+            postedDate: postedDate || undefined,
+          };
+        })
+        .slice(0, 5);
+
+      return {
+        id: r.id,
+        name,
+        slug: r.fields['Slug'] as string || toSlug(name),
+        url: r.fields['URL'] as string || undefined,
+        stage: r.fields['Stage'] as string || undefined,
+        industry: industryIds.length > 0 ? industryMap.get(industryIds[0]) || undefined : undefined,
+        investors: vcIds.map(id => investorMap.get(id) || '').filter(Boolean),
+        jobCount: allJobsCount,
+        recentJobs,
+      };
+    })
+    .filter(c => c.name)
+    .sort((a, b) => b.jobCount - a.jobCount);
+
+  const totalFnCount = Array.from(functionCounts.values()).reduce((s, v) => s + v, 0);
+  const topFunctions = Array.from(functionCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name, count]) => ({
+      name,
+      count,
+      pct: totalFnCount > 0 ? Math.round((count / totalFnCount) * 100) : 0,
+    }));
+
+  return {
+    companies,
+    totalFollowed: followedIds.size,
+    totalRoles,
+    newThisWeek,
+    topFunctions,
+  };
+}

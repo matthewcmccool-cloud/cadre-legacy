@@ -13,11 +13,10 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function Home() {
-  // Redirect signed-in users to /feed (once it exists — Prompt 10)
-  // For now, redirect to /discover so they see useful content
+  // Redirect signed-in users to their personalized feed
   const { userId } = await auth();
   if (userId) {
-    redirect('/discover');
+    redirect('/feed');
   }
 
   // Fetch real stats for the hero
