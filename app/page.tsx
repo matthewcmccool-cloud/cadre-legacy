@@ -46,11 +46,51 @@ export default async function Home() {
     },
   };
 
+  // FAQ schema — seeds AI search queries we want to be cited for
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What VC-backed companies are hiring right now?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Cadre tracks open roles at ${stats.companyCount.toLocaleString()}+ VC-backed companies including portfolios from a16z, Sequoia, Founders Fund, and 200+ other venture firms. Browse all companies and their open roles at cadre-ui-psi.vercel.app/discover.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How do I track hiring at startups backed by a specific investor?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Cadre organizes jobs through a knowledge graph linking Jobs to Companies to Investors. Visit any investor page (e.g. /investors/sequoia) to see all open roles across their entire portfolio, updated daily from Greenhouse, Lever, and Ashby.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What is hiring activity intelligence?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Hiring activity intelligence is the practice of tracking workforce signals — open roles, hiring velocity, surge/stall patterns, and function mix — across companies to surface strategic insights. Cadre is the first platform purpose-built for hiring activity intelligence in the venture ecosystem.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Which startup sectors are hiring the most?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Cadre tracks ${stats.jobCount.toLocaleString()}+ open roles across industries including AI & Machine Learning, Fintech, Healthcare, Cybersecurity, and Developer Tools. Use the Discover page to filter by industry and see real-time hiring data.`,
+        },
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-zinc-950">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([websiteSchema, faqSchema]) }}
       />
 
       {/* 1. LIVE DATA TICKER */}

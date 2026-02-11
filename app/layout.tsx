@@ -12,10 +12,10 @@ const BASE_URL = 'https://cadre-ui-psi.vercel.app';
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Cadre | Curated Roles at Exceptional Technology Companies',
+    default: 'Cadre — Hiring Activity Intelligence for the Venture Ecosystem',
     template: '%s | Cadre',
   },
-  description: 'Curated roles at exceptional technology companies, by the investors who back them.',
+  description: 'Hiring intelligence for the venture ecosystem. Track open roles, hiring velocity, and workforce signals across 1,300+ VC-backed companies organized by investor portfolio.',
   openGraph: {
     type: 'website',
     siteName: 'Cadre',
@@ -31,7 +31,7 @@ const organizationSchema = {
   '@type': 'Organization',
   name: 'Cadre',
   url: 'https://cadre-ui-psi.vercel.app',
-  description: 'Curated roles at exceptional technology companies, by the investors who back them.',
+  description: 'Hiring activity intelligence platform for the venture ecosystem. Track open roles, hiring velocity, and workforce signals across 1,300+ VC-backed companies.',
 };
 
 export default function RootLayout({
