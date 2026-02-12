@@ -949,6 +949,7 @@ export const getJobsForCompanyIds = getJobsForCompanyNames;
 // ── Directory page data ─────────────────────────────────────────────
 
 export interface CompanyDirectoryItem {
+  id: string;
   name: string;
   slug: string;
   url?: string;
@@ -986,6 +987,7 @@ export async function getAllCompaniesForDirectory(): Promise<CompanyDirectoryIte
       const industryIds = (r.fields['Industry'] || []) as string[];
       const jobIds = (r.fields['Jobs'] || []) as string[];
       return {
+        id: r.id,
         name,
         slug: toSlug(name),
         url: r.fields['URL'] as string || undefined,
@@ -1000,6 +1002,7 @@ export async function getAllCompaniesForDirectory(): Promise<CompanyDirectoryIte
 }
 
 export interface InvestorDirectoryItem {
+  id: string;
   name: string;
   slug: string;
   url?: string;
@@ -1054,6 +1057,7 @@ export async function getAllInvestorsForDirectory(): Promise<InvestorDirectoryIt
       const name = r.fields['Firm Name'] as string || '';
       const url = r.fields['Website'] as string || undefined;
       return {
+        id: r.id,
         name,
         slug: toSlug(name),
         url,

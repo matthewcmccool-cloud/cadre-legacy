@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Job } from '@/lib/data';
 import Favicon from '@/components/Favicon';
+import FollowButton from '@/components/FollowButton';
 
 interface JobTableProps {
   jobs: Job[];
@@ -172,6 +173,11 @@ export default function JobTable({ jobs }: JobTableProps) {
                   </>
                 )}
               </div>
+            </div>
+
+            {/* Save bookmark */}
+            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <FollowButton companyId={job.id} companyName={job.title} variant="save" compact />
             </div>
 
             {/* Chevron */}
