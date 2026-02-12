@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { formatNumber } from '@/lib/format';
 
 const VIEWS = [
   { key: 'jobs', label: 'Jobs' },
@@ -11,7 +12,7 @@ const VIEWS = [
 
 function formatCount(count: number): string {
   if (count > 5000) return '5,000+';
-  return count.toLocaleString();
+  return formatNumber(count);
 }
 
 interface ViewSwitcherProps {
