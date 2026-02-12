@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStatus } from '@/hooks/useUserStatus';
 import { useFollows } from '@/hooks/useFollows';
+import { formatNumber } from '@/lib/format';
 import ManageFollowsPanel from '@/components/ManageFollowsPanel';
 import { CompanyChipSkeleton } from '@/components/Skeletons';
 import Favicon from '@/components/Favicon';
@@ -311,7 +312,7 @@ export default function ForMePageContent({ stats }: ForMePageContentProps) {
               </>
             )}
             {' '}&middot;{' '}
-            <span className="font-semibold text-zinc-100">{totalRoles.toLocaleString()}</span>{' '}
+            <span className="font-semibold text-zinc-100">{formatNumber(totalRoles)}</span>{' '}
             open roles
           </p>
           <button
