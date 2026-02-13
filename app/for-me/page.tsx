@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 export default async function ForMePage() {
   const stats = await getStats();
