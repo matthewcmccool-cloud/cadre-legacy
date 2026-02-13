@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { useState, useMemo, useCallback, Suspense } from 'react';
+import { useState, useMemo, useCallback, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { CompanyDirectoryItem, InvestorDirectoryItem, Job, JobsResult } from '@/lib/data';
 import { formatNumber } from '@/lib/format';
@@ -91,7 +91,12 @@ const FUNCTION_COLORS: Record<string, string> = {
 };
 
 const STAGES = ['Seed', 'Series A', 'Series B', 'Series C', 'Series D', 'Series E+', 'Growth', 'Public'];
-const INITIAL_DISPLAY_COUNT = 54;
+
+const PAGE_SIZE: Record<ViewKey, number> = {
+  jobs: 25,
+  companies: 50,
+  investors: 50,
+};
 
 const DEPARTMENTS = [
   'Sales & GTM', 'Marketing', 'Engineering', 'AI & Research', 'Product',
@@ -135,17 +140,33 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // ── Ref for scrolling to top of list ─────────────────────────────
+  const listTopRef = useRef<HTMLDivElement>(null);
+
   // ── Active view from URL ──────────────────────────────────────────
   const activeView = (searchParams.get('view') as ViewKey) || 'jobs';
+  const currentPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
 
-  const setView = useCallback((view: ViewKey) => {
+  const pushUrl = useCallback((view: ViewKey, page: number) => {
     const params = new URLSearchParams();
     if (view !== 'jobs') {
       params.set('view', view);
     }
+    if (page > 1) {
+      params.set('page', String(page));
+    }
     const qs = params.toString();
     router.push(pathname + (qs ? `?${qs}` : ''));
   }, [router, pathname]);
+
+  const setView = useCallback((view: ViewKey) => {
+    pushUrl(view, 1);
+  }, [pushUrl]);
+
+  const setPage = useCallback((page: number) => {
+    pushUrl(activeView, page);
+    listTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [pushUrl, activeView]);
 
   // ── Search state ──────────────────────────────────────────────────
   const [search, setSearch] = useState('');
@@ -154,7 +175,6 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
   const [stageFilter, setStageFilter] = useState<string[]>([]);
   const [companyInvestorFilter, setCompanyInvestorFilter] = useState<string[]>([]);
   const [companyIndustryFilter, setCompanyIndustryFilter] = useState<string[]>([]);
-  const [companyExpanded, setCompanyExpanded] = useState(false);
 
   // ── Job filters ───────────────────────────────────────────────────
   const [jobDeptFilter, setJobDeptFilter] = useState<string[]>([]);
@@ -166,7 +186,6 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
   const [investorTypeFilter, setInvestorTypeFilter] = useState<string[]>([]);
   const [investorStageFocusFilter, setInvestorStageFocusFilter] = useState<string[]>([]);
   const [investorIndustryFilter, setInvestorIndustryFilter] = useState<string[]>([]);
-  const [investorExpanded, setInvestorExpanded] = useState(false);
 
   // ── Segment counts ────────────────────────────────────────────────
   const companyCount = companies.length;
@@ -365,7 +384,6 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
     setStageFilter([]);
     setCompanyInvestorFilter([]);
     setCompanyIndustryFilter([]);
-    setCompanyExpanded(false);
     setJobDeptFilter([]);
     setJobLocationFilter([]);
     setJobWorkModeFilter([]);
@@ -373,9 +391,54 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
     setInvestorTypeFilter([]);
     setInvestorStageFocusFilter([]);
     setInvestorIndustryFilter([]);
-    setInvestorExpanded(false);
-    setView(view);
+    setView(view); // resets page to 1
   }, [setView]);
+
+  // ── Reset pagination when search or filters change ─────────────
+  const resetPage = useCallback(() => {
+    if (currentPage !== 1) {
+      pushUrl(activeView, 1);
+    }
+  }, [currentPage, activeView, pushUrl]);
+
+  // Wrap filter setters to reset page
+  const setSearchAndReset = useCallback((v: string) => { setSearch(v); resetPage(); }, [resetPage]);
+  const setStageFilterAndReset = useCallback((v: string[]) => { setStageFilter(v); resetPage(); }, [resetPage]);
+  const setCompanyInvestorFilterAndReset = useCallback((v: string[]) => { setCompanyInvestorFilter(v); resetPage(); }, [resetPage]);
+  const setCompanyIndustryFilterAndReset = useCallback((v: string[]) => { setCompanyIndustryFilter(v); resetPage(); }, [resetPage]);
+  const setJobDeptFilterAndReset = useCallback((v: string[]) => { setJobDeptFilter(v); resetPage(); }, [resetPage]);
+  const setJobLocationFilterAndReset = useCallback((v: string[]) => { setJobLocationFilter(v); resetPage(); }, [resetPage]);
+  const setJobWorkModeFilterAndReset = useCallback((v: string[]) => { setJobWorkModeFilter(v); resetPage(); }, [resetPage]);
+  const setJobPostedFilterAndReset = useCallback((v: string[]) => { setJobPostedFilter(v); resetPage(); }, [resetPage]);
+  const setInvestorTypeFilterAndReset = useCallback((v: string[]) => { setInvestorTypeFilter(v); resetPage(); }, [resetPage]);
+  const setInvestorStageFocusFilterAndReset = useCallback((v: string[]) => { setInvestorStageFocusFilter(v); resetPage(); }, [resetPage]);
+  const setInvestorIndustryFilterAndReset = useCallback((v: string[]) => { setInvestorIndustryFilter(v); resetPage(); }, [resetPage]);
+
+  // ── Pagination slices ──────────────────────────────────────────
+  const jobsPageSize = PAGE_SIZE.jobs;
+  const companiesPageSize = PAGE_SIZE.companies;
+  const investorsPageSize = PAGE_SIZE.investors;
+
+  const jobsTotalPages = Math.max(1, Math.ceil(filteredJobs.length / jobsPageSize));
+  const companiesTotalPages = Math.max(1, Math.ceil(filteredCompanies.length / companiesPageSize));
+  const investorsTotalPages = Math.max(1, Math.ceil(filteredInvestors.length / investorsPageSize));
+
+  const safePage = (page: number, totalPages: number) => Math.min(page, totalPages);
+
+  const paginatedJobs = useMemo(() => {
+    const p = safePage(currentPage, jobsTotalPages);
+    return filteredJobs.slice((p - 1) * jobsPageSize, p * jobsPageSize);
+  }, [filteredJobs, currentPage, jobsTotalPages, jobsPageSize]);
+
+  const paginatedCompanies = useMemo(() => {
+    const p = safePage(currentPage, companiesTotalPages);
+    return filteredCompanies.slice((p - 1) * companiesPageSize, p * companiesPageSize);
+  }, [filteredCompanies, currentPage, companiesTotalPages, companiesPageSize]);
+
+  const paginatedInvestors = useMemo(() => {
+    const p = safePage(currentPage, investorsTotalPages);
+    return filteredInvestors.slice((p - 1) * investorsPageSize, p * investorsPageSize);
+  }, [filteredInvestors, currentPage, investorsTotalPages, investorsPageSize]);
 
   // ══════════════════════════════════════════════════════════════════
   //  RENDER
@@ -434,14 +497,14 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => setSearchAndReset(e.target.value)}
             placeholder={searchPlaceholder}
             className="w-full pl-10 pr-10 py-2.5 bg-[#1a1a1b] text-[#e8e8e8] placeholder-[#999] rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]/50 transition-all"
           />
           {search && (
             <button
               type="button"
-              onClick={() => setSearch('')}
+              onClick={() => setSearchAndReset('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#e8e8e8] transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -456,24 +519,24 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {activeView === 'companies' && (
           <>
-            <FilterDropdown label="Industry" options={companyIndustryOptions} selected={companyIndustryFilter} onChange={setCompanyIndustryFilter} multiSelect={false} searchable />
-            <FilterDropdown label="Stage" options={stageOptions} selected={stageFilter} onChange={setStageFilter} multiSelect={false} />
-            <FilterDropdown label="Backed By" options={companyInvestorOptions} selected={companyInvestorFilter} onChange={setCompanyInvestorFilter} multiSelect={false} searchable />
+            <FilterDropdown label="Industry" options={companyIndustryOptions} selected={companyIndustryFilter} onChange={setCompanyIndustryFilterAndReset} multiSelect={false} searchable />
+            <FilterDropdown label="Stage" options={stageOptions} selected={stageFilter} onChange={setStageFilterAndReset} multiSelect={false} />
+            <FilterDropdown label="Backed By" options={companyInvestorOptions} selected={companyInvestorFilter} onChange={setCompanyInvestorFilterAndReset} multiSelect={false} searchable />
           </>
         )}
         {activeView === 'jobs' && (
           <>
-            <FilterDropdown label="Department" options={jobDeptOptions} selected={jobDeptFilter} onChange={setJobDeptFilter} multiSelect={false} />
-            <FilterDropdown label="Location" options={jobLocationOptions} selected={jobLocationFilter} onChange={setJobLocationFilter} multiSelect={false} searchable />
-            <FilterDropdown label="Work Mode" options={WORK_MODE_OPTIONS} selected={jobWorkModeFilter} onChange={setJobWorkModeFilter} multiSelect={false} />
-            <FilterDropdown label="Posted" options={POSTED_OPTIONS} selected={jobPostedFilter} onChange={setJobPostedFilter} multiSelect={false} />
+            <FilterDropdown label="Department" options={jobDeptOptions} selected={jobDeptFilter} onChange={setJobDeptFilterAndReset} multiSelect={false} />
+            <FilterDropdown label="Location" options={jobLocationOptions} selected={jobLocationFilter} onChange={setJobLocationFilterAndReset} multiSelect={false} searchable />
+            <FilterDropdown label="Work Mode" options={WORK_MODE_OPTIONS} selected={jobWorkModeFilter} onChange={setJobWorkModeFilterAndReset} multiSelect={false} />
+            <FilterDropdown label="Posted" options={POSTED_OPTIONS} selected={jobPostedFilter} onChange={setJobPostedFilterAndReset} multiSelect={false} />
           </>
         )}
         {activeView === 'investors' && (
           <>
-            <FilterDropdown label="Type" options={INVESTOR_TYPE_OPTIONS} selected={investorTypeFilter} onChange={setInvestorTypeFilter} multiSelect={false} />
-            <FilterDropdown label="Stage Focus" options={STAGE_FOCUS_OPTIONS} selected={investorStageFocusFilter} onChange={setInvestorStageFocusFilter} multiSelect={false} />
-            <FilterDropdown label="Industry" options={investorIndustryOptions} selected={investorIndustryFilter} onChange={setInvestorIndustryFilter} multiSelect={false} searchable />
+            <FilterDropdown label="Type" options={INVESTOR_TYPE_OPTIONS} selected={investorTypeFilter} onChange={setInvestorTypeFilterAndReset} multiSelect={false} />
+            <FilterDropdown label="Stage Focus" options={STAGE_FOCUS_OPTIONS} selected={investorStageFocusFilter} onChange={setInvestorStageFocusFilterAndReset} multiSelect={false} />
+            <FilterDropdown label="Industry" options={investorIndustryOptions} selected={investorIndustryFilter} onChange={setInvestorIndustryFilterAndReset} multiSelect={false} searchable />
           </>
         )}
       </div>
@@ -482,34 +545,37 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
       {activeView === 'companies' && hasCompanyFilters && (
         <ActiveFilterChips
           filters={[
-            ...companyIndustryFilter.map(f => ({ label: f, onRemove: () => setCompanyIndustryFilter([]) })),
-            ...stageFilter.map(f => ({ label: f, onRemove: () => setStageFilter([]) })),
-            ...companyInvestorFilter.map(f => ({ label: f, onRemove: () => setCompanyInvestorFilter([]) })),
+            ...companyIndustryFilter.map(f => ({ label: f, onRemove: () => setCompanyIndustryFilterAndReset([]) })),
+            ...stageFilter.map(f => ({ label: f, onRemove: () => setStageFilterAndReset([]) })),
+            ...companyInvestorFilter.map(f => ({ label: f, onRemove: () => setCompanyInvestorFilterAndReset([]) })),
           ]}
-          onClearAll={() => { setCompanyIndustryFilter([]); setStageFilter([]); setCompanyInvestorFilter([]); }}
+          onClearAll={() => { setCompanyIndustryFilterAndReset([]); setStageFilterAndReset([]); setCompanyInvestorFilterAndReset([]); }}
         />
       )}
       {activeView === 'jobs' && hasJobFilters && (
         <ActiveFilterChips
           filters={[
-            ...jobDeptFilter.map(f => ({ label: f, onRemove: () => setJobDeptFilter([]) })),
-            ...jobLocationFilter.map(f => ({ label: f, onRemove: () => setJobLocationFilter([]) })),
-            ...jobWorkModeFilter.map(f => ({ label: f, onRemove: () => setJobWorkModeFilter([]) })),
-            ...jobPostedFilter.map(f => ({ label: POSTED_OPTIONS.find(o => o.value === f)?.label || f, onRemove: () => setJobPostedFilter([]) })),
+            ...jobDeptFilter.map(f => ({ label: f, onRemove: () => setJobDeptFilterAndReset([]) })),
+            ...jobLocationFilter.map(f => ({ label: f, onRemove: () => setJobLocationFilterAndReset([]) })),
+            ...jobWorkModeFilter.map(f => ({ label: f, onRemove: () => setJobWorkModeFilterAndReset([]) })),
+            ...jobPostedFilter.map(f => ({ label: POSTED_OPTIONS.find(o => o.value === f)?.label || f, onRemove: () => setJobPostedFilterAndReset([]) })),
           ]}
-          onClearAll={() => { setJobDeptFilter([]); setJobLocationFilter([]); setJobWorkModeFilter([]); setJobPostedFilter([]); }}
+          onClearAll={() => { setJobDeptFilterAndReset([]); setJobLocationFilterAndReset([]); setJobWorkModeFilterAndReset([]); setJobPostedFilterAndReset([]); }}
         />
       )}
       {activeView === 'investors' && hasInvestorFilters && (
         <ActiveFilterChips
           filters={[
-            ...investorTypeFilter.map(f => ({ label: f, onRemove: () => setInvestorTypeFilter([]) })),
-            ...investorStageFocusFilter.map(f => ({ label: f, onRemove: () => setInvestorStageFocusFilter([]) })),
-            ...investorIndustryFilter.map(f => ({ label: f, onRemove: () => setInvestorIndustryFilter([]) })),
+            ...investorTypeFilter.map(f => ({ label: f, onRemove: () => setInvestorTypeFilterAndReset([]) })),
+            ...investorStageFocusFilter.map(f => ({ label: f, onRemove: () => setInvestorStageFocusFilterAndReset([]) })),
+            ...investorIndustryFilter.map(f => ({ label: f, onRemove: () => setInvestorIndustryFilterAndReset([]) })),
           ]}
-          onClearAll={() => { setInvestorTypeFilter([]); setInvestorStageFocusFilter([]); setInvestorIndustryFilter([]); }}
+          onClearAll={() => { setInvestorTypeFilterAndReset([]); setInvestorStageFocusFilterAndReset([]); setInvestorIndustryFilterAndReset([]); }}
         />
       )}
+
+      {/* ── Scroll anchor for pagination ──────────────────────────── */}
+      <div ref={listTopRef} />
 
       {/* ══════════════════════════════════════════════════════════════
        *  COMPANIES VIEW
@@ -517,14 +583,12 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
       {activeView === 'companies' && (
         <>
           <div className="flex flex-wrap gap-2">
-            {(companyExpanded ? filteredCompanies : filteredCompanies.slice(0, INITIAL_DISPLAY_COUNT)).map((company, i) => {
+            {paginatedCompanies.map((company) => {
               const domain = getDomain(company.url);
-              const isRevealed = companyExpanded && i >= INITIAL_DISPLAY_COUNT;
               return (
                 <div
                   key={company.slug}
-                  className={`inline-flex items-center gap-2 px-3 py-2 bg-[#1a1a1b] hover:bg-[#252526] rounded-lg text-sm text-[#e8e8e8] transition-colors group${isRevealed ? ' animate-chip-reveal' : ''}`}
-                  style={isRevealed ? { animationDelay: `${Math.min((i - INITIAL_DISPLAY_COUNT) * 8, 300)}ms` } : undefined}
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-[#1a1a1b] hover:bg-[#252526] rounded-lg text-sm text-[#e8e8e8] transition-colors group"
                 >
                   <Link href={`/companies/${company.slug}`} className="inline-flex items-center gap-2">
                     {domain ? (
@@ -545,14 +609,6 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
                 </div>
               );
             })}
-            {filteredCompanies.length > INITIAL_DISPLAY_COUNT && (
-              <button
-                onClick={() => setCompanyExpanded(!companyExpanded)}
-                className="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors border border-[#5e6ad2]/40 bg-[#5e6ad2]/20 text-[#8b93e6] hover:bg-[#5e6ad2]/30"
-              >
-                {companyExpanded ? 'Show less' : `View all ${formatNumber(filteredCompanies.length)} \u2192`}
-              </button>
-            )}
           </div>
           {filteredCompanies.length === 0 && (
             <div className="text-center py-16">
@@ -560,6 +616,7 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
               <p className="text-[#999] text-sm mt-1">Try adjusting your search or clearing filters.</p>
             </div>
           )}
+          <DiscoverPagination currentPage={safePage(currentPage, companiesTotalPages)} totalPages={companiesTotalPages} onPageChange={setPage} />
         </>
       )}
 
@@ -575,7 +632,7 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
             </div>
           ) : (
             <div className="rounded-lg border border-[#1a1a1b] divide-y divide-[#1a1a1b] overflow-hidden">
-              {filteredJobs.slice(0, 50).map((job) => {
+              {paginatedJobs.map((job) => {
                 const companyDomain = getDomain(job.companyUrl);
                 const { text: dateText, isNew } = formatDate(job.datePosted);
                 const fnStyle = FUNCTION_COLORS[job.functionName] || 'text-[#888] border-[#333]';
@@ -660,16 +717,7 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
               })}
             </div>
           )}
-          {filteredJobs.length > 50 && (
-            <div className="text-center mt-4">
-              <Link
-                href="/jobs"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium border border-[#5e6ad2]/40 bg-[#5e6ad2]/20 text-[#8b93e6] hover:bg-[#5e6ad2]/30 transition-colors"
-              >
-                View all {formatNumber(filteredJobs.length)} roles &rarr;
-              </Link>
-            </div>
-          )}
+          <DiscoverPagination currentPage={safePage(currentPage, jobsTotalPages)} totalPages={jobsTotalPages} onPageChange={setPage} />
         </>
       )}
 
@@ -679,14 +727,12 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
       {activeView === 'investors' && (
         <>
           <div className="flex flex-wrap gap-2">
-            {(investorExpanded ? filteredInvestors : filteredInvestors.slice(0, INITIAL_DISPLAY_COUNT)).map((investor, i) => {
+            {paginatedInvestors.map((investor) => {
               const domain = getDomain(investor.url);
-              const isRevealed = investorExpanded && i >= INITIAL_DISPLAY_COUNT;
               return (
                 <div
                   key={investor.slug}
-                  className={`inline-flex items-center gap-2 px-3 py-2 bg-[#1a1a1b] hover:bg-[#252526] rounded-lg text-sm text-[#e8e8e8] transition-colors group${isRevealed ? ' animate-chip-reveal' : ''}`}
-                  style={isRevealed ? { animationDelay: `${Math.min((i - INITIAL_DISPLAY_COUNT) * 8, 300)}ms` } : undefined}
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-[#1a1a1b] hover:bg-[#252526] rounded-lg text-sm text-[#e8e8e8] transition-colors group"
                 >
                   <Link href={`/investors/${investor.slug}`} className="inline-flex items-center gap-2">
                     {domain ? (
@@ -707,14 +753,6 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
                 </div>
               );
             })}
-            {filteredInvestors.length > INITIAL_DISPLAY_COUNT && (
-              <button
-                onClick={() => setInvestorExpanded(!investorExpanded)}
-                className="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors border border-[#5e6ad2]/40 bg-[#5e6ad2]/20 text-[#8b93e6] hover:bg-[#5e6ad2]/30"
-              >
-                {investorExpanded ? 'Show less' : `View all ${formatNumber(filteredInvestors.length)} \u2192`}
-              </button>
-            )}
           </div>
           {filteredInvestors.length === 0 && (
             <div className="text-center py-16">
@@ -722,9 +760,51 @@ function DiscoverInner({ companies, investors, jobs, jobsTotalCount, stats }: Di
               <p className="text-[#999] text-sm mt-1">Try a different search term.</p>
             </div>
           )}
+          <DiscoverPagination currentPage={safePage(currentPage, investorsTotalPages)} totalPages={investorsTotalPages} onPageChange={setPage} />
         </>
       )}
     </>
+  );
+}
+
+
+// ── Pagination Controls ───────────────────────────────────────────────
+
+function DiscoverPagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-4 mt-6 mb-2">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage <= 1}
+        className={`text-sm transition-colors ${
+          currentPage <= 1 ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-zinc-200'
+        }`}
+      >
+        &larr; Previous
+      </button>
+      <span className="text-sm text-zinc-400">
+        Page <span className="text-zinc-100">{currentPage}</span> of {totalPages}
+      </span>
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage >= totalPages}
+        className={`text-sm transition-colors ${
+          currentPage >= totalPages ? 'text-zinc-600 cursor-not-allowed' : 'text-zinc-400 hover:text-zinc-200'
+        }`}
+      >
+        Next &rarr;
+      </button>
+    </div>
   );
 }
 
