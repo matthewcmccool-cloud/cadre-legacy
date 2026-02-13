@@ -2,7 +2,7 @@ import { getAllInvestorsForDirectory } from '@/lib/data';
 import InvestorDirectory from '@/components/InvestorDirectory';
 import type { Metadata } from 'next';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const BASE_URL = 'https://cadre-ui-psi.vercel.app';
 
