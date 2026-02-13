@@ -52,9 +52,9 @@ export async function GET(req: Request) {
 
   // Determine plan
   const { data: userData } = await supabase
-    .from('users')
+    .from('user_plans')
     .select('plan, trial_ends_at')
-    .eq('clerk_id', userId)
+    .eq('user_id', userId)
     .single();
 
   let plan: 'free' | 'pro' = 'free';
@@ -126,9 +126,9 @@ export async function POST(req: Request) {
 
   // Check plan limits
   const { data: userData } = await supabase
-    .from('users')
+    .from('user_plans')
     .select('plan, trial_ends_at')
-    .eq('clerk_id', userId)
+    .eq('user_id', userId)
     .single();
 
   let plan: 'free' | 'pro' = 'free';
