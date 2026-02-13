@@ -2,7 +2,7 @@ import { getAllCompaniesForDirectory } from '@/lib/data';
 import CompanyDirectory from '@/components/CompanyDirectory';
 import type { Metadata } from 'next';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const BASE_URL = 'https://cadre-ui-psi.vercel.app';
 
