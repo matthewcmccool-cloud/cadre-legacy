@@ -2,7 +2,6 @@ import { getFilterOptions } from '@/lib/data';
 import LinkedInPostGenerator from '@/components/LinkedInPostGenerator';
 
 export const revalidate = 3600;
-export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'LinkedIn Post Generator | Cadre',
