@@ -50,6 +50,7 @@ export default function Home() {
         <div className="lp-logo">CADRE <span>&middot;</span></div>
         <p>Hiring activity intelligence for AI agents.</p>
         <div className="lp-links">
+          <Link href="/docs">Docs</Link>
           <a href="mailto:matt@cadre.careers">Contact</a>
         </div>
         <div className="lp-meta">&copy; 2026 Cadre Talent Intelligence &middot; <Link href="/privacy">Privacy</Link></div>
