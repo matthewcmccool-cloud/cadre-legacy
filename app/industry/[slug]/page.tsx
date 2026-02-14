@@ -4,7 +4,7 @@ import { getIndustryBySlug, getJobsForCompanyNames } from '@/lib/data';
 import IndustryPageContent from '@/components/IndustryPageContent';
 import type { Metadata } from 'next';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 interface IndustryPageProps {
   params: { slug: string };
