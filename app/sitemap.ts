@@ -3,6 +3,8 @@ import { getAllCompaniesForDirectory, getAllInvestorsForDirectory, getFilterOpti
 
 const BASE_URL = 'https://cadre-ui-psi.vercel.app';
 
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [companies, investors, filterOptions, jobsResult] = await Promise.all([
     getAllCompaniesForDirectory(),
