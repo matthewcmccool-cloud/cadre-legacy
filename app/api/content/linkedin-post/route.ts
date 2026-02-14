@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getInvestorBySlug, getJobsForCompanyNames, toSlug } from '@/lib/data';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const SITE_URL = 'https://cadre-ui-psi.vercel.app';
 
