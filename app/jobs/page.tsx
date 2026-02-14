@@ -21,8 +21,7 @@ export const metadata: Metadata = {
   },
 };
 
-// ISR: regenerate every 60 minutes
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 interface PageProps {
   searchParams: {
