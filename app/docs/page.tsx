@@ -394,7 +394,7 @@ export default function DocsPage() {
 
       {/* ─── Mobile Header ─── */}
       <div className="mob-header">
-        <span className="mob-brand">CADRE<span className="mob-dot"> &middot;</span></span>
+        <span className="mob-brand">Cadre<span className="mob-dot"> &middot;</span></span>
         <button
           className={`mob-toggle ${mobileMenuOpen ? 'open' : ''}`}
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -423,7 +423,7 @@ export default function DocsPage() {
       <div className="docs-app">
         <nav className="sidebar">
           <div className="sb-brand">
-            <span className="mark">CADRE<span className="mark-dot"> &middot;</span></span>
+            <span className="mark">Cadre<span className="mark-dot"> &middot;</span></span>
             <span className="sub">API Docs</span>
           </div>
           <div className="nav-group">
@@ -457,7 +457,7 @@ export default function DocsPage() {
           <div className={`pg ${activePage === 'intro' ? 'active' : ''}`} id="intro">
             <h1>Introduction</h1>
             <p>
-              CADRE is a hiring intelligence API for AI agents. It provides structured, real-time access to job postings, company profiles, investor portfolios, and hiring signals across the VC-backed ecosystem — connected in a single knowledge graph.
+              Cadre is a hiring intelligence API for AI agents. It provides structured, real-time access to job postings, company profiles, investor portfolios, and hiring signals across the VC-backed ecosystem — connected in a single knowledge graph.
             </p>
             <p>
               The API is designed for AI recruiting tools that need to reason across multiple data dimensions in a single call — sourcing agents, career copilots, talent marketplaces, and hiring analytics platforms.
@@ -1025,7 +1025,7 @@ investor=andreessen-horowitz" \\
           {/* ─── Access ─── */}
           <div className={`pg ${activePage === 'access' ? 'active' : ''}`} id="access">
             <h1>Request Access</h1>
-            <p>CADRE is in private beta. We&apos;re onboarding AI recruiting companies as design partners.</p>
+            <p>Cadre is in private beta. We&apos;re onboarding AI recruiting companies as design partners.</p>
             <hr />
             <h2 style={{ marginTop: 0 }}>What you get</h2>
             <p>Sandbox API key with access to the full knowledge graph. We&apos;ll tailor the integration to your agent architecture.</p>

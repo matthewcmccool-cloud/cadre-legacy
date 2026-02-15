@@ -11,7 +11,7 @@ export default function PrivacyPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap');
 
         /* Hide app chrome from root layout — Header renders <header>, Footer renders <footer> */
         body > header, body > footer,
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
           min-height: 100vh;
           background: #09090b;
           color: #a1a1aa;
-          font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Geist Mono', monospace;
           -webkit-font-smoothing: antialiased;
           padding: 0 24px;
         }
