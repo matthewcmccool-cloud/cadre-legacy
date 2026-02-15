@@ -53,16 +53,18 @@ export default function DocsPage() {
           font-weight: 700;
         }
         :root {
-          --bg: #000;
-          --bg-code: #080808;
-          --border: #1a1a1a;
-          --border-light: #111;
-          --text: #888;
-          --text-bright: #bbb;
-          --text-dim: #444;
-          --text-xdim: #2a2a2a;
-          --copied: #666;
-          --mono: 'Geist Mono', 'JetBrains Mono', monospace;
+          --bg: #09090b;
+          --bg-code: #0c0c0e;
+          --border: #1e1e24;
+          --border-light: #16161a;
+          --text: #a1a1aa;
+          --text-bright: #e4e4e7;
+          --text-dim: #71717a;
+          --text-xdim: #52525b;
+          --purple: #9d8ec7;
+          --purple-bright: #7C5CFC;
+          --copied: #9d8ec7;
+          --mono: 'Geist Mono', monospace;
         }
         header, footer, nav.fixed, nav.sticky { display: none !important; }
         body {
@@ -77,7 +79,7 @@ export default function DocsPage() {
           padding: 0 !important;
           margin: 0 !important;
         }
-        ::selection { background: rgba(255,255,255,0.08); }
+        ::selection { background: rgba(124,92,252,0.2); }
         .docs-app {
           display: grid;
           grid-template-columns: 216px 1fr;
@@ -91,7 +93,7 @@ export default function DocsPage() {
           flex-direction: column;
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: #111 transparent;
+          scrollbar-color: #1e1e24 transparent;
         }
         .sb-brand {
           padding: 0 22px 28px;
@@ -105,7 +107,7 @@ export default function DocsPage() {
           letter-spacing: 0.1em;
           text-transform: uppercase;
         }
-        .sb-brand .mark-dot { color: var(--text-dim); }
+        .sb-brand .mark-dot { color: var(--purple-bright); }
         .sb-brand .sub {
           display: block;
           font-size: 11px;
@@ -135,8 +137,8 @@ export default function DocsPage() {
           user-select: none;
           border-radius: 3px;
         }
-        .nav-item:hover { color: var(--text); }
-        .nav-item.active { color: var(--text-bright); background: rgba(255,255,255,0.02); }
+        .nav-item:hover { color: var(--purple); }
+        .nav-item.active { color: var(--purple-bright); background: rgba(124,92,252,0.06); }
         .sb-footer {
           margin-top: auto;
           padding: 16px 22px 0;
@@ -147,12 +149,12 @@ export default function DocsPage() {
           color: var(--text-dim);
           text-decoration: none;
         }
-        .sb-footer a:hover { color: var(--text-bright); }
+        .sb-footer a:hover { color: var(--purple); }
         /* ── Content ── */
         .docs-content {
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: #1a1a1a transparent;
+          scrollbar-color: #1e1e24 transparent;
         }
         .pg {
           display: none;
@@ -199,8 +201,8 @@ export default function DocsPage() {
         .ep-method {
           font-size: 11px;
           font-weight: 700;
-          color: var(--text-bright);
-          background: rgba(255,255,255,0.04);
+          color: var(--purple-bright);
+          background: rgba(124,92,252,0.08);
           padding: 2px 7px;
           border-radius: 2px;
           letter-spacing: 0.03em;
@@ -212,7 +214,7 @@ export default function DocsPage() {
         /* ── Code ── */
         .cb {
           background: var(--bg-code);
-          border: 1px solid var(--border);
+          border: 1px solid rgba(124,92,252,0.12);
           margin: 12px 0 20px;
           overflow: hidden;
           position: relative;
@@ -237,7 +239,7 @@ export default function DocsPage() {
           border-radius: 2px;
           transition: all 0.12s;
         }
-        .cb-copy:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+        .cb-copy:hover { color: var(--purple); background: rgba(124,92,252,0.06); }
         .cb-copy.copied { color: var(--copied); }
         .cb-body {
           padding: 14px 16px;
@@ -255,7 +257,7 @@ export default function DocsPage() {
           padding: 0;
           border-radius: 0;
         }
-        .cv { color: var(--text); }
+        .cv { color: var(--purple); }
         .ck { color: var(--text-xdim); }
         /* ── Params ── */
         .params { margin: 12px 0 20px; }
@@ -301,7 +303,7 @@ export default function DocsPage() {
           padding-bottom: 1px;
           text-decoration: none;
         }
-        .foot-link:hover { color: #fff; border-color: #fff; text-decoration: none; }
+        .foot-link:hover { color: var(--purple); border-color: var(--purple); text-decoration: none; }
         /* ── Next link ── */
         .next-link {
           display: inline-block;
@@ -311,7 +313,7 @@ export default function DocsPage() {
           cursor: pointer;
           transition: color 0.1s;
         }
-        .next-link:hover { color: var(--text-bright); text-decoration: none; }
+        .next-link:hover { color: var(--purple); text-decoration: none; }
         /* ── Mobile Nav ── */
         .mob-header {
           display: none;
@@ -332,7 +334,7 @@ export default function DocsPage() {
           letter-spacing: 0.1em;
           text-transform: uppercase;
         }
-        .mob-brand .mob-dot { color: var(--text-dim); }
+        .mob-brand .mob-dot { color: var(--purple-bright); }
         .mob-toggle {
           background: none;
           border: none;
