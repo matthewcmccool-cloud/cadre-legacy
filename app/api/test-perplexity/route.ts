@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const response = await fetch('https://api.perplexity.ai/chat/completions', {
     method: 'POST',
