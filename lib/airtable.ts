@@ -207,6 +207,17 @@ export async function fetchInvestors(): Promise<{ investors: InvestorListing[]; 
   }
 }
 
+// Helper to build a company name → logo URL map from company data
+export function buildCompanyLogoMap(companies: CompanyListing[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const c of companies) {
+    if (c.logoUrl) {
+      map[c.name] = c.logoUrl;
+    }
+  }
+  return map;
+}
+
 // Helper to build a company name → website domain map from company data
 export function buildCompanyDomainMap(companies: CompanyListing[]): Record<string, string> {
   const map: Record<string, string> = {};
