@@ -46,7 +46,7 @@ async function airtableFetch(tableIdOrName: string, params: Record<string, strin
 
     if (!res.ok) {
       console.error("Airtable error:", json);
-      return [];
+      throw new Error(`Airtable API error: ${res.status}`);
     }
 
     if (json.records) {
@@ -65,19 +65,23 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
 
   try {
     // Fetch jobs sorted by Posted Date descending
-    const records = await airtableFetch("Job Listings", {
-      sort$0$field: "Posted Date",
+    const records = await airtableFetch("Jobs", {
+      "sort[0][field]": "Posted Date",
       "sort[0][direction]": "desc",
       pageSize: "100",
     });
 
     const jobs: JobListing[] = records.map((rec: Record<string, unknown>) => {
       const fields = rec.fields as Record<string, unknown>;
-      const companyName = Array.isArray(fields["Company Name"])
-        ? (fields["Company Name"] as string[])[0]
-        : (fields["Company Name"] as string) || "Unknown";
-      const investors = Array.isArray(fields["Investors"])
-        ? (fields["Investors"] as string[])
+      // Company is a linked record — comes as array of strings
+      const companyRaw = fields["Company"];
+      const companyName = Array.isArray(companyRaw)
+        ? String(companyRaw[0])
+        : (companyRaw as string) || "Unknown";
+      // Investors are linked through Companies, not directly on Jobs
+      const investorsRaw = fields["Investors"] || fields["VCs"] || [];
+      const investors = Array.isArray(investorsRaw)
+        ? (investorsRaw as string[])
         : [];
       const location = (fields["Location"] as string) || "";
 
@@ -86,7 +90,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
         title: (fields["Title"] as string) || "",
         company: companyName,
         companySlug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        companyLogo: (fields["Logo URL"] as string) || null,
+        companyLogo: null,
         location,
         department: (fields["Function"] as string) || "",
         postedDate: (fields["Posted Date"] as string) || "",
