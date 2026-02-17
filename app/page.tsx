@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { fetchJobs, fetchCompanies, fetchInvestors, buildCompanyDomainMap } from '@/lib/airtable';
+import { fetchJobs, fetchCompanies, fetchInvestors, buildCompanyDomainMap, buildCompanyLogoMap } from '@/lib/airtable';
 import JobBoard from './JobBoard';
 
 export const metadata: Metadata = {
@@ -17,8 +17,9 @@ export default async function Home() {
     fetchInvestors(),
   ]);
 
-  // Build domain map so JobBoard can derive Clearbit logo URLs
+  // Build lookup maps for logos
   const companyDomains = buildCompanyDomainMap(companies);
+  const companyLogos = buildCompanyLogoMap(companies);
 
   return (
     <JobBoard
@@ -29,6 +30,7 @@ export default async function Home() {
       investors={investors}
       totalInvestors={totalInvestors}
       companyDomains={companyDomains}
+      companyLogos={companyLogos}
     />
   );
 }

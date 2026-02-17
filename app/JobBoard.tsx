@@ -50,20 +50,29 @@ function getDomain(website: string): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// Company Logo with Clearbit fallback to letter circle
+// Company Logo — tries: direct Airtable URL → Google favicon → letter circle
 // ═══════════════════════════════════════════════════════════════════════
 
 function CompanyLogo({
   name,
+  logoUrl,
   domain,
 }: {
   name: string;
-  domain: string;
+  logoUrl?: string;
+  domain?: string;
 }) {
-  const [failed, setFailed] = useState(false);
-  const logoUrl = domain ? `https://logo.clearbit.com/${domain}` : "";
+  const [srcIndex, setSrcIndex] = useState(0);
 
-  if (!logoUrl || failed) {
+  // Build an ordered list of URLs to try
+  const srcs: string[] = [];
+  if (logoUrl) srcs.push(logoUrl);
+  if (domain) srcs.push(`https://img.logo.dev/${domain}?token=pk_a8CO5glvSNOJpPBxGBm3Iw&size=64&format=png`);
+  if (domain) srcs.push(`https://www.google.com/s2/favicons?domain=${domain}&sz=64`);
+
+  const currentSrc = srcs[srcIndex];
+
+  if (!currentSrc) {
     return (
       <div
         className="flex items-center justify-center shrink-0 rounded-full bg-cadre-border text-cadre-secondary"
@@ -76,13 +85,19 @@ function CompanyLogo({
 
   return (
     <img
-      src={logoUrl}
+      src={currentSrc}
       alt={name}
       width={32}
       height={32}
       className="shrink-0 rounded-full object-cover"
       style={{ border: "1px solid #E0E0E0" }}
-      onError={() => setFailed(true)}
+      onError={() => {
+        if (srcIndex < srcs.length - 1) {
+          setSrcIndex(srcIndex + 1);
+        } else {
+          setSrcIndex(srcs.length); // triggers letter circle fallback
+        }
+      }}
     />
   );
 }
@@ -250,7 +265,7 @@ function CompaniesTab({ companies }: { companies: CompanyListing[] }) {
             key={c.id}
             className="flex items-start gap-3 p-4 bg-white border border-cadre-border hover:border-cadre-text transition-colors"
           >
-            <CompanyLogo name={c.name} domain={domain} />
+            <CompanyLogo name={c.name} logoUrl={c.logoUrl || undefined} domain={domain} />
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm text-cadre-text truncate">{c.name}</div>
               <div className="text-xs text-cadre-secondary mt-0.5">
@@ -284,7 +299,7 @@ function InvestorsTab({ investors }: { investors: InvestorListing[] }) {
             key={inv.id}
             className="flex items-center gap-3 py-3 px-2 border-b border-cadre-border hover:bg-cadre-hover transition-colors -mx-2"
           >
-            <CompanyLogo name={inv.name} domain={domain} />
+            <CompanyLogo name={inv.name} logoUrl={inv.logoUrl || undefined} domain={domain} />
             <div className="flex-1 min-w-0">
               <span className="font-semibold text-sm text-cadre-text">{inv.name}</span>
               {inv.type && (
@@ -313,6 +328,7 @@ export default function JobBoard({
   investors,
   totalInvestors,
   companyDomains,
+  companyLogos,
 }: {
   initialJobs: JobListing[];
   totalJobs: number;
@@ -321,6 +337,7 @@ export default function JobBoard({
   investors: InvestorListing[];
   totalInvestors: number;
   companyDomains: Record<string, string>;
+  companyLogos: Record<string, string>;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("jobs");
   const [search, setSearch] = useState("");
@@ -393,14 +410,14 @@ export default function JobBoard({
     setVisibleCount(PAGE_SIZE);
   }, []);
 
-  // Resolve domain for a job's company: prefer companyDomains map, fallback to companyWebsite field
-  const getJobDomain = useCallback(
+  // Resolve logo URL and domain for a job's company
+  const getJobLogo = useCallback(
     (job: JobListing) => {
-      if (companyDomains[job.company]) return companyDomains[job.company];
-      if (job.companyWebsite) return getDomain(job.companyWebsite);
-      return "";
+      const logoUrl = companyLogos[job.company] || undefined;
+      const domain = companyDomains[job.company] || (job.companyWebsite ? getDomain(job.companyWebsite) : "");
+      return { logoUrl, domain };
     },
-    [companyDomains]
+    [companyDomains, companyLogos]
   );
 
   // Tab definitions
@@ -511,7 +528,7 @@ export default function JobBoard({
           {/* JOB LIST — horizontal spread layout */}
           <div>
             {visible.map((job) => {
-              const domain = getJobDomain(job);
+              const { logoUrl, domain } = getJobLogo(job);
               return (
                 <a
                   key={job.id}
@@ -524,7 +541,7 @@ export default function JobBoard({
                   }}
                 >
                   {/* Col 1: Logo */}
-                  <CompanyLogo name={job.company} domain={domain} />
+                  <CompanyLogo name={job.company} logoUrl={logoUrl} domain={domain} />
 
                   {/* Col 2: Title + Company */}
                   <div className="min-w-0">
