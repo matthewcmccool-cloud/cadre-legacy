@@ -1,11 +1,4 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
-import { ClerkProvider } from '@clerk/nextjs';
-import { dark } from '@clerk/themes';
-import Providers from '@/components/Providers';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import AnalyticsProvider from '@/components/AnalyticsProvider';
 import './globals.css';
 
 const BASE_URL = 'https://cadre-ui-psi.vercel.app';
@@ -13,13 +6,13 @@ const BASE_URL = 'https://cadre-ui-psi.vercel.app';
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Cadre — Hiring Activity Intelligence for the Venture Ecosystem',
-    template: '%s | Cadre',
+    default: 'CADRE — Jobs at the best venture-backed companies',
+    template: '%s | CADRE',
   },
-  description: 'Hiring intelligence for the venture ecosystem. Track open roles, hiring velocity, and workforce signals across 1,300+ VC-backed companies organized by investor portfolio.',
+  description: 'Find jobs at top VC-backed companies. Filter by investor, department, and location.',
   openGraph: {
     type: 'website',
-    siteName: 'Cadre',
+    siteName: 'CADRE',
     locale: 'en_US',
   },
   twitter: {
@@ -30,9 +23,9 @@ export const metadata: Metadata = {
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'Cadre',
+  name: 'CADRE',
   url: 'https://cadre-ui-psi.vercel.app',
-  description: 'Hiring activity intelligence platform for the venture ecosystem. Track open roles, hiring velocity, and workforce signals across 1,300+ VC-backed companies.',
+  description: 'Jobs at the best venture-backed companies.',
 };
 
 export default function RootLayout({
@@ -41,30 +34,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider appearance={{ baseTheme: dark, variables: { colorPrimary: '#5e6ad2' } }}>
-      <html lang="en">
-        <head>
-          <script
-            defer
-            data-domain="cadre-ui-psi.vercel.app"
-            src="https://plausible.io/js/script.js"
-          />
-        </head>
-        <body>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-          />
-          <AnalyticsProvider />
-          <Suspense>
-            <Providers>
-              <Header />
-              {children}
-              <Footer />
-            </Providers>
-          </Suspense>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
+        <script
+          defer
+          data-domain="cadre-ui-psi.vercel.app"
+          src="https://plausible.io/js/script.js"
+        />
+      </head>
+      <body className="bg-cadre-bg text-cadre-text font-body">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        {children}
+      </body>
+    </html>
   );
 }
