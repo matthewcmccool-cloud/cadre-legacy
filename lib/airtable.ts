@@ -46,7 +46,7 @@ async function airtableFetch(tableIdOrName: string, params: Record<string, strin
 
     if (!res.ok) {
       console.error("Airtable error:", json);
-      throw new Error(`Airtable API error: ${res.status}`);
+      return [];
     }
 
     if (json.records) {
@@ -65,24 +65,19 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
 
   try {
     // Fetch jobs sorted by Posted Date descending
-    const records = await airtableFetch("Jobs", {
-      "sort[0][field]": "Posted Date",
+    const records = await airtableFetch("Job Listings", {
+      sort$0$field: "Posted Date",
       "sort[0][direction]": "desc",
       pageSize: "100",
     });
 
     const jobs: JobListing[] = records.map((rec: Record<string, unknown>) => {
       const fields = rec.fields as Record<string, unknown>;
-      // Company is a linked record — comes as array of strings (lookup) or record IDs
-      const companyRaw = fields["Company"];
-      const companyName = Array.isArray(companyRaw)
-        ? String(companyRaw[0])
-        : (companyRaw as string) || "Unknown";
-      // Investors are linked through Companies, not directly on Jobs
-      // Check for a lookup field if it exists, otherwise empty
-      const investorsRaw = fields["Investors"] || fields["VCs"] || [];
-      const investors = Array.isArray(investorsRaw)
-        ? (investorsRaw as string[])
+      const companyName = Array.isArray(fields["Company Name"])
+        ? (fields["Company Name"] as string[])[0]
+        : (fields["Company Name"] as string) || "Unknown";
+      const investors = Array.isArray(fields["Investors"])
+        ? (fields["Investors"] as string[])
         : [];
       const location = (fields["Location"] as string) || "";
 
@@ -91,7 +86,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
         title: (fields["Title"] as string) || "",
         company: companyName,
         companySlug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        companyLogo: null,
+        companyLogo: (fields["Logo URL"] as string) || null,
         location,
         department: (fields["Function"] as string) || "",
         postedDate: (fields["Posted Date"] as string) || "",
