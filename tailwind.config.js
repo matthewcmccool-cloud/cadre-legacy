@@ -8,14 +8,19 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'sans-serif'],
-        mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 'Source Code Pro', 'monospace'],
+        heading: ['"Space Mono"', 'monospace'],
+        body: ['"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
-        'cadre-black': '#1a1a1a',
-        'cadre-gray': '#4a4a4a',
-        'cadre-light': '#f5f5f5',
-        'cadre-link': '#3d3d3d',
+        'cadre-bg': '#F2F2F2',
+        'cadre-text': '#1A1A1A',
+        'cadre-secondary': '#666666',
+        'cadre-border': '#E0E0E0',
+        'cadre-hover': '#EAEAEA',
+        'cadre-red': '#EA4335',
+        'cadre-blue': '#4285F4',
+        'cadre-yellow': '#FBBC04',
+        'cadre-green': '#34A853',
       },
     },
   },

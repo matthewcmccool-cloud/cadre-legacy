@@ -2,13 +2,13 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Cadre — Hiring Activity Intelligence',
-    short_name: 'Cadre',
-    description: 'Hiring activity intelligence for AI agents.',
+    name: 'CADRE — Jobs at VC-backed companies',
+    short_name: 'CADRE',
+    description: 'Find jobs at top VC-backed companies.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#000000',
-    theme_color: '#000000',
+    background_color: '#F2F2F2',
+    theme_color: '#F2F2F2',
     icons: [
       {
         src: '/icon.svg',

@@ -11,19 +11,12 @@ export default function PrivacyPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap');
-
-        /* Hide app chrome from root layout — Header renders <header>, Footer renders <footer> */
-        body > header, body > footer,
-        header.sticky, footer.py-16,
-        nav.fixed, nav.sticky { display: none !important; }
-
         .pp * { box-sizing: border-box; margin: 0; padding: 0; }
         .pp {
           min-height: 100vh;
-          background: #09090b;
-          color: #a1a1aa;
-          font-family: 'Geist Mono', monospace;
+          background: #F2F2F2;
+          color: #666666;
+          font-family: 'DM Sans', -apple-system, sans-serif;
           -webkit-font-smoothing: antialiased;
           padding: 0 24px;
         }
@@ -37,35 +30,36 @@ export default function PrivacyPage() {
           align-items: center;
           gap: 6px;
           font-size: 13px;
-          color: #52525b;
+          color: #666666;
           text-decoration: none;
           transition: color 0.15s;
           margin-bottom: 48px;
         }
-        .pp-back:hover { color: #a1a1aa; }
+        .pp-back:hover { color: #1A1A1A; }
         .pp-title {
           font-size: 28px;
-          font-weight: 600;
-          color: #fafafa;
+          font-weight: 700;
+          color: #1A1A1A;
+          font-family: 'Space Mono', monospace;
           letter-spacing: -0.02em;
           margin-bottom: 8px;
         }
         .pp-date {
           font-size: 13px;
-          color: #52525b;
+          color: #666666;
           margin-bottom: 48px;
         }
         .pp h2 {
           font-size: 16px;
           font-weight: 600;
-          color: #e4e4e7;
+          color: #1A1A1A;
           margin-top: 36px;
           margin-bottom: 12px;
         }
         .pp p {
           font-size: 14px;
           line-height: 1.7;
-          color: #71717a;
+          color: #666666;
           margin-bottom: 16px;
         }
         .pp ul {
@@ -76,7 +70,7 @@ export default function PrivacyPage() {
         .pp li {
           font-size: 14px;
           line-height: 1.7;
-          color: #71717a;
+          color: #666666;
           padding-left: 16px;
           position: relative;
           margin-bottom: 4px;
@@ -89,16 +83,16 @@ export default function PrivacyPage() {
           width: 4px;
           height: 4px;
           border-radius: 50%;
-          background: #3f3f46;
+          background: #E0E0E0;
         }
         .pp-divider {
           border: none;
-          border-top: 1px solid #1c1c1e;
+          border-top: 1px solid #E0E0E0;
           margin: 48px 0 32px;
         }
         .pp-footer {
           font-size: 13px;
-          color: #3f3f46;
+          color: #666666;
         }
 
         @media (max-width: 640px) {

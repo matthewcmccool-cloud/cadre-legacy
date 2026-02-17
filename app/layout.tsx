@@ -6,13 +6,13 @@ const BASE_URL = 'https://cadre-ui-psi.vercel.app';
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Cadre — Hiring Activity Intelligence for AI Agents',
-    template: '%s | Cadre',
+    default: 'CADRE — Jobs at the best venture-backed companies',
+    template: '%s | CADRE',
   },
-  description: 'Hiring activity intelligence for AI agents.',
+  description: 'Find jobs at top VC-backed companies. Filter by investor, department, and location.',
   openGraph: {
     type: 'website',
-    siteName: 'Cadre',
+    siteName: 'CADRE',
     locale: 'en_US',
   },
   twitter: {
@@ -23,9 +23,9 @@ export const metadata: Metadata = {
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'Cadre',
+  name: 'CADRE',
   url: 'https://cadre-ui-psi.vercel.app',
-  description: 'Hiring activity intelligence for AI agents.',
+  description: 'Jobs at the best venture-backed companies.',
 };
 
 export default function RootLayout({
@@ -36,13 +36,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
         <script
           defer
           data-domain="cadre-ui-psi.vercel.app"
           src="https://plausible.io/js/script.js"
         />
       </head>
-      <body>
+      <body className="bg-cadre-bg text-cadre-text font-body">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}

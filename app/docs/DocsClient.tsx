@@ -30,41 +30,23 @@ export default function DocsClient() {
   return (
     <>
       <style>{`
-        @font-face {
-          font-family: 'Geist Mono';
-          src: url('https://cdn.jsdelivr.net/gh/nicro950/geist-mono@main/fonts/GeistMono-Regular.woff2') format('woff2');
-          font-weight: 400;
-        }
-        @font-face {
-          font-family: 'Geist Mono';
-          src: url('https://cdn.jsdelivr.net/gh/nicro950/geist-mono@main/fonts/GeistMono-Medium.woff2') format('woff2');
-          font-weight: 500;
-        }
-        @font-face {
-          font-family: 'Geist Mono';
-          src: url('https://cdn.jsdelivr.net/gh/nicro950/geist-mono@main/fonts/GeistMono-Bold.woff2') format('woff2');
-          font-weight: 700;
-        }
-
         :root {
-          --bg: #000;
-          --bg-code: #0a0a0a;
-          --border: #1a1a1a;
-          --text: #999;
-          --text-bright: #ccc;
-          --text-dim: #555;
-          --purple: #9d8ec7;
-          --purple-dim: rgba(157, 142, 199, 0.15);
-          --purple-border: rgba(157, 142, 199, 0.25);
-          --mono: 'Geist Mono', 'JetBrains Mono', monospace;
+          --bg: #F2F2F2;
+          --bg-code: #FFFFFF;
+          --border: #E0E0E0;
+          --text: #666666;
+          --text-bright: #1A1A1A;
+          --text-dim: #999999;
+          --purple: #4285F4;
+          --purple-dim: rgba(66, 133, 244, 0.08);
+          --purple-border: rgba(66, 133, 244, 0.25);
+          --mono: 'Space Mono', monospace;
         }
-
-        header, footer, nav.fixed, nav.sticky { display: none !important; }
 
         body {
           background: var(--bg) !important;
           color: var(--text) !important;
-          font-family: var(--mono) !important;
+          font-family: 'DM Sans', -apple-system, sans-serif !important;
           font-size: 13px !important;
           line-height: 1.7 !important;
           -webkit-font-smoothing: antialiased !important;
@@ -157,7 +139,7 @@ export default function DocsClient() {
         .content {
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: #1a1a1a transparent;
+          scrollbar-color: #ccc transparent;
         }
 
         .pg {
@@ -233,8 +215,8 @@ export default function DocsClient() {
 
         .k { color: var(--text-bright); }
         .s { color: var(--purple); }
-        .n { color: #7ec89d; }
-        .c { color: #444; }
+        .n { color: #34A853; }
+        .c { color: #999; }
 
         /* ── Endpoint badge ── */
         .ep {
@@ -246,7 +228,7 @@ export default function DocsClient() {
         }
 
         .ep .m {
-          color: #7ec89d;
+          color: #34A853;
           font-weight: 500;
         }
 
@@ -270,7 +252,7 @@ export default function DocsClient() {
 
         td {
           padding: 4px 10px;
-          border-bottom: 1px solid #0d0d0d;
+          border-bottom: 1px solid var(--border);
         }
 
         td:first-child { color: var(--purple); white-space: nowrap; }
