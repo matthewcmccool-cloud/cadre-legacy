@@ -189,7 +189,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
   }
 
   try {
-    const records = await airtableFetch("Jobs", {
+    const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
       "sort[0][field]": "Posted Date",
       "sort[0][direction]": "desc",
       pageSize: "100",
@@ -250,7 +250,7 @@ export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: Jo
       params.filterByFormula = formula;
     }
 
-    const records = await airtableFetch("Jobs", params);
+    const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", params);
     const jobs: JobListing[] = records.map(mapRecordToJob);
     return { jobs, total: jobs.length };
   } catch (err) {
@@ -272,7 +272,7 @@ export async function fetchAllDepartments(): Promise<string[]> {
 
   try {
     // Fetch only the Function field to keep it lightweight
-    const records = await airtableFetch("Jobs", {
+    const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
       "fields[]": "Function",
       pageSize: "100",
     });
@@ -300,7 +300,7 @@ export async function fetchAllLocations(): Promise<string[]> {
   }
 
   try {
-    const records = await airtableFetch("Jobs", {
+    const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
       "fields[]": "Location",
       pageSize: "100",
     });
@@ -330,15 +330,15 @@ export async function fetchCompanies(): Promise<{ companies: CompanyListing[]; t
   }
 
   try {
-    const records = await airtableFetch("Companies", {
-      "sort[0][field]": "Name",
+    const records = await airtableFetch("tbl4dA7iDr7mjF6Gt", {
+      "sort[0][field]": "Company",
       "sort[0][direction]": "asc",
       pageSize: "100",
     });
 
     const companies: CompanyListing[] = records.map((rec: Record<string, unknown>) => {
       const fields = rec.fields as Record<string, unknown>;
-      const name = (fields["Name"] as string) || "";
+      const name = (fields["Company"] as string) || "";
       const investorsRaw = fields["VCs"] || [];
       const investors = Array.isArray(investorsRaw) ? (investorsRaw as string[]) : [];
       const jobCountRaw = fields["Job Count"] || fields["Jobs"] || 0;
@@ -348,7 +348,7 @@ export async function fetchCompanies(): Promise<{ companies: CompanyListing[]; t
         id: rec.id as string,
         name,
         slug: (fields["Slug"] as string) || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        website: (fields["Website"] as string) || "",
+        website: (fields["URL"] as string) || "",
         logoUrl: (fields["Logo URL"] as string) || null,
         stage: (fields["Stage"] as string) || "",
         industry: Array.isArray(fields["Industry"]) ? (fields["Industry"] as string[])[0] || "" : (fields["Industry"] as string) || "",
@@ -370,16 +370,16 @@ export async function fetchInvestors(): Promise<{ investors: InvestorListing[]; 
   }
 
   try {
-    const records = await airtableFetch("Investors", {
-      "sort[0][field]": "Name",
+    const records = await airtableFetch("tblH6MmoXCn3Ve0K2", {
+      "sort[0][field]": "Firm Name",
       "sort[0][direction]": "asc",
       pageSize: "100",
     });
 
     const investors: InvestorListing[] = records.map((rec: Record<string, unknown>) => {
       const fields = rec.fields as Record<string, unknown>;
-      const name = (fields["Name"] as string) || "";
-      const portfolioRaw = fields["Portfolio Companies"] || [];
+      const name = (fields["Firm Name"] as string) || "";
+      const portfolioRaw = fields["PortCo's"] || [];
       const portfolioCount = Array.isArray(portfolioRaw) ? portfolioRaw.length : 0;
 
       return {
