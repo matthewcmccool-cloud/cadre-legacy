@@ -192,7 +192,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
     const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
       "sort[0][field]": "Created Time",
       "sort[0][direction]": "desc",
-      pageSize: "100",
+      pageSize: "100", maxRecords: "100",
     });
 
     const jobs: JobListing[] = records.map(mapRecordToJob);
@@ -242,7 +242,7 @@ export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: Jo
     const params: Record<string, string> = {
       "sort[0][field]": "Created Time",
       "sort[0][direction]": "desc",
-      pageSize: "100",
+      pageSize: "100", maxRecords: "100",
     };
 
     const formula = buildFilterFormula(filters);
@@ -274,7 +274,7 @@ export async function fetchAllDepartments(): Promise<string[]> {
     // Fetch only the Function field to keep it lightweight
     const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
       "fields[]": "Function",
-      pageSize: "100",
+      pageSize: "100", maxRecords: "100",
     });
 
     const set = new Set<string>();
@@ -302,7 +302,7 @@ export async function fetchAllLocations(): Promise<string[]> {
   try {
     const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
       "fields[]": "Location",
-      pageSize: "100",
+      pageSize: "100", maxRecords: "100",
     });
 
     const set = new Set<string>();
@@ -333,7 +333,7 @@ export async function fetchCompanies(): Promise<{ companies: CompanyListing[]; t
     const records = await airtableFetch("tbl4dA7iDr7mjF6Gt", {
       "sort[0][field]": "Company",
       "sort[0][direction]": "asc",
-      pageSize: "100",
+      pageSize: "100", maxRecords: "100",
     });
 
     const companies: CompanyListing[] = records.map((rec: Record<string, unknown>) => {
@@ -373,7 +373,7 @@ export async function fetchInvestors(): Promise<{ investors: InvestorListing[]; 
     const records = await airtableFetch("tblH6MmoXCn3Ve0K2", {
       "sort[0][field]": "Firm Name",
       "sort[0][direction]": "asc",
-      pageSize: "100",
+      pageSize: "100", maxRecords: "100",
     });
 
     const investors: InvestorListing[] = records.map((rec: Record<string, unknown>) => {
