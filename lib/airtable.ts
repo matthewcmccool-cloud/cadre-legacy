@@ -117,7 +117,7 @@ function mapRecordToJob(rec: Record<string, unknown>): JobListing {
     companyWebsite: (fields["Company Website"] as string) || "",
     location,
     department: (fields["Function"] as string) || "",
-    postedDate: (fields["Posted Date"] as string) || "",
+    postedDate: (fields["Created Time"] as string) || "",
     jobUrl: (fields["Job URL"] as string) || "",
     investors,
     isRemote: location.toLowerCase().includes("remote"),
@@ -180,7 +180,7 @@ function buildFilterFormula(filters: JobFilters): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// fetchJobs — returns 100 most recent jobs sorted by Posted Date desc
+// fetchJobs — returns 100 most recent jobs sorted by Created Time desc
 // ═══════════════════════════════════════════════════════════════════════
 
 export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }> {
@@ -190,7 +190,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
 
   try {
     const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
-      "sort[0][field]": "Posted Date",
+      "sort[0][field]": "Created Time",
       "sort[0][direction]": "desc",
       pageSize: "100",
     });
@@ -240,7 +240,7 @@ export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: Jo
 
   try {
     const params: Record<string, string> = {
-      "sort[0][field]": "Posted Date",
+      "sort[0][field]": "Created Time",
       "sort[0][direction]": "desc",
       pageSize: "100",
     };
