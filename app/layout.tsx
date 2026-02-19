@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     default: 'CADRE — Jobs at the best venture-backed companies',
     template: '%s | CADRE',
   },
-  description: 'Find jobs at top VC-backed companies. Filter by investor, department, and location.',
+  description: 'Find jobs at top VC-backed companies. Filter by function, industry, and location.',
   openGraph: {
     type: 'website',
     siteName: 'CADRE',
