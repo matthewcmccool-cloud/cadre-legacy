@@ -1,229 +1,58 @@
-// ═══════════════════════════════════════════════════════════════════════
-// Cadre — Airtable Data Fetching
-// Uses response.text() + JSON.parse() per CLAUDE.md (never .json())
-// Falls back to mock data when AIRTABLE_API_KEY is not configured
-// ═══════════════════════════════════════════════════════════════════════
+import { createClient } from '@supabase/supabase-js';
 
-export interface JobListing {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Types
+
+export interface Job {
   id: string;
   title: string;
   company: string;
-  companySlug: string;
-  companyLogo: string | null;
-  companyWebsite: string;
-  location: string;
+  company_slug: string;
+  company_website: string;
+  company_logo_url: string;
+  company_stage: string;
+  investors: string[];
   function: string;
+  department: string;
+  location: string;
+  job_url: string;
+  posted_at: string;
   industry: string;
-  postedDate: string;
-  jobUrl: string;
-  investors: string[];
-  isRemote: boolean;
 }
 
-export interface CompanyListing {
+export interface Company {
   id: string;
   name: string;
   slug: string;
   website: string;
-  logoUrl: string | null;
+  logo_url: string;
   stage: string;
-  industry: string;
+  hq_location: string;
+  about: string;
+  linkedin_url: string;
+  twitter_url: string;
+  ats_platform: string;
+  total_raised: number;
+  headcount_range: string;
+  industries: string[];
   investors: string[];
-  jobCount: number;
+  open_roles_count: number;
 }
 
-export interface InvestorListing {
+export interface Investor {
   id: string;
   name: string;
   slug: string;
   website: string;
-  logoUrl: string | null;
+  logo_url: string;
+  bio: string;
+  location: string;
   type: string;
-  portfolioCount: number;
-}
-
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID || "appnDXaCfmGtgt6gk";
-
-const isAirtableConfigured = Boolean(AIRTABLE_API_KEY && AIRTABLE_BASE_ID);
-
-async function airtableFetch(tableIdOrName: string, params: Record<string, string> = {}): Promise<Record<string, unknown>[]> {
-  const url = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(tableIdOrName)}`);
-  for (const [k, v] of Object.entries(params)) {
-    url.searchParams.set(k, v);
-  }
-
-  const allRecords: Record<string, unknown>[] = [];
-  let offset: string | undefined;
-
-  do {
-    if (offset) url.searchParams.set("offset", offset);
-
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` },
-      next: { revalidate: 300 }, // cache 5 min
-    });
-
-    // CRITICAL: use .text() + JSON.parse(), NEVER .json() (see CLAUDE.md)
-    const text = await res.text();
-    const json = JSON.parse(text);
-
-    if (!res.ok) {
-      console.error("Airtable error:", json);
-      throw new Error(`Airtable API error: ${res.status}`);
-    }
-
-    if (json.records) {
-      allRecords.push(...json.records);
-    }
-    offset = json.offset;
-  } while (offset);
-
-  return allRecords;
-}
-
-// Safe fetch that returns [] if table doesn't exist
-async function airtableFetchSafe(tableIdOrName: string, params: Record<string, string> = {}): Promise<Record<string, unknown>[]> {
-  try {
-    return await airtableFetch(tableIdOrName, params);
-  } catch {
-    return [];
-  }
-}
-
-// Check if a value looks like an Airtable record ID (e.g. "recABC123xyz")
-function isRecordId(val: unknown): boolean {
-  return typeof val === "string" && /^rec[A-Za-z0-9]{10,}$/.test(val);
-}
-
-// Resolve a linked record field: if values are record IDs, look them up; otherwise return as-is
-function resolveLinkedField(raw: unknown, nameMap: Map<string, string>): string[] {
-  if (!raw) return [];
-  const arr = Array.isArray(raw) ? raw.map(String) : [String(raw)];
-  return arr
-    .map((val) => isRecordId(val) ? (nameMap.get(val) || "") : val)
-    .filter(Boolean);
-}
-
-// Build a recordId → fieldValue map from a set of records, trying multiple field name candidates
-function buildNameMap(records: Record<string, unknown>[], ...fieldCandidates: string[]): Map<string, string> {
-  const fields = fieldCandidates.length > 0 ? fieldCandidates : ["Name"];
-  const map = new Map<string, string>();
-  for (const rec of records) {
-    const f = rec.fields as Record<string, unknown>;
-    let name = "";
-    for (const field of fields) {
-      const val = f[field];
-      if (typeof val === "string" && val.trim()) {
-        name = val.trim();
-        break;
-      }
-    }
-    if (name) map.set(rec.id as string, name);
-  }
-  return map;
-}
-
-export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }> {
-  if (!isAirtableConfigured) {
-    return { jobs: MOCK_JOBS, total: MOCK_JOBS.length };
-  }
-
-  try {
-    // Fetch jobs + ALL lookup tables in parallel to resolve linked record IDs
-    const [jobRecords, companyRecords, investorRecords, functionRecords, industryRecords] = await Promise.all([
-      airtableFetch("Jobs", {
-        "sort[0][field]": "Posted Date",
-        "sort[0][direction]": "desc",
-        pageSize: "100",
-        maxRecords: "1000",
-      }),
-      airtableFetch("Companies", { pageSize: "100" }),
-      airtableFetchSafe("tblH6MmoXCn3Ve0K2", { pageSize: "100" }), // Investors table by ID
-      airtableFetchSafe("Functions", { pageSize: "100" }),
-      airtableFetchSafe("Industries", { pageSize: "100" }),
-    ]);
-
-    // Build record ID → name lookup maps (try multiple field names for robustness)
-    const companyNameMap = buildNameMap(companyRecords, "Company", "Name");
-    const companyWebsiteMap = new Map<string, string>();
-    for (const rec of companyRecords) {
-      const f = rec.fields as Record<string, unknown>;
-      const url = (f["URL"] as string) || (f["Website"] as string) || "";
-      if (url) companyWebsiteMap.set(rec.id as string, url);
-    }
-
-    const investorNameMap = buildNameMap(investorRecords, "Firm Name", "Name");
-    const functionNameMap = buildNameMap(functionRecords, "Name", "Function");
-    const industryNameMap = buildNameMap(industryRecords, "Name");
-    // Merge industry names into function map as fallback (Function might link to Industries)
-    for (const [k, v] of industryNameMap) {
-      if (!functionNameMap.has(k)) functionNameMap.set(k, v);
-    }
-
-    // Build company ID → industry name map (for resolving job industry through company)
-    const companyIndustryMap = new Map<string, string>();
-    for (const rec of companyRecords) {
-      const f = rec.fields as Record<string, unknown>;
-      const indRaw = f["Industry"];
-      const indArr = resolveLinkedField(indRaw, industryNameMap);
-      if (indArr[0]) companyIndustryMap.set(rec.id as string, indArr[0]);
-    }
-
-    const jobs: JobListing[] = jobRecords.map((rec: Record<string, unknown>) => {
-      const fields = rec.fields as Record<string, unknown>;
-
-      // Company — linked record, resolve ID to name
-      const companyRaw = fields["Companies"] || fields["Company"];
-      const companyIds = Array.isArray(companyRaw) ? companyRaw.map(String) : [];
-      const companyId = companyIds[0] || "";
-      const companyName = companyNameMap.get(companyId)
-        || (companyRaw && !Array.isArray(companyRaw) && !isRecordId(companyRaw) ? String(companyRaw) : "")
-        || "Unknown";
-      const companyWebsite = companyWebsiteMap.get(companyId) || "";
-
-      // Investors — linked records, resolve IDs to names
-      const investorsRaw = fields["Investors"] || fields["VCs"] || [];
-      const investors = resolveLinkedField(investorsRaw, investorNameMap);
-
-      // Function (formerly "Department") — may be linked record, resolve if needed
-      const funcRaw = fields["Function"] || fields["Department"] || fields["Functions"];
-      const funcArr = resolveLinkedField(funcRaw, functionNameMap);
-      const funcName = funcArr[0] || "";
-
-      // Date — prefer "Posted Date", fall back to "Last Seen At" or "Created Time"
-      const postedDate = (fields["Posted Date"] as string)
-        || (fields["Last Seen At"] as string)
-        || (fields["Created Time"] as string)
-        || "";
-
-      const location = (fields["Location"] as string) || "";
-
-      // Industry — resolve through company's linked industry
-      const jobIndustry = companyIndustryMap.get(companyId) || "";
-
-      return {
-        id: rec.id as string,
-        title: (fields["Title"] as string) || "",
-        company: companyName,
-        companySlug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        companyLogo: null,
-        companyWebsite,
-        location,
-        function: funcName,
-        industry: jobIndustry,
-        postedDate,
-        jobUrl: (fields["Job URL"] as string) || "",
-        investors,
-        isRemote: location.toLowerCase().includes("remote"),
-      };
-    });
-
-    return { jobs, total: jobs.length };
-  } catch (err) {
-    console.error("Failed to fetch from Airtable:", err);
-    return { jobs: MOCK_JOBS, total: MOCK_JOBS.length };
-  }
+  portfolio: string[];
+  portfolio_count: number;
 }
 
 export interface JobFilters {
@@ -231,321 +60,176 @@ export interface JobFilters {
   functions?: string[];
   industries?: string[];
   locations?: string[];
-  remote?: "remote" | "onsite";
+  remote?: boolean;
 }
 
-export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: JobListing[]; total: number }> {
-  const { jobs } = await fetchJobs();
-  let result = jobs;
+// Jobs
 
+export async function fetchJobs(): Promise<Job[]> {
+  const { data, error } = await supabase
+    .from('jobs')
+    .select(`
+      id, title, location, function, ats_url, posted_at, first_seen_at, is_active,
+      companies (
+        name, slug, website, logo_url, stage,
+        company_industries ( industries ( name ) ),
+        company_investors ( investors ( name ) )
+      )
+    `)
+    .eq('is_active', true)
+    .order('posted_at', { ascending: false })
+    .limit(1000);
+
+  if (error) {
+    console.error('fetchJobs error', error);
+    return [];
+  }
+
+  return (data || []).map((job: any) => ({
+    id: job.id,
+    title: job.title,
+    company: job.companies?.name || '',
+    company_slug: job.companies?.slug || '',
+    company_website: job.companies?.website || '',
+    company_logo_url: job.companies?.logo_url || '',
+    company_stage: job.companies?.stage || '',
+    investors: job.companies?.company_investors?.map((ci: any) => ci.investors?.name).filter(Boolean) || [],
+    function: job.function || '',
+    department: job.function || '',
+    location: job.location || '',
+    job_url: job.ats_url || '',
+    posted_at: job.posted_at || job.first_seen_at || '',
+    industry: job.companies?.company_industries?.[0]?.industries?.name || '',
+  }));
+}
+
+export async function fetchFilteredJobs(filters: JobFilters): Promise<Job[]> {
+  let query = supabase
+    .from('jobs')
+    .select(`
+      id, title, location, function, ats_url, posted_at, first_seen_at, is_active,
+      companies (
+        name, slug, website, logo_url, stage,
+        company_industries ( industries ( name ) ),
+        company_investors ( investors ( name ) )
+      )
+    `)
+    .eq('is_active', true)
+    .order('posted_at', { ascending: false });
+
+  // server-side filters
+  if (filters.functions?.length) {
+    query = query.in('function', filters.functions);
+  }
+  if (filters.remote) {
+    query = query.ilike('location', '%remote%');
+  }
   if (filters.search) {
-    const q = filters.search.toLowerCase();
-    result = result.filter(
-      (j) =>
-        j.title.toLowerCase().includes(q) ||
-        j.company.toLowerCase().includes(q) ||
-        j.function.toLowerCase().includes(q) ||
-        j.investors.some((inv) => inv.toLowerCase().includes(q))
+    query = query.ilike('title', `%${filters.search}%`);
+  }
+
+  const { data, error } = await query.limit(1000);
+
+  if (error) {
+    console.error('fetchFilteredJobs error', error);
+    return [];
+  }
+
+  let jobs = (data || []).map((job: any) => ({
+    id: job.id,
+    title: job.title,
+    company: job.companies?.name || '',
+    company_slug: job.companies?.slug || '',
+    company_website: job.companies?.website || '',
+    company_logo_url: job.companies?.logo_url || '',
+    company_stage: job.companies?.stage || '',
+    investors: job.companies?.company_investors?.map((ci: any) => ci.investors?.name).filter(Boolean) || [],
+    function: job.function || '',
+    department: job.function || '',
+    location: job.location || '',
+    job_url: job.ats_url || '',
+    posted_at: job.posted_at || job.first_seen_at || '',
+    industry: job.companies?.company_industries?.[0]?.industries?.name || '',
+  }));
+
+  // client-side filters that need relational data
+  if (filters.industries?.length) {
+    jobs = jobs.filter((j) => filters.industries!.includes(j.industry));
+  }
+  if (filters.locations?.length) {
+    jobs = jobs.filter((j) =>
+      filters.locations!.some((l) => j.location.toLowerCase().includes(l.toLowerCase()))
     );
   }
 
-  if (filters.functions && filters.functions.length > 0) {
-    result = result.filter((j) => filters.functions!.includes(j.function));
-  }
-
-  if (filters.industries && filters.industries.length > 0) {
-    result = result.filter((j) => filters.industries!.includes(j.industry));
-  }
-
-  if (filters.locations && filters.locations.length > 0) {
-    result = result.filter((j) => {
-      const city = j.location.split(",")[0].trim();
-      return filters.locations!.includes(city);
-    });
-  }
-
-  if (filters.remote === "remote") {
-    result = result.filter((j) => j.isRemote);
-  } else if (filters.remote === "onsite") {
-    result = result.filter((j) => !j.isRemote);
-  }
-
-  return { jobs: result, total: result.length };
+  return jobs;
 }
 
-export async function fetchCompanies(): Promise<{ companies: CompanyListing[]; total: number }> {
-  if (!isAirtableConfigured) {
-    return { companies: MOCK_COMPANIES, total: MOCK_COMPANIES.length };
-  }
+// Companies
 
-  try {
-    // Fetch companies + lookup tables for resolving VCs and Industry linked records
-    const [companyRecords, investorRecords, industryRecords] = await Promise.all([
-      airtableFetch("Companies", {
-        "sort[0][field]": "Company",
-        "sort[0][direction]": "asc",
-        pageSize: "100",
-      }),
-      airtableFetchSafe("tblH6MmoXCn3Ve0K2", { pageSize: "100" }), // Investors table by ID
-      airtableFetchSafe("Industries", { pageSize: "100" }),
-    ]);
+export async function fetchCompanies(): Promise<Company[]> {
+  const { data, error } = await supabase
+    .from('companies')
+    .select(`
+      id, name, slug, website, logo_url, stage, hq_location, about,
+      linkedin_url, twitter_url, ats_platform, total_raised, headcount_range,
+      company_industries ( industries ( name ) ),
+      company_investors ( investors ( name ) ),
+      jobs ( id, is_active )
+    `)
+    .order('name', { ascending: true });
 
-    const investorNameMap = buildNameMap(investorRecords, "Firm Name", "Name");
-    const industryNameMap = buildNameMap(industryRecords, "Name");
-
-    const companies: CompanyListing[] = companyRecords.map((rec: Record<string, unknown>) => {
-      const fields = rec.fields as Record<string, unknown>;
-      const name = (fields["Company"] as string) || (fields["Name"] as string) || "";
-
-      // VCs — linked record, resolve IDs to investor names
-      const investorsRaw = fields["VCs"] || fields["Investors"] || [];
-      const investors = resolveLinkedField(investorsRaw, investorNameMap);
-
-      // Industry — may be linked record, resolve if needed
-      const industryRaw = fields["Industry"];
-      const industryArr = resolveLinkedField(industryRaw, industryNameMap);
-      const industry = industryArr[0] || "";
-
-      const jobCountRaw = fields["Job Count"] || fields["Jobs"] || 0;
-      const jobCount = Array.isArray(jobCountRaw) ? jobCountRaw.length : (typeof jobCountRaw === "number" ? jobCountRaw : 0);
-
-      return {
-        id: rec.id as string,
-        name,
-        slug: (fields["Slug"] as string) || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        website: (fields["URL"] as string) || (fields["Website"] as string) || "",
-        logoUrl: (fields["Logo URL"] as string) || null,
-        stage: (fields["Stage"] as string) || "",
-        industry,
-        investors,
-        jobCount,
-      };
-    });
-
-    return { companies, total: companies.length };
-  } catch (err) {
-    console.error("Failed to fetch companies from Airtable:", err);
-    return { companies: MOCK_COMPANIES, total: MOCK_COMPANIES.length };
-  }
-}
-
-export async function fetchInvestors(): Promise<{ investors: InvestorListing[]; total: number }> {
-  if (!isAirtableConfigured) {
-    return { investors: MOCK_INVESTORS, total: MOCK_INVESTORS.length };
-  }
-
-  try {
-    const records = await airtableFetch("tblH6MmoXCn3Ve0K2", {
-      "sort[0][field]": "Firm Name",
-      "sort[0][direction]": "asc",
-      pageSize: "100",
-      maxRecords: "300",
-    });
-
-    const investors: InvestorListing[] = records
-      .map((rec: Record<string, unknown>) => {
-        const fields = rec.fields as Record<string, unknown>;
-        const name = (fields["Firm Name"] as string) || (fields["Name"] as string) || "";
-        const portfolioRaw = fields["PortCo's"] || fields["Portfolio Companies"] || [];
-        const portfolioCount = Array.isArray(portfolioRaw) ? portfolioRaw.length : 0;
-
-        return {
-          id: rec.id as string,
-          name,
-          slug: (fields["Slug"] as string) || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-          website: (fields["Website"] as string) || "",
-          logoUrl: (fields["Logo URL"] as string) || null,
-          type: (fields["Type"] as string) || "Venture Capital",
-          portfolioCount,
-        };
-      })
-      // Filter out corrupted entries: names with pipe chars, dashes-only, empty, or record IDs
-      .filter((inv) => {
-        if (!inv.name) return false;
-        if (/^\|[\s\-|]*\|?$/.test(inv.name)) return false;
-        if (/^[-\s]+$/.test(inv.name)) return false;
-        if (isRecordId(inv.name)) return false;
-        return true;
-      });
-
-    return { investors, total: investors.length };
-  } catch (err) {
-    console.error("Failed to fetch investors from Airtable:", err);
-    return { investors: MOCK_INVESTORS, total: MOCK_INVESTORS.length };
-  }
-}
-
-// Fetch unique function names (resolved from linked records)
-export async function fetchAllFunctions(): Promise<string[]> {
-  if (!isAirtableConfigured) {
-    return [...new Set(MOCK_JOBS.map((j) => j.function).filter(Boolean))].sort();
-  }
-  try {
-    const [functionRecords, industryRecords] = await Promise.all([
-      airtableFetchSafe("Functions", { pageSize: "100" }),
-      airtableFetchSafe("Industries", { pageSize: "100" }),
-    ]);
-    // Collect all names from Functions table
-    const names = new Set<string>();
-    for (const rec of functionRecords) {
-      const f = rec.fields as Record<string, unknown>;
-      const name = (f["Name"] as string) || (f["Function"] as string) || "";
-      if (name) names.add(name);
-    }
-    // If Functions table was empty, try Industries
-    if (names.size === 0) {
-      for (const rec of industryRecords) {
-        const f = rec.fields as Record<string, unknown>;
-        const name = (f["Name"] as string) || "";
-        if (name) names.add(name);
-      }
-    }
-    return [...names].sort();
-  } catch {
+  if (error) {
+    console.error('fetchCompanies error', error);
     return [];
   }
+
+  return (data || []).map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    website: c.website || '',
+    logo_url: c.logo_url || '',
+    stage: c.stage || '',
+    hq_location: c.hq_location || '',
+    about: c.about || '',
+    linkedin_url: c.linkedin_url || '',
+    twitter_url: c.twitter_url || '',
+    ats_platform: c.ats_platform || '',
+    total_raised: c.total_raised || 0,
+    headcount_range: c.headcount_range || '',
+    industries: c.company_industries?.map((ci: any) => ci.industries?.name).filter(Boolean) || [],
+    investors: c.company_investors?.map((ci: any) => ci.investors?.name).filter(Boolean) || [],
+    open_roles_count: c.jobs?.filter((j: any) => j.is_active).length || 0,
+  }));
 }
 
-// Fetch unique location strings from Jobs
-export async function fetchAllLocations(): Promise<string[]> {
-  if (!isAirtableConfigured) {
-    const set = new Set(
-      MOCK_JOBS.map((j) => j.location.split(",")[0].trim())
-        .filter((l) => l && l.toLowerCase() !== "remote")
-    );
-    return [...set].sort();
-  }
-  try {
-    const jobRecords = await airtableFetch("Jobs", { pageSize: "100" });
-    const set = new Set<string>();
-    for (const rec of jobRecords) {
-      const f = rec.fields as Record<string, unknown>;
-      const loc = (f["Location"] as string) || "";
-      const city = loc.split(",")[0].trim();
-      if (city && city.toLowerCase() !== "remote") {
-        set.add(city);
-      }
-    }
-    return [...set].sort();
-  } catch {
+// Investors
+
+export async function fetchInvestors(): Promise<Investor[]> {
+  const { data, error } = await supabase
+    .from('investors')
+    .select(`
+      id, name, slug, website, logo_url, bio, location, type,
+      company_investors ( companies ( name, slug ) )
+    `)
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('fetchInvestors error', error);
     return [];
   }
+
+  return (data || []).map((inv: any) => ({
+    id: inv.id,
+    name: inv.name,
+    slug: inv.slug,
+    website: inv.website || '',
+    logo_url: inv.logo_url || '',
+    bio: inv.bio || '',
+    location: inv.location || '',
+    type: inv.type || 'VC',
+    portfolio: inv.company_investors?.map((ci: any) => ci.companies?.name).filter(Boolean) || [],
+    portfolio_count: inv.company_investors?.length || 0,
+  }));
 }
-
-// Fetch unique industry names from Companies (through industry linked field)
-export async function fetchAllIndustries(): Promise<string[]> {
-  if (!isAirtableConfigured) {
-    return [...new Set(MOCK_COMPANIES.map((c) => c.industry).filter(Boolean))].sort();
-  }
-  try {
-    const [industryRecords] = await Promise.all([
-      airtableFetchSafe("Industries", { pageSize: "100" }),
-    ]);
-    const names = new Set<string>();
-    for (const rec of industryRecords) {
-      const f = rec.fields as Record<string, unknown>;
-      const name = (f["Name"] as string) || "";
-      if (name) names.add(name);
-    }
-    // Fallback: extract from companies if Industries table is empty
-    if (names.size === 0) {
-      const companyRecords = await airtableFetch("Companies", { pageSize: "100" });
-      for (const rec of companyRecords) {
-        const f = rec.fields as Record<string, unknown>;
-        const ind = (f["Industry"] as string) || "";
-        if (ind && !isRecordId(ind)) names.add(ind);
-      }
-    }
-    return [...names].sort();
-  } catch {
-    return [];
-  }
-}
-
-// Fetch a single company by slug
-export async function fetchCompanyBySlug(slug: string): Promise<{ company: CompanyListing | null; jobs: JobListing[] }> {
-  const [{ companies }, { jobs }] = await Promise.all([
-    fetchCompanies(),
-    fetchJobs(),
-  ]);
-  const company = companies.find((c) => c.slug === slug) || null;
-  if (!company) return { company: null, jobs: [] };
-  const companyJobs = jobs.filter((j) => j.companySlug === company.slug || j.company === company.name);
-  return { company, jobs: companyJobs };
-}
-
-// Fetch a single investor by slug with their portfolio companies and aggregate jobs
-export async function fetchInvestorBySlug(slug: string): Promise<{ investor: InvestorListing | null; portfolioCompanies: CompanyListing[]; jobs: JobListing[] }> {
-  const [{ investors }, { companies }, { jobs }] = await Promise.all([
-    fetchInvestors(),
-    fetchCompanies(),
-    fetchJobs(),
-  ]);
-  const investor = investors.find((inv) => inv.slug === slug) || null;
-  if (!investor) return { investor: null, portfolioCompanies: [], jobs: [] };
-  // Find companies backed by this investor
-  const portfolioCompanies = companies.filter((c) => c.investors.includes(investor.name));
-  const portfolioNames = new Set(portfolioCompanies.map((c) => c.name));
-  const portfolioJobs = jobs.filter((j) => portfolioNames.has(j.company));
-  return { investor, portfolioCompanies, jobs: portfolioJobs };
-}
-
-// Helper to build a company name → logo URL map from company data
-export function buildCompanyLogoMap(companies: CompanyListing[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const c of companies) {
-    if (c.logoUrl) {
-      map[c.name] = c.logoUrl;
-    }
-  }
-  return map;
-}
-
-// Helper to build a company name → website domain map from company data
-export function buildCompanyDomainMap(companies: CompanyListing[]): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const c of companies) {
-    if (c.website) {
-      try {
-        const domain = new URL(c.website.startsWith("http") ? c.website : `https://${c.website}`).hostname.replace(/^www\./, "");
-        map[c.name] = domain;
-      } catch {
-        // skip invalid URLs
-      }
-    }
-  }
-  return map;
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Mock data for when Airtable is not configured
-// ═══════════════════════════════════════════════════════════════════════
-
-const MOCK_JOBS: JobListing[] = [
-  { id: "1", title: "Senior Backend Engineer", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", function: "Engineering", industry: "Fintech", postedDate: "2026-02-16", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
-  { id: "2", title: "Staff Platform Engineer", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", function: "Engineering", industry: "Fintech", postedDate: "2026-02-15", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
-  { id: "3", title: "ML Engineer, Risk", company: "Vercel", companySlug: "vercel", companyLogo: null, companyWebsite: "https://vercel.com", location: "San Francisco, CA", function: "Engineering", industry: "Developer Tools", postedDate: "2026-02-15", jobUrl: "#", investors: ["Accel", "GV", "Bedrock", "CRV"], isRemote: false },
-  { id: "4", title: "Enterprise Account Executive", company: "Ironclad", companySlug: "ironclad", companyLogo: null, companyWebsite: "https://ironcladapp.com", location: "San Francisco, CA", function: "Sales", industry: "Legal Tech", postedDate: "2026-02-14", jobUrl: "#", investors: ["a16z", "Accel", "Y Combinator", "Sequoia", "Bond"], isRemote: false },
-  { id: "5", title: "Senior Product Designer", company: "Watershed", companySlug: "watershed", companyLogo: null, companyWebsite: "https://watershed.com", location: "Remote", function: "Design", industry: "Climate Tech", postedDate: "2026-02-14", jobUrl: "#", investors: ["Sequoia", "Kleiner Perkins", "Greenoaks"], isRemote: true },
-  { id: "6", title: "Senior Full-Stack Engineer", company: "Anyscale", companySlug: "anyscale", companyLogo: null, companyWebsite: "https://anyscale.com", location: "San Francisco, CA", function: "Engineering", industry: "AI/ML", postedDate: "2026-02-13", jobUrl: "#", investors: ["a16z", "NEA", "Addition"], isRemote: false },
-  { id: "7", title: "Head of People Operations", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", function: "Operations", industry: "Fintech", postedDate: "2026-02-13", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
-  { id: "8", title: "Sr Product Marketing Manager", company: "Mutiny", companySlug: "mutiny", companyLogo: null, companyWebsite: "https://mutinyhq.com", location: "San Francisco, CA", function: "Marketing", industry: "MarTech", postedDate: "2026-02-12", jobUrl: "#", investors: ["Sequoia", "Tiger Global"], isRemote: false },
-  { id: "9", title: "Backend Engineer, Data Pipeline", company: "Watershed", companySlug: "watershed", companyLogo: null, companyWebsite: "https://watershed.com", location: "San Francisco, CA", function: "Engineering", industry: "Climate Tech", postedDate: "2026-02-12", jobUrl: "#", investors: ["Sequoia", "Kleiner Perkins", "Greenoaks"], isRemote: false },
-  { id: "10", title: "VP of Engineering", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", function: "Engineering", industry: "Fintech", postedDate: "2026-02-11", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
-];
-
-const MOCK_COMPANIES: CompanyListing[] = [
-  { id: "c1", name: "Ramp", slug: "ramp", website: "https://ramp.com", logoUrl: null, stage: "Series D", industry: "Fintech", investors: ["a16z", "Founders Fund", "Thrive Capital"], jobCount: 6 },
-  { id: "c2", name: "Vercel", slug: "vercel", website: "https://vercel.com", logoUrl: null, stage: "Series D", industry: "Developer Tools", investors: ["Accel", "GV", "Bedrock", "CRV"], jobCount: 5 },
-  { id: "c3", name: "Watershed", slug: "watershed", website: "https://watershed.com", logoUrl: null, stage: "Series C", industry: "Climate Tech", investors: ["Sequoia", "Kleiner Perkins", "Greenoaks"], jobCount: 4 },
-  { id: "c4", name: "Ironclad", slug: "ironclad", website: "https://ironcladapp.com", logoUrl: null, stage: "Series E", industry: "Legal Tech", investors: ["a16z", "Accel", "Y Combinator", "Sequoia", "Bond"], jobCount: 3 },
-  { id: "c5", name: "Anyscale", slug: "anyscale", website: "https://anyscale.com", logoUrl: null, stage: "Series C", industry: "AI/ML", investors: ["a16z", "NEA", "Addition"], jobCount: 3 },
-];
-
-const MOCK_INVESTORS: InvestorListing[] = [
-  { id: "i1", name: "a16z", slug: "a16z", website: "https://a16z.com", logoUrl: null, type: "Venture Capital", portfolioCount: 6 },
-  { id: "i2", name: "Sequoia", slug: "sequoia", website: "https://sequoiacap.com", logoUrl: null, type: "Venture Capital", portfolioCount: 4 },
-  { id: "i3", name: "Accel", slug: "accel", website: "https://accel.com", logoUrl: null, type: "Venture Capital", portfolioCount: 2 },
-  { id: "i4", name: "Y Combinator", slug: "y-combinator", website: "https://ycombinator.com", logoUrl: null, type: "Accelerator", portfolioCount: 3 },
-  { id: "i5", name: "Founders Fund", slug: "founders-fund", website: "https://foundersfund.com", logoUrl: null, type: "Venture Capital", portfolioCount: 1 },
-];
