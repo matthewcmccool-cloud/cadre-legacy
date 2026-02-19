@@ -363,6 +363,25 @@ export default function JobBoard({
   const [remote, setRemote] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  // Extract unique values for filters
+  const departments = useMemo(() => {
+    const set = new Set(initialJobs.map((j) => j.department).filter(Boolean));
+    return Array.from(set).sort();
+  }, [initialJobs]);
+
+  const locations = useMemo(() => {
+    const set = new Set(
+      initialJobs
+        .map((j) => {
+          if (!j.location) return "";
+          const parts = j.location.split(",");
+          return parts[0].trim();
+        })
+        .filter((l) => l && l.toLowerCase() !== "remote")
+    );
+    return Array.from(set).sort();
+  }, [initialJobs]);
+
   // Filter jobs
   const filtered = useMemo(() => {
     let result = initialJobs;

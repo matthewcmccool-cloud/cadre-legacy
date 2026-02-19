@@ -37,8 +37,10 @@ export interface InvestorListing {
   slug: string;
   website: string;
   logoUrl: string | null;
-  type: string;
-  portfolioCount: number;
+  stage: string;
+  industry: string;
+  investors: string[];
+  jobCount: number;
 }
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
@@ -248,6 +250,10 @@ export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: Jo
     result = result.filter((j) => j.isRemote);
   } else if (filters.remote === "onsite") {
     result = result.filter((j) => !j.isRemote);
+    return { jobs, total: jobs.length };
+  } catch (err) {
+    console.error("Failed to fetch from Airtable:", err);
+    return { jobs: MOCK_JOBS, total: MOCK_JOBS.length };
   }
 
   return { jobs: result, total: result.length };
