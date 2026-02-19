@@ -1,8 +1,10 @@
 // ═══════════════════════════════════════════════════════════════════════
-// Cadre — Airtable Data Fetching
+// Cadre — Airtable Data Fetching (legacy)
 // Uses response.text() + JSON.parse() per CLAUDE.md (never .json())
 // Falls back to mock data when AIRTABLE_API_KEY is not configured
 // ═══════════════════════════════════════════════════════════════════════
+
+import { detectRemoteFromLocation } from "./remote-detect";
 
 export interface JobListing {
   id: string;
@@ -215,7 +217,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
         postedDate,
         jobUrl: (fields["Job URL"] as string) || "",
         investors,
-        isRemote: location.toLowerCase().includes("remote"),
+        isRemote: detectRemoteFromLocation(location),
       };
     });
 

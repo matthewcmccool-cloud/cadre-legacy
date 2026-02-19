@@ -169,6 +169,54 @@ export async function fetchCompanyRoles(companyId: string): Promise<Job[]> {
     seniority_level: (row.seniority_level as Job["seniority_level"]) || null,
     first_seen_at: (row.first_seen_at as string) || "",
     is_new: new Date(row.first_seen_at as string) > sevenDaysAgo,
+    is_remote: (row.is_remote as boolean) || false,
+  }));
+}
+
+// ── QUERY 4: Remote Jobs Filter ─────────────────────────────────────
+// Fetches active, primary jobs filtered by is_remote column.
+
+export async function fetchRemoteJobs(companyId?: string): Promise<Job[]> {
+  if (isDemoMode) {
+    const all = companyId ? (MOCK_ROLES[companyId] || []) : Object.values(MOCK_ROLES).flat();
+    return all.filter((j) => j.is_remote);
+  }
+
+  let query = getSupabase()
+    .from("jobs")
+    .select("*")
+    .eq("is_active", true)
+    .eq("is_primary", true)
+    .eq("is_remote", true)
+    .order("first_seen_at", { ascending: false });
+
+  if (companyId) {
+    query = query.eq("company_id", companyId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Failed to fetch remote jobs:", error);
+    return [];
+  }
+
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  return data.map((row: Record<string, unknown>) => ({
+    id: row.id as string,
+    title: (row.title as string) || "",
+    location: (row.location as string) || null,
+    function_bucket: (row.function_bucket as Job["function_bucket"]) || null,
+    seniority_level: (row.seniority_level as Job["seniority_level"]) || null,
+    first_seen_at: (row.first_seen_at as string) || "",
+    is_new: new Date(row.first_seen_at as string) > sevenDaysAgo,
+    is_remote: true,
   }));
 }
 
