@@ -638,7 +638,7 @@ export default function JobBoard({
   );
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: "jobs", label: "Jobs", count: totalJobs },
+    { key: "jobs", label: "Jobs", count: filtered.length },
     { key: "companies", label: "Companies", count: totalCompanies },
     { key: "investors", label: "Investors", count: totalInvestors },
   ];
@@ -783,16 +783,6 @@ export default function JobBoard({
         onClearLocation={() => handleLocationChange("")}
         onClearRemote={handleRemoteToggle}
       />
-
-      {/* LIVE JOB COUNT */}
-      <div className="pb-3">
-        <span className="text-sm font-semibold text-white">
-          Jobs
-        </span>{" "}
-        <span className="text-sm text-cadre-muted">
-          ({filtered.length.toLocaleString()})
-        </span>
-      </div>
 
       {/* TABS — animated green underline */}
       <div className="flex gap-6 border-b border-cadre-border">
