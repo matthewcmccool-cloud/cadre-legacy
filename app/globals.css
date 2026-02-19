@@ -2,10 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #F2F2F2;
-  color: #1A1A1A;
+:root {
+  /* Backgrounds */
+  --bg-base:        #111111;
+  --bg-surface:     #1A1A1A;
+  --bg-elevated:    #222222;
+  --bg-hover:       #2A2A2A;
+
+  /* Brand */
+  --brand-green:    #00E87A;
+  --brand-green-dim: rgba(0, 232, 122, 0.12);
+
+  /* Text */
+  --text-primary:   #FFFFFF;
+  --text-secondary: #999999;
+  --text-muted:     #555555;
+  --text-inverse:   #000000;
+
+  /* Borders */
+  --border-default: #2A2A2A;
+  --border-subtle:  #1F1F1F;
+  --border-brand:   #00E87A;
+
+  /* Status / Semantic */
+  --status-new:     #00E87A;
+  --status-warning: #F59E0B;
+  --status-error:   #EF4444;
+}
+
+html, body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animated tab underline */
+.tab-underline {
+  position: relative;
+}
+
+.tab-underline::after {
+  content: '';
+  display: block;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  border-bottom: 2px solid var(--brand-green);
+  transition: transform 0.2s ease-out;
+}
+
+.tab-underline:hover::after,
+.tab-underline.active::after {
+  transform: scaleX(1);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Global transition easing */
+* {
+  transition-timing-function: ease-out;
 }

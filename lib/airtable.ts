@@ -135,6 +135,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
         "sort[0][field]": "Posted Date",
         "sort[0][direction]": "desc",
         pageSize: "100",
+        maxRecords: "1000",
       }),
       airtableFetch("Companies", { pageSize: "100" }),
       airtableFetchSafe("tblH6MmoXCn3Ve0K2", { pageSize: "100" }), // Investors table by ID
@@ -319,7 +320,7 @@ export async function fetchInvestors(): Promise<{ investors: InvestorListing[]; 
       "sort[0][field]": "Firm Name",
       "sort[0][direction]": "asc",
       pageSize: "100",
-      maxRecords: "100",
+      maxRecords: "300",
     });
 
     const investors: InvestorListing[] = records

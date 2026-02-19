@@ -3,7 +3,7 @@
 import { logoColors } from "@/lib/utils";
 
 export function CompanyLogo({ name, size = "sm" }: { name: string; size?: "sm" | "lg" }) {
-  const c = logoColors[name] || { bg: "#18181c", fg: "#8a8a96", border: "#222228" };
+  const c = logoColors[name] || { bg: "#1A1A1A", fg: "#999999", border: "#2A2A2A" };
   const px = size === "sm" ? 26 : 36;
   const fs = size === "sm" ? 10 : 14;
   const br = size === "sm" ? 5 : 8;

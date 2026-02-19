@@ -31,15 +31,15 @@ export default function DocsClient() {
     <>
       <style>{`
         :root {
-          --bg: #F2F2F2;
-          --bg-code: #FFFFFF;
-          --border: #E0E0E0;
-          --text: #666666;
-          --text-bright: #1A1A1A;
-          --text-dim: #999999;
-          --purple: #4285F4;
-          --purple-dim: rgba(66, 133, 244, 0.08);
-          --purple-border: rgba(66, 133, 244, 0.25);
+          --bg: #111111;
+          --bg-code: #1A1A1A;
+          --border: #2A2A2A;
+          --text: #999999;
+          --text-bright: #FFFFFF;
+          --text-dim: #555555;
+          --green: #00E87A;
+          --green-dim: rgba(0, 232, 122, 0.12);
+          --green-border: rgba(0, 232, 122, 0.25);
           --mono: 'Space Mono', monospace;
         }
 
@@ -56,10 +56,10 @@ export default function DocsClient() {
           margin: 0 !important;
         }
 
-        ::selection { background: var(--purple-dim); color: var(--text-bright); }
+        ::selection { background: var(--green-dim); color: var(--text-bright); }
 
-        a { color: var(--purple); text-decoration: none; }
-        a:hover { color: #b8a9db; text-decoration: underline; }
+        a { color: var(--green); text-decoration: none; }
+        a:hover { color: #33ff99; text-decoration: underline; }
 
         /* ── Layout ── */
         .docs-app {
@@ -70,6 +70,7 @@ export default function DocsClient() {
 
         /* ── Sidebar ── */
         .sidebar {
+          background: #1A1A1A;
           border-right: 1px solid var(--border);
           padding: 36px 0;
           display: flex;
@@ -85,7 +86,7 @@ export default function DocsClient() {
         .sb-brand .mark {
           font-size: 12px;
           font-weight: 700;
-          color: var(--purple);
+          color: var(--green);
           letter-spacing: 0.1em;
           text-transform: uppercase;
         }
@@ -120,7 +121,7 @@ export default function DocsClient() {
         }
 
         .nav-item:hover { color: var(--text); }
-        .nav-item.active { color: var(--purple); background: var(--purple-dim); }
+        .nav-item.active { color: var(--green); background: var(--green-dim); }
 
         .sb-footer {
           margin-top: auto;
@@ -133,13 +134,13 @@ export default function DocsClient() {
           color: var(--text-dim);
         }
 
-        .sb-footer a:hover { color: var(--purple); }
+        .sb-footer a:hover { color: var(--green); }
 
         /* ── Content ── */
         .content {
           overflow-y: auto;
           scrollbar-width: thin;
-          scrollbar-color: #ccc transparent;
+          scrollbar-color: #2A2A2A transparent;
         }
 
         .pg {
@@ -177,7 +178,7 @@ export default function DocsClient() {
 
         .b { color: var(--text-bright); }
         .d { color: var(--text-dim); }
-        .accent { color: var(--purple); }
+        .accent { color: var(--green); }
 
         /* ── Code ── */
         .cb {
@@ -210,13 +211,13 @@ export default function DocsClient() {
           transition: color 0.15s, border-color 0.15s;
         }
 
-        .cb .cp:hover { color: var(--purple); border-color: var(--purple-border); }
-        .cb .cp.copied { color: var(--purple); }
+        .cb .cp:hover { color: var(--green); border-color: var(--green-border); }
+        .cb .cp.copied { color: var(--green); }
 
         .k { color: var(--text-bright); }
-        .s { color: var(--purple); }
-        .n { color: #34A853; }
-        .c { color: #999; }
+        .s { color: var(--green); }
+        .n { color: #00E87A; }
+        .c { color: #555; }
 
         /* ── Endpoint badge ── */
         .ep {
@@ -228,7 +229,7 @@ export default function DocsClient() {
         }
 
         .ep .m {
-          color: #34A853;
+          color: #00E87A;
           font-weight: 500;
         }
 
@@ -255,7 +256,7 @@ export default function DocsClient() {
           border-bottom: 1px solid var(--border);
         }
 
-        td:first-child { color: var(--purple); white-space: nowrap; }
+        td:first-child { color: var(--green); white-space: nowrap; }
 
         /* ── Next link ── */
         .next {
@@ -267,7 +268,7 @@ export default function DocsClient() {
           transition: color 0.1s;
         }
 
-        .next:hover { color: var(--purple); text-decoration: none; }
+        .next:hover { color: var(--green); text-decoration: none; }
 
         /* ── Responsive ── */
         @media (max-width: 700px) {
