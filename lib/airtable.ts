@@ -12,7 +12,8 @@ export interface JobListing {
   companyLogo: string | null;
   companyWebsite: string;
   location: string;
-  department: string;
+  function: string;
+  industry: string;
   postedDate: string;
   jobUrl: string;
   investors: string[];
@@ -160,6 +161,15 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
       if (!functionNameMap.has(k)) functionNameMap.set(k, v);
     }
 
+    // Build company ID → industry name map (for resolving job industry through company)
+    const companyIndustryMap = new Map<string, string>();
+    for (const rec of companyRecords) {
+      const f = rec.fields as Record<string, unknown>;
+      const indRaw = f["Industry"];
+      const indArr = resolveLinkedField(indRaw, industryNameMap);
+      if (indArr[0]) companyIndustryMap.set(rec.id as string, indArr[0]);
+    }
+
     const jobs: JobListing[] = jobRecords.map((rec: Record<string, unknown>) => {
       const fields = rec.fields as Record<string, unknown>;
 
@@ -176,10 +186,10 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
       const investorsRaw = fields["Investors"] || fields["VCs"] || [];
       const investors = resolveLinkedField(investorsRaw, investorNameMap);
 
-      // Department/Function — may be linked record, resolve if needed
+      // Function (formerly "Department") — may be linked record, resolve if needed
       const funcRaw = fields["Function"] || fields["Department"] || fields["Functions"];
-      const departmentArr = resolveLinkedField(funcRaw, functionNameMap);
-      const department = departmentArr[0] || "";
+      const funcArr = resolveLinkedField(funcRaw, functionNameMap);
+      const funcName = funcArr[0] || "";
 
       // Date — prefer "Posted Date", fall back to "Last Seen At" or "Created Time"
       const postedDate = (fields["Posted Date"] as string)
@@ -189,6 +199,9 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
 
       const location = (fields["Location"] as string) || "";
 
+      // Industry — resolve through company's linked industry
+      const jobIndustry = companyIndustryMap.get(companyId) || "";
+
       return {
         id: rec.id as string,
         title: (fields["Title"] as string) || "",
@@ -197,7 +210,8 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
         companyLogo: null,
         companyWebsite,
         location,
-        department,
+        function: funcName,
+        industry: jobIndustry,
         postedDate,
         jobUrl: (fields["Job URL"] as string) || "",
         investors,
@@ -214,7 +228,8 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
 
 export interface JobFilters {
   search?: string;
-  departments?: string[];
+  functions?: string[];
+  industries?: string[];
   locations?: string[];
   remote?: "remote" | "onsite";
 }
@@ -229,13 +244,17 @@ export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: Jo
       (j) =>
         j.title.toLowerCase().includes(q) ||
         j.company.toLowerCase().includes(q) ||
-        j.department.toLowerCase().includes(q) ||
+        j.function.toLowerCase().includes(q) ||
         j.investors.some((inv) => inv.toLowerCase().includes(q))
     );
   }
 
-  if (filters.departments && filters.departments.length > 0) {
-    result = result.filter((j) => filters.departments!.includes(j.department));
+  if (filters.functions && filters.functions.length > 0) {
+    result = result.filter((j) => filters.functions!.includes(j.function));
+  }
+
+  if (filters.industries && filters.industries.length > 0) {
+    result = result.filter((j) => filters.industries!.includes(j.industry));
   }
 
   if (filters.locations && filters.locations.length > 0) {
@@ -356,10 +375,10 @@ export async function fetchInvestors(): Promise<{ investors: InvestorListing[]; 
   }
 }
 
-// Fetch unique department names (resolved from linked records)
-export async function fetchAllDepartments(): Promise<string[]> {
+// Fetch unique function names (resolved from linked records)
+export async function fetchAllFunctions(): Promise<string[]> {
   if (!isAirtableConfigured) {
-    return [...new Set(MOCK_JOBS.map((j) => j.department).filter(Boolean))].sort();
+    return [...new Set(MOCK_JOBS.map((j) => j.function).filter(Boolean))].sort();
   }
   try {
     const [functionRecords, industryRecords] = await Promise.all([
@@ -413,6 +432,64 @@ export async function fetchAllLocations(): Promise<string[]> {
   }
 }
 
+// Fetch unique industry names from Companies (through industry linked field)
+export async function fetchAllIndustries(): Promise<string[]> {
+  if (!isAirtableConfigured) {
+    return [...new Set(MOCK_COMPANIES.map((c) => c.industry).filter(Boolean))].sort();
+  }
+  try {
+    const [industryRecords] = await Promise.all([
+      airtableFetchSafe("Industries", { pageSize: "100" }),
+    ]);
+    const names = new Set<string>();
+    for (const rec of industryRecords) {
+      const f = rec.fields as Record<string, unknown>;
+      const name = (f["Name"] as string) || "";
+      if (name) names.add(name);
+    }
+    // Fallback: extract from companies if Industries table is empty
+    if (names.size === 0) {
+      const companyRecords = await airtableFetch("Companies", { pageSize: "100" });
+      for (const rec of companyRecords) {
+        const f = rec.fields as Record<string, unknown>;
+        const ind = (f["Industry"] as string) || "";
+        if (ind && !isRecordId(ind)) names.add(ind);
+      }
+    }
+    return [...names].sort();
+  } catch {
+    return [];
+  }
+}
+
+// Fetch a single company by slug
+export async function fetchCompanyBySlug(slug: string): Promise<{ company: CompanyListing | null; jobs: JobListing[] }> {
+  const [{ companies }, { jobs }] = await Promise.all([
+    fetchCompanies(),
+    fetchJobs(),
+  ]);
+  const company = companies.find((c) => c.slug === slug) || null;
+  if (!company) return { company: null, jobs: [] };
+  const companyJobs = jobs.filter((j) => j.companySlug === company.slug || j.company === company.name);
+  return { company, jobs: companyJobs };
+}
+
+// Fetch a single investor by slug with their portfolio companies and aggregate jobs
+export async function fetchInvestorBySlug(slug: string): Promise<{ investor: InvestorListing | null; portfolioCompanies: CompanyListing[]; jobs: JobListing[] }> {
+  const [{ investors }, { companies }, { jobs }] = await Promise.all([
+    fetchInvestors(),
+    fetchCompanies(),
+    fetchJobs(),
+  ]);
+  const investor = investors.find((inv) => inv.slug === slug) || null;
+  if (!investor) return { investor: null, portfolioCompanies: [], jobs: [] };
+  // Find companies backed by this investor
+  const portfolioCompanies = companies.filter((c) => c.investors.includes(investor.name));
+  const portfolioNames = new Set(portfolioCompanies.map((c) => c.name));
+  const portfolioJobs = jobs.filter((j) => portfolioNames.has(j.company));
+  return { investor, portfolioCompanies, jobs: portfolioJobs };
+}
+
 // Helper to build a company name → logo URL map from company data
 export function buildCompanyLogoMap(companies: CompanyListing[]): Record<string, string> {
   const map: Record<string, string> = {};
@@ -445,16 +522,16 @@ export function buildCompanyDomainMap(companies: CompanyListing[]): Record<strin
 // ═══════════════════════════════════════════════════════════════════════
 
 const MOCK_JOBS: JobListing[] = [
-  { id: "1", title: "Senior Backend Engineer", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", department: "Engineering", postedDate: "2026-02-16", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
-  { id: "2", title: "Staff Platform Engineer", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", department: "Engineering", postedDate: "2026-02-15", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
-  { id: "3", title: "ML Engineer, Risk", company: "Vercel", companySlug: "vercel", companyLogo: null, companyWebsite: "https://vercel.com", location: "San Francisco, CA", department: "Engineering", postedDate: "2026-02-15", jobUrl: "#", investors: ["Accel", "GV", "Bedrock", "CRV"], isRemote: false },
-  { id: "4", title: "Enterprise Account Executive", company: "Ironclad", companySlug: "ironclad", companyLogo: null, companyWebsite: "https://ironcladapp.com", location: "San Francisco, CA", department: "Sales", postedDate: "2026-02-14", jobUrl: "#", investors: ["a16z", "Accel", "Y Combinator", "Sequoia", "Bond"], isRemote: false },
-  { id: "5", title: "Senior Product Designer", company: "Watershed", companySlug: "watershed", companyLogo: null, companyWebsite: "https://watershed.com", location: "Remote", department: "Design", postedDate: "2026-02-14", jobUrl: "#", investors: ["Sequoia", "Kleiner Perkins", "Greenoaks"], isRemote: true },
-  { id: "6", title: "Senior Full-Stack Engineer", company: "Anyscale", companySlug: "anyscale", companyLogo: null, companyWebsite: "https://anyscale.com", location: "San Francisco, CA", department: "Engineering", postedDate: "2026-02-13", jobUrl: "#", investors: ["a16z", "NEA", "Addition"], isRemote: false },
-  { id: "7", title: "Head of People Operations", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", department: "Operations", postedDate: "2026-02-13", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
-  { id: "8", title: "Sr Product Marketing Manager", company: "Mutiny", companySlug: "mutiny", companyLogo: null, companyWebsite: "https://mutinyhq.com", location: "San Francisco, CA", department: "Marketing", postedDate: "2026-02-12", jobUrl: "#", investors: ["Sequoia", "Tiger Global"], isRemote: false },
-  { id: "9", title: "Backend Engineer, Data Pipeline", company: "Watershed", companySlug: "watershed", companyLogo: null, companyWebsite: "https://watershed.com", location: "San Francisco, CA", department: "Engineering", postedDate: "2026-02-12", jobUrl: "#", investors: ["Sequoia", "Kleiner Perkins", "Greenoaks"], isRemote: false },
-  { id: "10", title: "VP of Engineering", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", department: "Engineering", postedDate: "2026-02-11", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
+  { id: "1", title: "Senior Backend Engineer", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", function: "Engineering", industry: "Fintech", postedDate: "2026-02-16", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
+  { id: "2", title: "Staff Platform Engineer", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", function: "Engineering", industry: "Fintech", postedDate: "2026-02-15", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
+  { id: "3", title: "ML Engineer, Risk", company: "Vercel", companySlug: "vercel", companyLogo: null, companyWebsite: "https://vercel.com", location: "San Francisco, CA", function: "Engineering", industry: "Developer Tools", postedDate: "2026-02-15", jobUrl: "#", investors: ["Accel", "GV", "Bedrock", "CRV"], isRemote: false },
+  { id: "4", title: "Enterprise Account Executive", company: "Ironclad", companySlug: "ironclad", companyLogo: null, companyWebsite: "https://ironcladapp.com", location: "San Francisco, CA", function: "Sales", industry: "Legal Tech", postedDate: "2026-02-14", jobUrl: "#", investors: ["a16z", "Accel", "Y Combinator", "Sequoia", "Bond"], isRemote: false },
+  { id: "5", title: "Senior Product Designer", company: "Watershed", companySlug: "watershed", companyLogo: null, companyWebsite: "https://watershed.com", location: "Remote", function: "Design", industry: "Climate Tech", postedDate: "2026-02-14", jobUrl: "#", investors: ["Sequoia", "Kleiner Perkins", "Greenoaks"], isRemote: true },
+  { id: "6", title: "Senior Full-Stack Engineer", company: "Anyscale", companySlug: "anyscale", companyLogo: null, companyWebsite: "https://anyscale.com", location: "San Francisco, CA", function: "Engineering", industry: "AI/ML", postedDate: "2026-02-13", jobUrl: "#", investors: ["a16z", "NEA", "Addition"], isRemote: false },
+  { id: "7", title: "Head of People Operations", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", function: "Operations", industry: "Fintech", postedDate: "2026-02-13", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
+  { id: "8", title: "Sr Product Marketing Manager", company: "Mutiny", companySlug: "mutiny", companyLogo: null, companyWebsite: "https://mutinyhq.com", location: "San Francisco, CA", function: "Marketing", industry: "MarTech", postedDate: "2026-02-12", jobUrl: "#", investors: ["Sequoia", "Tiger Global"], isRemote: false },
+  { id: "9", title: "Backend Engineer, Data Pipeline", company: "Watershed", companySlug: "watershed", companyLogo: null, companyWebsite: "https://watershed.com", location: "San Francisco, CA", function: "Engineering", industry: "Climate Tech", postedDate: "2026-02-12", jobUrl: "#", investors: ["Sequoia", "Kleiner Perkins", "Greenoaks"], isRemote: false },
+  { id: "10", title: "VP of Engineering", company: "Ramp", companySlug: "ramp", companyLogo: null, companyWebsite: "https://ramp.com", location: "New York, NY", function: "Engineering", industry: "Fintech", postedDate: "2026-02-11", jobUrl: "#", investors: ["a16z", "Founders Fund", "Thrive Capital"], isRemote: false },
 ];
 
 const MOCK_COMPANIES: CompanyListing[] = [

@@ -10,8 +10,11 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search");
   if (search) filters.search = search;
 
-  const departments = searchParams.get("departments");
-  if (departments) filters.departments = departments.split(",").filter(Boolean);
+  const functions = searchParams.get("functions");
+  if (functions) filters.functions = functions.split(",").filter(Boolean);
+
+  const industry = searchParams.get("industry");
+  if (industry) filters.industries = industry.split(",").filter(Boolean);
 
   const locations = searchParams.get("locations");
   if (locations) filters.locations = locations.split(",").filter(Boolean);
