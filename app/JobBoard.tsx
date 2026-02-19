@@ -427,6 +427,9 @@ export default function JobBoard({
       {/* HEADER */}
       <header className="py-4 border-b border-cadre-border">
         <Logo size="md" />
+        <h2 className="text-brand-green text-sm font-medium mt-2 tracking-wide">
+          Jobs at the world&apos;s elite technology companies
+        </h2>
       </header>
 
       {/* SEARCH */}
