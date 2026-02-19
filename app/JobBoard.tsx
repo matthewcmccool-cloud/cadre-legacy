@@ -28,11 +28,16 @@ function getInvestorColor(name: string): string {
 
 function timeAgo(dateStr: string): string {
   if (!dateStr) return "";
-  const now = new Date();
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const days = Math.floor(diffMs / 86400000);
-  if (days === 0) return "today";
+  // If date is today or negative (future), show formatted date (e.g. "Feb 18")
+  // This handles Created Time fallback where everything looks like "today"
+  if (days <= 0) {
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
   if (days === 1) return "1d ago";
   if (days < 7) return `${days}d ago`;
   if (days < 30) return `${Math.floor(days / 7)}w ago`;
@@ -64,6 +69,7 @@ function CompanyLogo({
 }) {
   const [srcIndex, setSrcIndex] = useState(0);
 
+  // Build an ordered list of URLs to try
   const srcs: string[] = [];
   if (logoUrl) srcs.push(logoUrl);
   if (domain) srcs.push(`https://img.logo.dev/${domain}?token=pk_a8CO5glvSNOJpPBxGBm3Iw&size=64&format=png`);
@@ -94,7 +100,7 @@ function CompanyLogo({
         if (srcIndex < srcs.length - 1) {
           setSrcIndex(srcIndex + 1);
         } else {
-          setSrcIndex(srcs.length);
+          setSrcIndex(srcs.length); // triggers letter circle fallback
         }
       }}
     />
@@ -349,76 +355,61 @@ export default function JobBoard({
   const [remote, setRemote] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  // Jobs state: starts with server-rendered initial jobs, updated by API
-  const [jobs, setJobs] = useState<JobListing[]>(initialJobs);
-  const [filteredTotal, setFilteredTotal] = useState(totalJobs);
-  const [isFiltering, setIsFiltering] = useState(false);
+  // Extract unique values for filters
+  const departments = useMemo(() => {
+    const set = new Set(initialJobs.map((j) => j.department).filter(Boolean));
+    return Array.from(set).sort();
+  }, [initialJobs]);
 
-  // Track whether any filter is active
+  const locations = useMemo(() => {
+    const set = new Set(
+      initialJobs
+        .map((j) => {
+          if (!j.location) return "";
+          const parts = j.location.split(",");
+          return parts[0].trim();
+        })
+        .filter((l) => l && l.toLowerCase() !== "remote")
+    );
+    return Array.from(set).sort();
+  }, [initialJobs]);
+
+  // Filter jobs
+  const filtered = useMemo(() => {
+    let result = initialJobs;
+
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (j) =>
+          j.title.toLowerCase().includes(q) ||
+          j.company.toLowerCase().includes(q) ||
+          j.department.toLowerCase().includes(q) ||
+          j.investors.some((inv) => inv.toLowerCase().includes(q))
+      );
+    }
+
+    if (selectedDepartments.length > 0) {
+      result = result.filter((j) => selectedDepartments.includes(j.department));
+    }
+
+    if (selectedLocations.length > 0) {
+      result = result.filter((j) => selectedLocations.includes(j.location.split(",")[0].trim()));
+    }
+
+    if (remote === "remote") {
+      result = result.filter((j) => j.isRemote);
+    } else if (remote === "onsite") {
+      result = result.filter((j) => !j.isRemote);
+    }
+
+    return result;
+  }, [initialJobs, search, selectedDepartments, selectedLocations, remote]);
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
   const hasFilters = search || selectedDepartments.length > 0 || selectedLocations.length > 0 || remote;
-
-  // Debounce timer ref for search
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Fetch filtered jobs from API route
-  const fetchFromAPI = useCallback(async (params: {
-    search: string;
-    departments: string[];
-    locations: string[];
-    remote: string;
-  }) => {
-    // If no filters, revert to initial server-rendered jobs
-    if (!params.search && params.departments.length === 0 && params.locations.length === 0 && !params.remote) {
-      setJobs(initialJobs);
-      setFilteredTotal(totalJobs);
-      setIsFiltering(false);
-      return;
-    }
-
-    setIsFiltering(true);
-    try {
-      const url = new URL("/api/jobs", window.location.origin);
-      if (params.search) url.searchParams.set("search", params.search);
-      if (params.departments.length > 0) url.searchParams.set("departments", params.departments.join(","));
-      if (params.locations.length > 0) url.searchParams.set("locations", params.locations.join(","));
-      if (params.remote) url.searchParams.set("remote", params.remote);
-
-      const res = await fetch(url.toString());
-      const text = await res.text();
-      const data = JSON.parse(text);
-
-      if (data.jobs) {
-        setJobs(data.jobs);
-        setFilteredTotal(data.total);
-      }
-    } catch (err) {
-      console.error("Failed to fetch filtered jobs:", err);
-    } finally {
-      setIsFiltering(false);
-    }
-  }, [initialJobs, totalJobs]);
-
-  // Trigger API fetch when filters change (debounced for search)
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    debounceRef.current = setTimeout(() => {
-      fetchFromAPI({
-        search,
-        departments: selectedDepartments,
-        locations: selectedLocations,
-        remote,
-      });
-      setVisibleCount(PAGE_SIZE);
-    }, search ? 300 : 0); // debounce search input, immediate for dropdowns
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [search, selectedDepartments, selectedLocations, remote, fetchFromAPI]);
-
-  const visible = jobs.slice(0, visibleCount);
-  const hasMore = visibleCount < jobs.length;
 
   const clearFilters = useCallback(() => {
     setSearch("");
@@ -458,7 +449,10 @@ export default function JobBoard({
           type="text"
           placeholder="Search roles, companies, skills..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setVisibleCount(PAGE_SIZE);
+          }}
           className="w-full px-4 py-2.5 text-sm bg-white border border-cadre-border text-cadre-text placeholder-cadre-secondary outline-none focus:border-cadre-text transition-colors"
         />
       </div>
@@ -469,14 +463,20 @@ export default function JobBoard({
           label="Department"
           options={departments}
           selected={selectedDepartments}
-          onChange={setSelectedDepartments}
+          onChange={(v) => {
+            setSelectedDepartments(v);
+            setVisibleCount(PAGE_SIZE);
+          }}
         />
 
         <FilterDropdown
           label="Location"
           options={locations}
           selected={selectedLocations}
-          onChange={setSelectedLocations}
+          onChange={(v) => {
+            setSelectedLocations(v);
+            setVisibleCount(PAGE_SIZE);
+          }}
         />
 
         {/* Remote filter stays simple — single choice */}

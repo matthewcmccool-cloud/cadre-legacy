@@ -37,19 +37,20 @@ export interface InvestorListing {
   slug: string;
   website: string;
   logoUrl: string | null;
-  type: string;
-  portfolioCount: number;
+  stage: string;
+  industry: string;
+  investors: string[];
+  jobCount: number;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// Job Filters — used by fetchFilteredJobs()
-// ═══════════════════════════════════════════════════════════════════════
-
-export interface JobFilters {
-  search?: string;
-  departments?: string[];
-  locations?: string[];
-  remote?: "remote" | "onsite" | "";
+export interface InvestorListing {
+  id: string;
+  name: string;
+  slug: string;
+  website: string;
+  logoUrl: string | null;
+  type: string;
+  portfolioCount: number;
 }
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
@@ -92,235 +93,85 @@ async function airtableFetch(tableIdOrName: string, params: Record<string, strin
   return allRecords;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// Record → JobListing mapper (shared by fetchJobs & fetchFilteredJobs)
-// ═══════════════════════════════════════════════════════════════════════
-
-function mapRecordToJob(rec: Record<string, unknown>): JobListing {
-  const fields = rec.fields as Record<string, unknown>;
-  const companyRaw = fields["Company"];
-  const companyName = Array.isArray(companyRaw)
-    ? String(companyRaw[0])
-    : (companyRaw as string) || "Unknown";
-  const investorsRaw = fields["Investors"] || fields["VCs"] || [];
-  const investors = Array.isArray(investorsRaw)
-    ? (investorsRaw as string[])
-    : [];
-  const location = (fields["Location"] as string) || "";
-
-  return {
-    id: rec.id as string,
-    title: (fields["Title"] as string) || "",
-    company: companyName,
-    companySlug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    companyLogo: null,
-    companyWebsite: (fields["Company Website"] as string) || "",
-    location,
-    department: (fields["Function"] as string) || "",
-    postedDate: (fields["Created Time"] as string) || "",
-    jobUrl: (fields["Job URL"] as string) || "",
-    investors,
-    isRemote: location.toLowerCase().includes("remote"),
-  };
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Build Airtable filterByFormula from JobFilters
-// ═══════════════════════════════════════════════════════════════════════
-
-function buildFilterFormula(filters: JobFilters): string {
-  const conditions: string[] = [];
-
-  // Search — match against Title, Company, or Function
-  if (filters.search && filters.search.trim()) {
-    const q = filters.search.trim().replace(/'/g, "\\'");
-    conditions.push(
-      `OR(FIND(LOWER("${q}"), LOWER({Title})), FIND(LOWER("${q}"), LOWER({Company})), FIND(LOWER("${q}"), LOWER({Function})))`
-    );
-  }
-
-  // Departments — OR across selected values
-  if (filters.departments && filters.departments.length > 0) {
-    if (filters.departments.length === 1) {
-      const dept = filters.departments[0].replace(/'/g, "\\'");
-      conditions.push(`{Function} = '${dept}'`);
-    } else {
-      const deptConditions = filters.departments.map((d) => {
-        const dept = d.replace(/'/g, "\\'");
-        return `{Function} = '${dept}'`;
-      });
-      conditions.push(`OR(${deptConditions.join(", ")})`);
-    }
-  }
-
-  // Locations — match on city (first part before comma)
-  if (filters.locations && filters.locations.length > 0) {
-    if (filters.locations.length === 1) {
-      const loc = filters.locations[0].replace(/'/g, "\\'");
-      conditions.push(`FIND('${loc}', {Location})`);
-    } else {
-      const locConditions = filters.locations.map((l) => {
-        const loc = l.replace(/'/g, "\\'");
-        return `FIND('${loc}', {Location})`;
-      });
-      conditions.push(`OR(${locConditions.join(", ")})`);
-    }
-  }
-
-  // Remote filter
-  if (filters.remote === "remote") {
-    conditions.push(`FIND('remote', LOWER({Location}))`);
-  } else if (filters.remote === "onsite") {
-    conditions.push(`NOT(FIND('remote', LOWER({Location})))`);
-  }
-
-  if (conditions.length === 0) return "";
-  if (conditions.length === 1) return conditions[0];
-  return `AND(${conditions.join(", ")})`;
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// fetchJobs — returns 100 most recent jobs sorted by Created Time desc
-// ═══════════════════════════════════════════════════════════════════════
-
 export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }> {
   if (!isAirtableConfigured) {
     return { jobs: MOCK_JOBS, total: MOCK_JOBS.length };
   }
 
   try {
-    const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
-      "sort[0][field]": "Created Time",
-      "sort[0][direction]": "desc",
-      pageSize: "100", maxRecords: "100",
+    // Fetch jobs + lookup tables in parallel to resolve linked record IDs
+    const [jobRecords, companyRecords, investorRecords] = await Promise.all([
+      airtableFetch("Jobs", {
+        "sort[0][field]": "Posted Date",
+        "sort[0][direction]": "desc",
+        pageSize: "100",
+      }),
+      airtableFetch("Companies", { pageSize: "100" }),
+      airtableFetch("Investors", { pageSize: "100" }),
+    ]);
+
+    // Build record ID → name/website lookup maps
+    const companyNameMap = new Map<string, string>();
+    const companyWebsiteMap = new Map<string, string>();
+    for (const rec of companyRecords) {
+      const f = rec.fields as Record<string, unknown>;
+      companyNameMap.set(rec.id as string, (f["Name"] as string) || "");
+      companyWebsiteMap.set(rec.id as string, (f["Website"] as string) || "");
+    }
+
+    const investorNameMap = new Map<string, string>();
+    for (const rec of investorRecords) {
+      const f = rec.fields as Record<string, unknown>;
+      investorNameMap.set(rec.id as string, (f["Name"] as string) || "");
+    }
+
+    const jobs: JobListing[] = jobRecords.map((rec: Record<string, unknown>) => {
+      const fields = rec.fields as Record<string, unknown>;
+
+      // Bug fix #1: Company is a linked record — returns array of record IDs
+      // Try both "Companies" and "Company" field names, resolve ID to name
+      const companyRaw = fields["Companies"] || fields["Company"];
+      const companyIds = Array.isArray(companyRaw) ? companyRaw.map(String) : [];
+      const companyId = companyIds[0] || "";
+      const companyName = companyNameMap.get(companyId)
+        || (companyRaw && !Array.isArray(companyRaw) ? String(companyRaw) : "Unknown");
+      const companyWebsite = companyWebsiteMap.get(companyId) || "";
+
+      // Bug fix #2: Investors are linked records — resolve IDs to names
+      const investorsRaw = fields["Investors"] || fields["VCs"] || [];
+      const investorIds = Array.isArray(investorsRaw) ? investorsRaw.map(String) : [];
+      const investors = investorIds
+        .map((id) => investorNameMap.get(id))
+        .filter((name): name is string => Boolean(name));
+
+      // Bug fix #3: Prefer "Posted Date", fall back to "Last Seen At" or "Created Time"
+      const postedDate = (fields["Posted Date"] as string)
+        || (fields["Last Seen At"] as string)
+        || (fields["Created Time"] as string)
+        || "";
+
+      const location = (fields["Location"] as string) || "";
+
+      return {
+        id: rec.id as string,
+        title: (fields["Title"] as string) || "",
+        company: companyName,
+        companySlug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        companyLogo: null,
+        companyWebsite,
+        location,
+        department: (fields["Function"] as string) || "",
+        postedDate,
+        jobUrl: (fields["Job URL"] as string) || "",
+        investors,
+        isRemote: location.toLowerCase().includes("remote"),
+      };
     });
 
-    const jobs: JobListing[] = records.map(mapRecordToJob);
     return { jobs, total: jobs.length };
   } catch (err) {
     console.error("Failed to fetch from Airtable:", err);
     return { jobs: MOCK_JOBS, total: MOCK_JOBS.length };
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// fetchFilteredJobs — server-side filtering via Airtable formulas
-// ═══════════════════════════════════════════════════════════════════════
-
-export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: JobListing[]; total: number }> {
-  if (!isAirtableConfigured) {
-    // Apply filters to mock data client-side as fallback
-    let result = [...MOCK_JOBS];
-
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      result = result.filter(
-        (j) =>
-          j.title.toLowerCase().includes(q) ||
-          j.company.toLowerCase().includes(q) ||
-          j.department.toLowerCase().includes(q)
-      );
-    }
-    if (filters.departments && filters.departments.length > 0) {
-      result = result.filter((j) => filters.departments!.includes(j.department));
-    }
-    if (filters.locations && filters.locations.length > 0) {
-      result = result.filter((j) =>
-        filters.locations!.some((loc) => j.location.includes(loc))
-      );
-    }
-    if (filters.remote === "remote") {
-      result = result.filter((j) => j.isRemote);
-    } else if (filters.remote === "onsite") {
-      result = result.filter((j) => !j.isRemote);
-    }
-
-    return { jobs: result, total: result.length };
-  }
-
-  try {
-    const params: Record<string, string> = {
-      "sort[0][field]": "Created Time",
-      "sort[0][direction]": "desc",
-      pageSize: "100", maxRecords: "100",
-    };
-
-    const formula = buildFilterFormula(filters);
-    if (formula) {
-      params.filterByFormula = formula;
-    }
-
-    const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", params);
-    const jobs: JobListing[] = records.map(mapRecordToJob);
-    return { jobs, total: jobs.length };
-  } catch (err) {
-    console.error("Failed to fetch filtered jobs from Airtable:", err);
-    return { jobs: MOCK_JOBS, total: MOCK_JOBS.length };
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// fetchAllDepartments / fetchAllLocations — lightweight helpers for
-// populating filter dropdowns from the full job set
-// ═══════════════════════════════════════════════════════════════════════
-
-export async function fetchAllDepartments(): Promise<string[]> {
-  if (!isAirtableConfigured) {
-    const set = new Set(MOCK_JOBS.map((j) => j.department).filter(Boolean));
-    return Array.from(set).sort();
-  }
-
-  try {
-    // Fetch only the Function field to keep it lightweight
-    const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
-      "fields[]": "Function",
-      pageSize: "100", maxRecords: "100",
-    });
-
-    const set = new Set<string>();
-    for (const rec of records) {
-      const fields = rec.fields as Record<string, unknown>;
-      const dept = fields["Function"] as string;
-      if (dept) set.add(dept);
-    }
-    return Array.from(set).sort();
-  } catch (err) {
-    console.error("Failed to fetch departments:", err);
-    const set = new Set(MOCK_JOBS.map((j) => j.department).filter(Boolean));
-    return Array.from(set).sort();
-  }
-}
-
-export async function fetchAllLocations(): Promise<string[]> {
-  if (!isAirtableConfigured) {
-    const set = new Set(
-      MOCK_JOBS.map((j) => j.location.split(",")[0].trim()).filter((l) => l && l.toLowerCase() !== "remote")
-    );
-    return Array.from(set).sort();
-  }
-
-  try {
-    const records = await airtableFetch("tbl4HJr9bYCMOn2Ry", {
-      "fields[]": "Location",
-      pageSize: "100", maxRecords: "100",
-    });
-
-    const set = new Set<string>();
-    for (const rec of records) {
-      const fields = rec.fields as Record<string, unknown>;
-      const location = (fields["Location"] as string) || "";
-      const city = location.split(",")[0].trim();
-      if (city && city.toLowerCase() !== "remote") {
-        set.add(city);
-      }
-    }
-    return Array.from(set).sort();
-  } catch (err) {
-    console.error("Failed to fetch locations:", err);
-    const set = new Set(
-      MOCK_JOBS.map((j) => j.location.split(",")[0].trim()).filter((l) => l && l.toLowerCase() !== "remote")
-    );
-    return Array.from(set).sort();
   }
 }
 
@@ -330,10 +181,10 @@ export async function fetchCompanies(): Promise<{ companies: CompanyListing[]; t
   }
 
   try {
-    const records = await airtableFetch("tbl4dA7iDr7mjF6Gt", {
-      "sort[0][field]": "Company",
+    const records = await airtableFetch("Companies", {
+      "sort[0][field]": "Name",
       "sort[0][direction]": "asc",
-      pageSize: "100", maxRecords: "100",
+      pageSize: "100",
     });
 
     const companies: CompanyListing[] = records.map((rec: Record<string, unknown>) => {
