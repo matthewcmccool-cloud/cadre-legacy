@@ -37,6 +37,18 @@ export interface InvestorListing {
   slug: string;
   website: string;
   logoUrl: string | null;
+  stage: string;
+  industry: string;
+  investors: string[];
+  jobCount: number;
+}
+
+export interface InvestorListing {
+  id: string;
+  name: string;
+  slug: string;
+  website: string;
+  logoUrl: string | null;
   type: string;
   portfolioCount: number;
 }
@@ -177,7 +189,7 @@ export async function fetchCompanies(): Promise<{ companies: CompanyListing[]; t
 
     const companies: CompanyListing[] = records.map((rec: Record<string, unknown>) => {
       const fields = rec.fields as Record<string, unknown>;
-      const name = (fields["Name"] as string) || "";
+      const name = (fields["Company"] as string) || "";
       const investorsRaw = fields["VCs"] || [];
       const investors = Array.isArray(investorsRaw) ? (investorsRaw as string[]) : [];
       const jobCountRaw = fields["Job Count"] || fields["Jobs"] || 0;
@@ -187,7 +199,7 @@ export async function fetchCompanies(): Promise<{ companies: CompanyListing[]; t
         id: rec.id as string,
         name,
         slug: (fields["Slug"] as string) || name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        website: (fields["Website"] as string) || "",
+        website: (fields["URL"] as string) || "",
         logoUrl: (fields["Logo URL"] as string) || null,
         stage: (fields["Stage"] as string) || "",
         industry: Array.isArray(fields["Industry"]) ? (fields["Industry"] as string[])[0] || "" : (fields["Industry"] as string) || "",
@@ -209,16 +221,16 @@ export async function fetchInvestors(): Promise<{ investors: InvestorListing[]; 
   }
 
   try {
-    const records = await airtableFetch("Investors", {
-      "sort[0][field]": "Name",
+    const records = await airtableFetch("tblH6MmoXCn3Ve0K2", {
+      "sort[0][field]": "Firm Name",
       "sort[0][direction]": "asc",
-      pageSize: "100",
+      pageSize: "100", maxRecords: "100",
     });
 
     const investors: InvestorListing[] = records.map((rec: Record<string, unknown>) => {
       const fields = rec.fields as Record<string, unknown>;
-      const name = (fields["Name"] as string) || "";
-      const portfolioRaw = fields["Portfolio Companies"] || [];
+      const name = (fields["Firm Name"] as string) || "";
+      const portfolioRaw = fields["PortCo's"] || [];
       const portfolioCount = Array.isArray(portfolioRaw) ? portfolioRaw.length : 0;
 
       return {

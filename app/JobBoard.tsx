@@ -334,6 +334,8 @@ export default function JobBoard({
   totalInvestors,
   companyDomains,
   companyLogos,
+  departments,
+  locations,
 }: {
   initialJobs: JobListing[];
   totalJobs: number;
@@ -343,6 +345,8 @@ export default function JobBoard({
   totalInvestors: number;
   companyDomains: Record<string, string>;
   companyLogos: Record<string, string>;
+  departments: string[];
+  locations: string[];
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("jobs");
   const [search, setSearch] = useState("");
@@ -415,7 +419,6 @@ export default function JobBoard({
     setVisibleCount(PAGE_SIZE);
   }, []);
 
-  // Resolve logo URL and domain for a job's company
   const getJobLogo = useCallback(
     (job: JobListing) => {
       const logoUrl = companyLogos[job.company] || undefined;
@@ -425,7 +428,6 @@ export default function JobBoard({
     [companyDomains, companyLogos]
   );
 
-  // Tab definitions
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "jobs", label: "Jobs", count: totalJobs },
     { key: "companies", label: "Companies", count: totalCompanies },
@@ -499,6 +501,10 @@ export default function JobBoard({
           >
             Clear filters
           </button>
+        )}
+
+        {isFiltering && (
+          <span className="text-xs text-cadre-secondary animate-pulse">Loading…</span>
         )}
       </div>
 
@@ -585,8 +591,8 @@ export default function JobBoard({
           {/* FOOTER OF LIST */}
           <div className="py-6 text-center">
             <p className="text-xs text-cadre-secondary mb-2">
-              Showing {visible.length} of {filtered.length} roles
-              {filtered.length !== totalJobs && ` (${totalJobs.toLocaleString()} total)`}
+              Showing {visible.length} of {filteredTotal} roles
+              {hasFilters && filteredTotal !== totalJobs && ` (${totalJobs.toLocaleString()} total)`}
             </p>
             {hasMore && (
               <button

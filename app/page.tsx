@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { fetchJobs, fetchCompanies, fetchInvestors, buildCompanyDomainMap, buildCompanyLogoMap } from '@/lib/airtable';
+import { fetchJobs, fetchCompanies, fetchInvestors, fetchAllDepartments, fetchAllLocations, buildCompanyDomainMap, buildCompanyLogoMap } from '@/lib/airtable';
 import JobBoard from './JobBoard';
 
 export const metadata: Metadata = {
@@ -11,10 +11,18 @@ export const metadata: Metadata = {
 export const revalidate = 300; // revalidate every 5 minutes
 
 export default async function Home() {
-  const [{ jobs, total: totalJobs }, { companies, total: totalCompanies }, { investors, total: totalInvestors }] = await Promise.all([
+  const [
+    { jobs, total: totalJobs },
+    { companies, total: totalCompanies },
+    { investors, total: totalInvestors },
+    departments,
+    locations,
+  ] = await Promise.all([
     fetchJobs(),
     fetchCompanies(),
     fetchInvestors(),
+    fetchAllDepartments(),
+    fetchAllLocations(),
   ]);
 
   // Build lookup maps for logos
@@ -31,6 +39,8 @@ export default async function Home() {
       totalInvestors={totalInvestors}
       companyDomains={companyDomains}
       companyLogos={companyLogos}
+      departments={departments}
+      locations={locations}
     />
   );
 }
