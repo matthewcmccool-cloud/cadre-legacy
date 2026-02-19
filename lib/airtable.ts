@@ -211,6 +211,48 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
   }
 }
 
+export interface JobFilters {
+  search?: string;
+  departments?: string[];
+  locations?: string[];
+  remote?: "remote" | "onsite";
+}
+
+export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: JobListing[]; total: number }> {
+  const { jobs } = await fetchJobs();
+  let result = jobs;
+
+  if (filters.search) {
+    const q = filters.search.toLowerCase();
+    result = result.filter(
+      (j) =>
+        j.title.toLowerCase().includes(q) ||
+        j.company.toLowerCase().includes(q) ||
+        j.department.toLowerCase().includes(q) ||
+        j.investors.some((inv) => inv.toLowerCase().includes(q))
+    );
+  }
+
+  if (filters.departments && filters.departments.length > 0) {
+    result = result.filter((j) => filters.departments!.includes(j.department));
+  }
+
+  if (filters.locations && filters.locations.length > 0) {
+    result = result.filter((j) => {
+      const city = j.location.split(",")[0].trim();
+      return filters.locations!.includes(city);
+    });
+  }
+
+  if (filters.remote === "remote") {
+    result = result.filter((j) => j.isRemote);
+  } else if (filters.remote === "onsite") {
+    result = result.filter((j) => !j.isRemote);
+  }
+
+  return { jobs: result, total: result.length };
+}
+
 export async function fetchCompanies(): Promise<{ companies: CompanyListing[]; total: number }> {
   if (!isAirtableConfigured) {
     return { companies: MOCK_COMPANIES, total: MOCK_COMPANIES.length };

@@ -363,25 +363,6 @@ export default function JobBoard({
   const [remote, setRemote] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  // Extract unique values for filters
-  const departments = useMemo(() => {
-    const set = new Set(initialJobs.map((j) => j.department).filter(Boolean));
-    return Array.from(set).sort();
-  }, [initialJobs]);
-
-  const locations = useMemo(() => {
-    const set = new Set(
-      initialJobs
-        .map((j) => {
-          if (!j.location) return "";
-          const parts = j.location.split(",");
-          return parts[0].trim();
-        })
-        .filter((l) => l && l.toLowerCase() !== "remote")
-    );
-    return Array.from(set).sort();
-  }, [initialJobs]);
-
   // Filter jobs
   const filtered = useMemo(() => {
     let result = initialJobs;
@@ -511,9 +492,6 @@ export default function JobBoard({
           </button>
         )}
 
-        {isFiltering && (
-          <span className="text-xs text-cadre-secondary animate-pulse">Loading…</span>
-        )}
       </div>
 
       {/* TABS */}
@@ -599,8 +577,8 @@ export default function JobBoard({
           {/* FOOTER OF LIST */}
           <div className="py-6 text-center">
             <p className="text-xs text-cadre-secondary mb-2">
-              Showing {visible.length} of {filteredTotal} roles
-              {hasFilters && filteredTotal !== totalJobs && ` (${totalJobs.toLocaleString()} total)`}
+              Showing {visible.length} of {filtered.length} roles
+              {hasFilters && filtered.length !== totalJobs && ` (${totalJobs.toLocaleString()} total)`}
             </p>
             {hasMore && (
               <button
