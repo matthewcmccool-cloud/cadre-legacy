@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 
-const BASE_URL = 'https://cadre-ui-psi.vercel.app';
+const BASE_URL = 'https://cadre.careers';
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -24,7 +24,7 @@ const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'CADRE',
-  url: 'https://cadre-ui-psi.vercel.app',
+  url: 'https://cadre.careers',
   description: 'Jobs at the best venture-backed companies.',
 };
 
@@ -44,7 +44,7 @@ export default function RootLayout({
         />
         <script
           defer
-          data-domain="cadre-ui-psi.vercel.app"
+          data-domain="cadre.careers"
           src="https://plausible.io/js/script.js"
         />
       </head>

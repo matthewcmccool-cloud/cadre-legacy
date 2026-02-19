@@ -295,13 +295,21 @@ function CompaniesTab({ companies }: { companies: CompanyListing[] }) {
 }
 
 function InvestorsTab({ investors }: { investors: InvestorListing[] }) {
+  // Filter out investors with 0 portfolio companies
+  const visible = investors.filter((inv) => inv.portfolioCount > 0);
+
   return (
     <div className="py-4">
-      {investors.map((inv) => {
+      {visible.map((inv) => {
         const domain = getDomain(inv.website);
+        const Wrapper = inv.website ? "a" : "div";
+        const linkProps = inv.website
+          ? { href: inv.website.startsWith("http") ? inv.website : `https://${inv.website}`, target: "_blank" as const, rel: "noopener noreferrer" }
+          : {};
         return (
-          <div
+          <Wrapper
             key={inv.id}
+            {...linkProps}
             className="flex items-center gap-3 py-3 px-2 border-b border-cadre-border hover:bg-cadre-hover transition-colors -mx-2"
           >
             <CompanyLogo name={inv.name} logoUrl={inv.logoUrl || undefined} domain={domain} />
@@ -314,7 +322,7 @@ function InvestorsTab({ investors }: { investors: InvestorListing[] }) {
             <div className="text-xs text-cadre-secondary text-right whitespace-nowrap">
               {inv.portfolioCount} {inv.portfolioCount === 1 ? "company" : "companies"}
             </div>
-          </div>
+          </Wrapper>
         );
       })}
     </div>
@@ -438,9 +446,9 @@ export default function JobBoard({
     <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
       {/* HEADER */}
       <header className="py-4 border-b border-cadre-border">
-        <span className="font-heading font-bold text-cadre-text text-lg tracking-tight uppercase">
+        <h1 className="font-heading font-bold text-cadre-text text-lg tracking-tight uppercase">
           CADRE
-        </span>
+        </h1>
       </header>
 
       {/* SEARCH */}
@@ -503,9 +511,6 @@ export default function JobBoard({
           </button>
         )}
 
-        {isFiltering && (
-          <span className="text-xs text-cadre-secondary animate-pulse">Loading…</span>
-        )}
       </div>
 
       {/* TABS */}
@@ -591,8 +596,8 @@ export default function JobBoard({
           {/* FOOTER OF LIST */}
           <div className="py-6 text-center">
             <p className="text-xs text-cadre-secondary mb-2">
-              Showing {visible.length} of {filteredTotal} roles
-              {hasFilters && filteredTotal !== totalJobs && ` (${totalJobs.toLocaleString()} total)`}
+              Showing {visible.length} of {filtered.length} roles
+              {hasFilters && filtered.length !== totalJobs && ` (${totalJobs.toLocaleString()} total)`}
             </p>
             {hasMore && (
               <button
