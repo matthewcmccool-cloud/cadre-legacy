@@ -87,25 +87,57 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
   }
 
   try {
-    // Fetch jobs sorted by Posted Date descending
-    const records = await airtableFetch("Jobs", {
-      "sort[0][field]": "Posted Date",
-      "sort[0][direction]": "desc",
-      pageSize: "100",
-    });
+    // Fetch jobs + lookup tables in parallel to resolve linked record IDs
+    const [jobRecords, companyRecords, investorRecords] = await Promise.all([
+      airtableFetch("Jobs", {
+        "sort[0][field]": "Posted Date",
+        "sort[0][direction]": "desc",
+        pageSize: "100",
+      }),
+      airtableFetch("Companies", { pageSize: "100" }),
+      airtableFetch("Investors", { pageSize: "100" }),
+    ]);
 
-    const jobs: JobListing[] = records.map((rec: Record<string, unknown>) => {
+    // Build record ID → name/website lookup maps
+    const companyNameMap = new Map<string, string>();
+    const companyWebsiteMap = new Map<string, string>();
+    for (const rec of companyRecords) {
+      const f = rec.fields as Record<string, unknown>;
+      companyNameMap.set(rec.id as string, (f["Name"] as string) || "");
+      companyWebsiteMap.set(rec.id as string, (f["Website"] as string) || "");
+    }
+
+    const investorNameMap = new Map<string, string>();
+    for (const rec of investorRecords) {
+      const f = rec.fields as Record<string, unknown>;
+      investorNameMap.set(rec.id as string, (f["Name"] as string) || "");
+    }
+
+    const jobs: JobListing[] = jobRecords.map((rec: Record<string, unknown>) => {
       const fields = rec.fields as Record<string, unknown>;
-      // Company is a linked record — comes as array of strings
-      const companyRaw = fields["Company"];
-      const companyName = Array.isArray(companyRaw)
-        ? String(companyRaw[0])
-        : (companyRaw as string) || "Unknown";
-      // Investors are linked through Companies, not directly on Jobs
+
+      // Bug fix #1: Company is a linked record — returns array of record IDs
+      // Try both "Companies" and "Company" field names, resolve ID to name
+      const companyRaw = fields["Companies"] || fields["Company"];
+      const companyIds = Array.isArray(companyRaw) ? companyRaw.map(String) : [];
+      const companyId = companyIds[0] || "";
+      const companyName = companyNameMap.get(companyId)
+        || (companyRaw && !Array.isArray(companyRaw) ? String(companyRaw) : "Unknown");
+      const companyWebsite = companyWebsiteMap.get(companyId) || "";
+
+      // Bug fix #2: Investors are linked records — resolve IDs to names
       const investorsRaw = fields["Investors"] || fields["VCs"] || [];
-      const investors = Array.isArray(investorsRaw)
-        ? (investorsRaw as string[])
-        : [];
+      const investorIds = Array.isArray(investorsRaw) ? investorsRaw.map(String) : [];
+      const investors = investorIds
+        .map((id) => investorNameMap.get(id))
+        .filter((name): name is string => Boolean(name));
+
+      // Bug fix #3: Prefer "Posted Date", fall back to "Last Seen At" or "Created Time"
+      const postedDate = (fields["Posted Date"] as string)
+        || (fields["Last Seen At"] as string)
+        || (fields["Created Time"] as string)
+        || "";
+
       const location = (fields["Location"] as string) || "";
 
       return {
@@ -114,10 +146,10 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
         company: companyName,
         companySlug: companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
         companyLogo: null,
-        companyWebsite: (fields["Company Website"] as string) || "",
+        companyWebsite,
         location,
         department: (fields["Function"] as string) || "",
-        postedDate: (fields["Posted Date"] as string) || "",
+        postedDate,
         jobUrl: (fields["Job URL"] as string) || "",
         investors,
         isRemote: location.toLowerCase().includes("remote"),

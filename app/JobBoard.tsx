@@ -28,11 +28,16 @@ function getInvestorColor(name: string): string {
 
 function timeAgo(dateStr: string): string {
   if (!dateStr) return "";
-  const now = new Date();
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const days = Math.floor(diffMs / 86400000);
-  if (days === 0) return "today";
+  // If date is today or negative (future), show formatted date (e.g. "Feb 18")
+  // This handles Created Time fallback where everything looks like "today"
+  if (days <= 0) {
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
   if (days === 1) return "1d ago";
   if (days < 7) return `${days}d ago`;
   if (days < 30) return `${Math.floor(days / 7)}w ago`;
