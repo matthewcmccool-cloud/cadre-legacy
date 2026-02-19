@@ -236,33 +236,145 @@ function SingleSelectDropdown({
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+// Multi-select filter dropdown — checkboxes, green accents
+// ═══════════════════════════════════════════════════════════════════════
+
+function MultiSelectDropdown({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }
+  }, [open]);
+
+  const toggle = (val: string) => {
+    if (selected.includes(val)) {
+      onChange(selected.filter((s) => s !== val));
+    } else {
+      onChange([...selected, val]);
+    }
+  };
+
+  const hasSelection = selected.length > 0;
+  const displayLabel = hasSelection ? `${label} (${selected.length})` : label;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1.5 px-3 py-2 text-xs rounded-md border cursor-pointer outline-none transition-all duration-200 ${
+          hasSelection
+            ? "bg-brand-green-dim border-brand-green text-brand-green"
+            : "bg-bg-surface border-cadre-border text-cadre-secondary hover:border-brand-green hover:text-white"
+        }`}
+        style={{ minWidth: 110 }}
+      >
+        <span className="truncate">{displayLabel}</span>
+        <svg
+          width="10"
+          height="6"
+          viewBox="0 0 10 6"
+          fill="none"
+          className={`shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        >
+          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="absolute top-full left-0 mt-1 bg-bg-elevated border border-cadre-border shadow-lg z-50 rounded-lg"
+          style={{ minWidth: 260, maxHeight: 320 }}
+        >
+          {hasSelection && (
+            <button
+              onClick={() => onChange([])}
+              className="w-full text-left px-3 py-1.5 text-[11px] text-brand-green hover:bg-bg-hover cursor-pointer border-b border-cadre-border"
+            >
+              Clear selection
+            </button>
+          )}
+          <div className="overflow-y-auto" style={{ maxHeight: 288 }}>
+            {options.map((opt) => {
+              const isChecked = selected.includes(opt);
+              return (
+                <div
+                  key={opt}
+                  onClick={() => toggle(opt)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-cadre-text hover:bg-bg-hover cursor-pointer transition-colors duration-150"
+                >
+                  <span
+                    className="flex items-center justify-center shrink-0 border rounded-sm"
+                    style={{
+                      width: 14,
+                      height: 14,
+                      borderColor: isChecked ? "var(--brand-green)" : "var(--border-default)",
+                      backgroundColor: isChecked ? "var(--brand-green)" : "transparent",
+                    }}
+                  >
+                    {isChecked && (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4L3.5 6.5L9 1" stroke="var(--text-inverse)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className={`truncate ${isChecked ? "text-brand-green" : ""}`}>{opt}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // Active Filter Chips — removable pills showing applied filters
 // ═══════════════════════════════════════════════════════════════════════
 
 function ActiveFilterChips({
   search,
   selectedFunction,
-  selectedIndustry,
+  selectedIndustries,
   selectedLocation,
   remote,
   onClearSearch,
   onClearFunction,
-  onClearIndustry,
+  onRemoveIndustry,
   onClearLocation,
   onClearRemote,
 }: {
   search: string;
   selectedFunction: string;
-  selectedIndustry: string;
+  selectedIndustries: string[];
   selectedLocation: string;
   remote: boolean;
   onClearSearch: () => void;
   onClearFunction: () => void;
-  onClearIndustry: () => void;
+  onRemoveIndustry: (industry: string) => void;
   onClearLocation: () => void;
   onClearRemote: () => void;
 }) {
-  const hasAny = search || selectedFunction || selectedIndustry || selectedLocation || remote;
+  const hasAny = search || selectedFunction || selectedIndustries.length > 0 || selectedLocation || remote;
   if (!hasAny) return null;
 
   return (
@@ -273,9 +385,9 @@ function ActiveFilterChips({
       {selectedFunction && (
         <FilterChip label={`Function: ${selectedFunction}`} onRemove={onClearFunction} />
       )}
-      {selectedIndustry && (
-        <FilterChip label={`Industry: ${selectedIndustry}`} onRemove={onClearIndustry} />
-      )}
+      {selectedIndustries.map((ind) => (
+        <FilterChip key={ind} label={`Industry: ${ind}`} onRemove={() => onRemoveIndustry(ind)} />
+      ))}
       {selectedLocation && (
         <FilterChip label={`Location: ${selectedLocation}`} onRemove={onClearLocation} />
       )}
@@ -412,7 +524,10 @@ export default function JobBoard({
   const [activeTab, setActiveTab] = useState<Tab>("jobs");
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [selectedFunction, setSelectedFunction] = useState(searchParams.get("function") || "");
-  const [selectedIndustry, setSelectedIndustry] = useState(searchParams.get("industry") || "");
+  const [selectedIndustries, setSelectedIndustries] = useState<string[]>(() => {
+    const param = searchParams.get("industry") || "";
+    return param ? param.split(",").filter(Boolean) : [];
+  });
   const [selectedLocation, setSelectedLocation] = useState(searchParams.get("location") || "");
   const [remote, setRemote] = useState(searchParams.get("remote") === "true");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -422,24 +537,24 @@ export default function JobBoard({
 
   // Sync filters to URL params (shallow navigation)
   const syncUrlParams = useCallback(
-    (overrides: Record<string, string | undefined> = {}) => {
+    (overrides: Record<string, string | string[] | undefined> = {}) => {
       const params = new URLSearchParams();
-      const s = overrides.search !== undefined ? overrides.search : search;
-      const fn = overrides.function !== undefined ? overrides.function : selectedFunction;
-      const ind = overrides.industry !== undefined ? overrides.industry : selectedIndustry;
-      const loc = overrides.location !== undefined ? overrides.location : selectedLocation;
+      const s = overrides.search !== undefined ? overrides.search as string : search;
+      const fn = overrides.function !== undefined ? overrides.function as string : selectedFunction;
+      const ind = overrides.industry !== undefined ? overrides.industry as string[] : selectedIndustries;
+      const loc = overrides.location !== undefined ? overrides.location as string : selectedLocation;
       const rem = overrides.remote !== undefined ? overrides.remote === "true" : remote;
 
       if (s) params.set("search", s);
       if (fn) params.set("function", fn);
-      if (ind) params.set("industry", ind);
+      if (ind.length > 0) params.set("industry", ind.map(toSlug).join(","));
       if (loc) params.set("location", loc);
       if (rem) params.set("remote", "true");
 
       const qs = params.toString();
       router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
     },
-    [router, pathname, search, selectedFunction, selectedIndustry, selectedLocation, remote]
+    [router, pathname, search, selectedFunction, selectedIndustries, selectedLocation, remote]
   );
 
   // Derive filter options from data
@@ -483,8 +598,8 @@ export default function JobBoard({
       result = result.filter((j) => j.function === selectedFunction);
     }
 
-    if (selectedIndustry) {
-      result = result.filter((j) => j.industry === selectedIndustry);
+    if (selectedIndustries.length > 0) {
+      result = result.filter((j) => selectedIndustries.includes(j.industry));
     }
 
     if (selectedLocation) {
@@ -496,17 +611,17 @@ export default function JobBoard({
     }
 
     return result;
-  }, [initialJobs, search, selectedFunction, selectedIndustry, selectedLocation, remote]);
+  }, [initialJobs, search, selectedFunction, selectedIndustries, selectedLocation, remote]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
-  const hasFilters = search || selectedFunction || selectedIndustry || selectedLocation || remote;
+  const hasFilters = search || selectedFunction || selectedIndustries.length > 0 || selectedLocation || remote;
 
   const clearFilters = useCallback(() => {
     setSearch("");
     setSelectedFunction("");
-    setSelectedIndustry("");
+    setSelectedIndustries([]);
     setSelectedLocation("");
     setRemote(false);
     setVisibleCount(PAGE_SIZE);
@@ -550,13 +665,23 @@ export default function JobBoard({
     [syncUrlParams]
   );
 
-  const handleIndustryChange = useCallback(
-    (value: string) => {
-      setSelectedIndustry(value);
+  const handleIndustriesChange = useCallback(
+    (values: string[]) => {
+      setSelectedIndustries(values);
       setVisibleCount(PAGE_SIZE);
-      syncUrlParams({ industry: value });
+      syncUrlParams({ industry: values });
     },
     [syncUrlParams]
+  );
+
+  const handleRemoveIndustry = useCallback(
+    (industry: string) => {
+      const next = selectedIndustries.filter((i) => i !== industry);
+      setSelectedIndustries(next);
+      setVisibleCount(PAGE_SIZE);
+      syncUrlParams({ industry: next });
+    },
+    [selectedIndustries, syncUrlParams]
   );
 
   const handleLocationChange = useCallback(
@@ -607,12 +732,12 @@ export default function JobBoard({
           onChange={handleFunctionChange}
         />
 
-        {/* Industry dropdown */}
-        <SingleSelectDropdown
+        {/* Industry dropdown (multi-select) */}
+        <MultiSelectDropdown
           label="Industry"
           options={industries}
-          selected={selectedIndustry}
-          onChange={handleIndustryChange}
+          selected={selectedIndustries}
+          onChange={handleIndustriesChange}
         />
 
         {/* Location dropdown */}
@@ -649,12 +774,12 @@ export default function JobBoard({
       <ActiveFilterChips
         search={search}
         selectedFunction={selectedFunction}
-        selectedIndustry={selectedIndustry}
+        selectedIndustries={selectedIndustries}
         selectedLocation={selectedLocation}
         remote={remote}
         onClearSearch={() => handleSearchChange("")}
         onClearFunction={() => handleFunctionChange("")}
-        onClearIndustry={() => handleIndustryChange("")}
+        onRemoveIndustry={handleRemoveIndustry}
         onClearLocation={() => handleLocationChange("")}
         onClearRemote={handleRemoteToggle}
       />

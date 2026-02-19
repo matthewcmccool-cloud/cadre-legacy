@@ -229,7 +229,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
 export interface JobFilters {
   search?: string;
   functions?: string[];
-  industry?: string;
+  industries?: string[];
   locations?: string[];
   remote?: "remote" | "onsite";
 }
@@ -253,8 +253,8 @@ export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: Jo
     result = result.filter((j) => filters.functions!.includes(j.function));
   }
 
-  if (filters.industry) {
-    result = result.filter((j) => j.industry === filters.industry);
+  if (filters.industries && filters.industries.length > 0) {
+    result = result.filter((j) => filters.industries!.includes(j.industry));
   }
 
   if (filters.locations && filters.locations.length > 0) {

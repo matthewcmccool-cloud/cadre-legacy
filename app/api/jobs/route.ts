@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   if (functions) filters.functions = functions.split(",").filter(Boolean);
 
   const industry = searchParams.get("industry");
-  if (industry) filters.industry = industry;
+  if (industry) filters.industries = industry.split(",").filter(Boolean);
 
   const locations = searchParams.get("locations");
   if (locations) filters.locations = locations.split(",").filter(Boolean);
