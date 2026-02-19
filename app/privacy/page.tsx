@@ -14,8 +14,8 @@ export default function PrivacyPage() {
         .pp * { box-sizing: border-box; margin: 0; padding: 0; }
         .pp {
           min-height: 100vh;
-          background: #F2F2F2;
-          color: #666666;
+          background: #111111;
+          color: #999999;
           font-family: 'DM Sans', -apple-system, sans-serif;
           -webkit-font-smoothing: antialiased;
           padding: 0 24px;
@@ -30,36 +30,36 @@ export default function PrivacyPage() {
           align-items: center;
           gap: 6px;
           font-size: 13px;
-          color: #666666;
+          color: #999999;
           text-decoration: none;
           transition: color 0.15s;
           margin-bottom: 48px;
         }
-        .pp-back:hover { color: #1A1A1A; }
+        .pp-back:hover { color: #00E87A; }
         .pp-title {
           font-size: 28px;
           font-weight: 700;
-          color: #1A1A1A;
+          color: #FFFFFF;
           font-family: 'Space Mono', monospace;
           letter-spacing: -0.02em;
           margin-bottom: 8px;
         }
         .pp-date {
           font-size: 13px;
-          color: #666666;
+          color: #555555;
           margin-bottom: 48px;
         }
         .pp h2 {
           font-size: 16px;
           font-weight: 600;
-          color: #1A1A1A;
+          color: #FFFFFF;
           margin-top: 36px;
           margin-bottom: 12px;
         }
         .pp p {
           font-size: 14px;
           line-height: 1.7;
-          color: #666666;
+          color: #999999;
           margin-bottom: 16px;
         }
         .pp ul {
@@ -70,7 +70,7 @@ export default function PrivacyPage() {
         .pp li {
           font-size: 14px;
           line-height: 1.7;
-          color: #666666;
+          color: #999999;
           padding-left: 16px;
           position: relative;
           margin-bottom: 4px;
@@ -83,16 +83,16 @@ export default function PrivacyPage() {
           width: 4px;
           height: 4px;
           border-radius: 50%;
-          background: #E0E0E0;
+          background: #00E87A;
         }
         .pp-divider {
           border: none;
-          border-top: 1px solid #E0E0E0;
+          border-top: 1px solid #2A2A2A;
           margin: 48px 0 32px;
         }
         .pp-footer {
           font-size: 13px;
-          color: #666666;
+          color: #555555;
         }
 
         @media (max-width: 640px) {

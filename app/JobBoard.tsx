@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { JobListing, CompanyListing, InvestorListing } from "@/lib/airtable";
+import { Logo } from "@/components/Logo";
 
-const ACCENT_COLORS = ["#EA4335", "#4285F4", "#FBBC04", "#34A853"] as const;
 const PAGE_SIZE = 25;
 
 type Tab = "jobs" | "companies" | "investors";
@@ -12,20 +12,6 @@ type Tab = "jobs" | "companies" | "investors";
 // Utility helpers
 // ═══════════════════════════════════════════════════════════════════════
 
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function getInvestorColor(name: string): string {
-  return ACCENT_COLORS[hashString(name) % ACCENT_COLORS.length];
-}
-
 function timeAgo(dateStr: string): string {
   if (!dateStr) return "";
   const d = new Date(dateStr);
@@ -33,8 +19,6 @@ function timeAgo(dateStr: string): string {
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const days = Math.floor(diffMs / 86400000);
-  // If date is today or negative (future), show formatted date (e.g. "Feb 18")
-  // This handles Created Time fallback where everything looks like "today"
   if (days <= 0) {
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
@@ -54,8 +38,16 @@ function getDomain(website: string): string {
   }
 }
 
+/** Check if a role was posted within the last 48 hours */
+function isNewRole(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  return Date.now() - d.getTime() < 48 * 60 * 60 * 1000;
+}
+
 // ═══════════════════════════════════════════════════════════════════════
-// Company Logo — tries: direct Airtable URL → Google favicon → letter circle
+// Company Logo — tries: direct Airtable URL → logo.dev → Google favicon → letter circle
 // ═══════════════════════════════════════════════════════════════════════
 
 function CompanyLogo({
@@ -69,7 +61,6 @@ function CompanyLogo({
 }) {
   const [srcIndex, setSrcIndex] = useState(0);
 
-  // Build an ordered list of URLs to try
   const srcs: string[] = [];
   if (logoUrl) srcs.push(logoUrl);
   if (domain) srcs.push(`https://img.logo.dev/${domain}?token=pk_a8CO5glvSNOJpPBxGBm3Iw&size=64&format=png`);
@@ -80,7 +71,7 @@ function CompanyLogo({
   if (!currentSrc) {
     return (
       <div
-        className="flex items-center justify-center shrink-0 rounded-full bg-cadre-border text-cadre-secondary"
+        className="flex items-center justify-center shrink-0 rounded-full bg-bg-elevated text-cadre-secondary"
         style={{ width: 32, height: 32, fontSize: 13, fontWeight: 600 }}
       >
         {name.charAt(0).toUpperCase()}
@@ -95,12 +86,12 @@ function CompanyLogo({
       width={32}
       height={32}
       className="shrink-0 rounded-full object-cover"
-      style={{ border: "1px solid #E0E0E0" }}
+      style={{ border: "1px solid var(--border-default)" }}
       onError={() => {
         if (srcIndex < srcs.length - 1) {
           setSrcIndex(srcIndex + 1);
         } else {
-          setSrcIndex(srcs.length); // triggers letter circle fallback
+          setSrcIndex(srcs.length);
         }
       }}
     />
@@ -108,7 +99,7 @@ function CompanyLogo({
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// Investor chips
+// Investor chips — uniform green outline style
 // ═══════════════════════════════════════════════════════════════════════
 
 function InvestorChips({ investors }: { investors: string[] }) {
@@ -118,21 +109,16 @@ function InvestorChips({ investors }: { investors: string[] }) {
 
   return (
     <div className="flex flex-wrap items-center gap-1">
-      {visible.map((inv) => {
-        const bg = getInvestorColor(inv);
-        const textColor = bg === "#FBBC04" ? "#1A1A1A" : "#FFFFFF";
-        return (
-          <span
-            key={inv}
-            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight whitespace-nowrap"
-            style={{ backgroundColor: bg, color: textColor }}
-          >
-            {inv}
-          </span>
-        );
-      })}
+      {visible.map((inv) => (
+        <span
+          key={inv}
+          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-normal border border-brand-green text-white whitespace-nowrap cursor-pointer hover:bg-brand-green-dim transition-colors duration-150"
+        >
+          {inv}
+        </span>
+      ))}
       {extra > 0 && (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight bg-cadre-border text-cadre-secondary whitespace-nowrap">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-normal border border-brand-green text-white whitespace-nowrap cursor-pointer hover:bg-brand-green-dim transition-colors duration-150">
           +{extra}
         </span>
       )}
@@ -150,7 +136,7 @@ function DepartmentBadge({ department }: { department: string }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// Custom filter dropdown (replaces native <select>)
+// Custom filter dropdown — dark pill style with green accents
 // ═══════════════════════════════════════════════════════════════════════
 
 function FilterDropdown({
@@ -187,13 +173,18 @@ function FilterDropdown({
     }
   };
 
-  const displayLabel = selected.length > 0 ? `${label} (${selected.length})` : label;
+  const hasSelection = selected.length > 0;
+  const displayLabel = hasSelection ? `${label} (${selected.length})` : label;
 
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-white border border-cadre-border text-cadre-text cursor-pointer outline-none hover:border-cadre-text transition-colors"
+        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border cursor-pointer outline-none transition-all duration-200 ${
+          hasSelection
+            ? "bg-brand-green-dim border-brand-green text-brand-green"
+            : "bg-bg-surface border-cadre-border text-cadre-secondary hover:border-brand-green hover:text-white"
+        }`}
         style={{ minWidth: 100 }}
       >
         <span className="truncate">{displayLabel}</span>
@@ -202,21 +193,21 @@ function FilterDropdown({
           height="6"
           viewBox="0 0 10 6"
           fill="none"
-          className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
         >
-          <path d="M1 1L5 5L9 1" stroke="#666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
 
       {open && (
         <div
-          className="absolute top-full left-0 mt-1 bg-white border border-cadre-border shadow-lg z-50"
+          className="absolute top-full left-0 mt-1 bg-bg-elevated border border-cadre-border shadow-lg z-50 rounded-lg"
           style={{ minWidth: 220, maxHeight: 280 }}
         >
           {selected.length > 0 && (
             <button
               onClick={() => onChange([])}
-              className="w-full text-left px-3 py-1.5 text-[11px] text-cadre-blue hover:bg-cadre-hover cursor-pointer border-b border-cadre-border"
+              className="w-full text-left px-3 py-1.5 text-[11px] text-brand-green hover:bg-bg-hover cursor-pointer border-b border-cadre-border"
             >
               Clear selection
             </button>
@@ -228,24 +219,24 @@ function FilterDropdown({
                 <div
                   key={opt}
                   onClick={() => toggle(opt)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-cadre-text hover:bg-cadre-hover cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-cadre-text hover:bg-bg-hover cursor-pointer transition-colors duration-150"
                 >
                   <span
                     className="flex items-center justify-center shrink-0 border rounded-sm"
                     style={{
                       width: 14,
                       height: 14,
-                      borderColor: isChecked ? "#4285F4" : "#ccc",
-                      backgroundColor: isChecked ? "#4285F4" : "transparent",
+                      borderColor: isChecked ? "var(--brand-green)" : "var(--border-default)",
+                      backgroundColor: isChecked ? "var(--brand-green)" : "transparent",
                     }}
                   >
                     {isChecked && (
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M1 4L3.5 6.5L9 1" stroke="var(--text-inverse)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                   </span>
-                  <span className="truncate">{opt}</span>
+                  <span className={`truncate ${isChecked ? "text-brand-green" : ""}`}>{opt}</span>
                 </div>
               );
             })}
@@ -268,16 +259,16 @@ function CompaniesTab({ companies }: { companies: CompanyListing[] }) {
         return (
           <div
             key={c.id}
-            className="flex items-start gap-3 p-4 bg-white border border-cadre-border hover:border-cadre-text transition-colors"
+            className="flex items-start gap-3 p-4 bg-bg-surface border border-cadre-border rounded-lg hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)] hover:border-brand-green transition-all duration-200 cursor-pointer"
           >
             <CompanyLogo name={c.name} logoUrl={c.logoUrl || undefined} domain={domain} />
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm text-cadre-text truncate">{c.name}</div>
+              <div className="font-semibold text-sm text-white truncate">{c.name}</div>
               <div className="text-xs text-cadre-secondary mt-0.5">
                 {[c.industry, c.stage].filter(Boolean).join(" · ")}
               </div>
               {c.jobCount > 0 && (
-                <div className="text-xs text-cadre-blue mt-1">
+                <div className="text-xs text-brand-green mt-1 cursor-pointer hover:brightness-110">
                   {c.jobCount} open {c.jobCount === 1 ? "role" : "roles"}
                 </div>
               )}
@@ -295,34 +286,28 @@ function CompaniesTab({ companies }: { companies: CompanyListing[] }) {
 }
 
 function InvestorsTab({ investors }: { investors: InvestorListing[] }) {
-  // Filter out investors with 0 portfolio companies
   const visible = investors.filter((inv) => inv.portfolioCount > 0);
 
   return (
-    <div className="py-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 py-4">
       {visible.map((inv) => {
         const domain = getDomain(inv.website);
-        const Wrapper = inv.website ? "a" : "div";
-        const linkProps = inv.website
-          ? { href: inv.website.startsWith("http") ? inv.website : `https://${inv.website}`, target: "_blank" as const, rel: "noopener noreferrer" }
-          : {};
         return (
-          <Wrapper
+          <div
             key={inv.id}
-            {...linkProps}
-            className="flex items-center gap-3 py-3 px-2 border-b border-cadre-border hover:bg-cadre-hover transition-colors -mx-2"
+            className="flex items-center gap-3 p-4 bg-bg-surface border border-cadre-border rounded-lg hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)] hover:border-brand-green transition-all duration-200 cursor-pointer"
           >
             <CompanyLogo name={inv.name} logoUrl={inv.logoUrl || undefined} domain={domain} />
             <div className="flex-1 min-w-0">
-              <span className="font-semibold text-sm text-cadre-text">{inv.name}</span>
+              <span className="font-semibold text-sm text-white">{inv.name}</span>
               {inv.type && (
-                <span className="text-xs text-cadre-secondary ml-2">{inv.type}</span>
+                <div className="text-xs text-cadre-secondary mt-0.5">{inv.type}</div>
               )}
             </div>
             <div className="text-xs text-cadre-secondary text-right whitespace-nowrap">
               {inv.portfolioCount} {inv.portfolioCount === 1 ? "company" : "companies"}
             </div>
-          </Wrapper>
+          </div>
         );
       })}
     </div>
@@ -441,9 +426,7 @@ export default function JobBoard({
     <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
       {/* HEADER */}
       <header className="py-4 border-b border-cadre-border">
-        <h1 className="font-heading font-bold text-cadre-text text-lg tracking-tight uppercase">
-          CADRE
-        </h1>
+        <Logo size="md" />
       </header>
 
       {/* SEARCH */}
@@ -456,7 +439,8 @@ export default function JobBoard({
             setSearch(e.target.value);
             setVisibleCount(PAGE_SIZE);
           }}
-          className="w-full px-4 py-2.5 text-sm bg-white border border-cadre-border text-cadre-text placeholder-cadre-secondary outline-none focus:border-cadre-text transition-colors"
+          className="w-full px-4 py-2.5 text-sm bg-bg-elevated border border-cadre-border text-white placeholder-cadre-muted rounded-md outline-none focus:border-brand-green transition-all duration-200"
+          style={{ boxShadow: search ? "0 0 0 2px var(--brand-green-dim)" : "none" }}
         />
       </div>
 
@@ -482,51 +466,43 @@ export default function JobBoard({
           }}
         />
 
-        {/* Remote filter stays simple — single choice */}
-        <div className="relative">
-          <button
-            onClick={() => setRemote(remote === "" ? "remote" : remote === "remote" ? "onsite" : "")}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs border cursor-pointer outline-none transition-colors"
-            style={{
-              backgroundColor: remote ? "#4285F4" : "white",
-              borderColor: remote ? "#4285F4" : "#E0E0E0",
-              color: remote ? "white" : "#1A1A1A",
-            }}
-          >
-            {remote === "remote" ? "Remote" : remote === "onsite" ? "On-site" : "Remote / On-site"}
-          </button>
-        </div>
+        {/* Remote filter — cycles: off → remote → onsite → off */}
+        <button
+          onClick={() => setRemote(remote === "" ? "remote" : remote === "remote" ? "onsite" : "")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-full border cursor-pointer outline-none transition-all duration-200 ${
+            remote
+              ? "bg-brand-green text-black border-brand-green font-semibold"
+              : "bg-bg-surface border-cadre-border text-cadre-secondary hover:border-brand-green hover:text-white"
+          }`}
+        >
+          {remote === "remote" ? "Remote" : remote === "onsite" ? "On-site" : "Remote / On-site"}
+        </button>
 
         {hasFilters && (
           <button
             onClick={clearFilters}
-            className="px-3 py-1.5 text-xs text-cadre-secondary hover:text-cadre-text transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-xs text-cadre-secondary hover:text-white transition-colors duration-200 cursor-pointer"
           >
             Clear filters
           </button>
         )}
-
       </div>
 
-      {/* TABS */}
+      {/* TABS — animated green underline */}
       <div className="flex gap-6 border-b border-cadre-border">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className="pb-2 text-sm cursor-pointer transition-colors outline-none"
-            style={{
-              color: activeTab === tab.key ? "#1A1A1A" : "#666666",
-              fontWeight: activeTab === tab.key ? 600 : 400,
-              borderBottom: activeTab === tab.key ? "2px solid #4285F4" : "2px solid transparent",
-              marginBottom: -1,
-            }}
+            className={`tab-underline pb-2 text-sm cursor-pointer outline-none transition-colors duration-200 ${
+              activeTab === tab.key
+                ? "active text-white font-semibold"
+                : "text-cadre-secondary font-normal"
+            }`}
+            style={{ marginBottom: -1 }}
           >
             {tab.label}{" "}
-            <span
-              className="text-xs"
-              style={{ color: activeTab === tab.key ? "#666666" : "#999999" }}
-            >
+            <span className="text-xs text-cadre-muted">
               ({tab.count.toLocaleString()})
             </span>
           </button>
@@ -536,17 +512,18 @@ export default function JobBoard({
       {/* TAB CONTENT */}
       {activeTab === "jobs" && (
         <>
-          {/* JOB LIST — horizontal spread layout */}
-          <div>
+          {/* JOB LIST — card style */}
+          <div className="flex flex-col gap-2 pt-4">
             {visible.map((job) => {
               const { logoUrl, domain } = getJobLogo(job);
+              const isNew = isNewRole(job.postedDate);
               return (
                 <a
                   key={job.id}
                   href={job.jobUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="grid items-center gap-x-4 border-b border-cadre-border py-3 px-2 hover:bg-cadre-hover transition-colors -mx-2"
+                  className="grid items-center gap-x-4 bg-bg-surface border border-cadre-border rounded-lg py-3 px-4 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)] hover:border-brand-green transition-all duration-200 cursor-pointer"
                   style={{
                     gridTemplateColumns: "32px minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.5fr) auto",
                   }}
@@ -556,8 +533,15 @@ export default function JobBoard({
 
                   {/* Col 2: Title + Company */}
                   <div className="min-w-0">
-                    <div className="font-semibold text-sm text-cadre-text truncate">
-                      {job.title}
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-white truncate">
+                        {job.title}
+                      </span>
+                      {isNew && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-brand-green text-black whitespace-nowrap leading-tight">
+                          New
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-cadre-secondary truncate">
                       {job.company}
@@ -567,7 +551,7 @@ export default function JobBoard({
                   {/* Col 3: Location + Department */}
                   <div className="min-w-0 flex flex-col items-start gap-1">
                     {job.location && (
-                      <span className="text-xs text-cadre-secondary truncate max-w-full">
+                      <span className="text-xs text-cadre-muted truncate max-w-full">
                         {job.location}
                       </span>
                     )}
@@ -580,7 +564,7 @@ export default function JobBoard({
                   </div>
 
                   {/* Col 5: Date */}
-                  <div className="text-xs text-cadre-secondary whitespace-nowrap text-right">
+                  <div className="text-xs text-cadre-muted whitespace-nowrap text-right">
                     {timeAgo(job.postedDate)}
                   </div>
                 </a>
@@ -597,7 +581,7 @@ export default function JobBoard({
             {hasMore && (
               <button
                 onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                className="text-sm text-cadre-secondary hover:text-cadre-text transition-colors underline cursor-pointer"
+                className="text-sm text-brand-green hover:brightness-110 transition-all duration-150 cursor-pointer underline"
               >
                 Load more
               </button>

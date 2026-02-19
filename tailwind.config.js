@@ -12,15 +12,33 @@ module.exports = {
         body: ['"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       colors: {
-        'cadre-bg': '#F2F2F2',
-        'cadre-text': '#1A1A1A',
-        'cadre-secondary': '#666666',
-        'cadre-border': '#E0E0E0',
-        'cadre-hover': '#EAEAEA',
-        'cadre-red': '#EA4335',
-        'cadre-blue': '#4285F4',
-        'cadre-yellow': '#FBBC04',
-        'cadre-green': '#34A853',
+        /* Legacy tokens — remapped to dark theme */
+        'cadre-bg':        '#111111',
+        'cadre-text':      '#FFFFFF',
+        'cadre-secondary': '#999999',
+        'cadre-border':    '#2A2A2A',
+        'cadre-hover':     '#2A2A2A',
+        'cadre-muted':     '#555555',
+
+        /* Brand */
+        'brand-green':     '#00E87A',
+        'brand-green-dim': 'rgba(0, 232, 122, 0.12)',
+
+        /* Surfaces */
+        'bg-base':     '#111111',
+        'bg-surface':  '#1A1A1A',
+        'bg-elevated': '#222222',
+        'bg-hover':    '#2A2A2A',
+
+        /* Borders */
+        'border-default': '#2A2A2A',
+        'border-subtle':  '#1F1F1F',
+        'border-brand':   '#00E87A',
+
+        /* Status */
+        'status-new':     '#00E87A',
+        'status-warning': '#F59E0B',
+        'status-error':   '#EF4444',
       },
     },
   },
