@@ -56,6 +56,7 @@ export interface Job {
   seniority_level: SeniorityLevel | null;
   first_seen_at: string;
   is_new: boolean;
+  is_remote: boolean;
 }
 
 export interface RoleGroup {

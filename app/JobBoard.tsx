@@ -154,6 +154,95 @@ function SingleSelectDropdown({
   selected,
   onChange,
 }: {
+
+    label: string;
+  options: string[];
+  selected: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }
+  }, [open]);
+
+  const hasSelection = Boolean(selected);
+  const displayLabel = hasSelection ? selected : label;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1.5 px-3 py-2 text-xs rounded-md border cursor-pointer outline-none transition-all duration-200 ${
+          hasSelection
+            ? "bg-brand-green-dim border-brand-green text-brand-green"
+            : "bg-bg-surface border-cadre-border text-cadre-secondary hover:border-brand-green hover:text-white"
+        }`}
+        style={{ minWidth: 110 }}
+      >
+        <span className="truncate">{displayLabel}</span>
+        <svg
+          width="10"
+          height="6"
+          viewBox="0 0 10 6"
+          fill="none"
+          className={`shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        >
+          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="absolute top-full left-0 mt-1 bg-bg-elevated border border-cadre-border shadow-lg z-50 rounded-lg"
+          style={{ minWidth: 220, maxHeight: 320 }}
+        >
+          {hasSelection && (
+            <button
+              onClick={() => { onChange(""); setOpen(false); }}
+              className="w-full text-left px-3 py-1.5 text-[11px] text-brand-green hover:bg-bg-hover cursor-pointer border-b border-cadre-border"
+            >
+              Clear
+            </button>
+          )}
+          <div className="overflow-y-auto" style={{ maxHeight: 288 }}>
+            {options.map((opt) => {
+              const isActive = selected === opt;
+              return (
+                <div
+                  key={opt}
+                  onClick={() => { onChange(opt); setOpen(false); }}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-bg-hover cursor-pointer transition-colors duration-150 ${
+                    isActive ? "text-brand-green" : "text-cadre-text"
+                  }`}
+                >
+                  <span className="truncate">{opt}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function SingleSelectDropdown({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
   label: string;
   options: string[];
   selected: string;
@@ -415,11 +504,76 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
   );
 }
 
+
+function ActiveFilterChips({
+  search,
+  selectedFunction,
+  selectedIndustries,
+  selectedLocation,
+  remote,
+  onClearSearch,
+  onClearFunction,
+  onRemoveIndustry,
+  onClearLocation,
+  onClearRemote,
+}: {
+  search: string;
+  selectedFunction: string;
+  selectedIndustries: string[];
+  selectedLocation: string;
+  remote: boolean;
+  onClearSearch: () => void;
+  onClearFunction: () => void;
+  onRemoveIndustry: (industry: string) => void;
+  onClearLocation: () => void;
+  onClearRemote: () => void;
+}) {
+  const hasAny = search || selectedFunction || selectedIndustries.length > 0 || selectedLocation || remote;
+  if (!hasAny) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 pb-3">
+      {search && (
+        <FilterChip label={`Search: "${search}"`} onRemove={onClearSearch} />
+      )}
+      {selectedFunction && (
+        <FilterChip label={`Function: ${selectedFunction}`} onRemove={onClearFunction} />
+      )}
+      {selectedIndustries.map((ind) => (
+        <FilterChip key={ind} label={`Industry: ${ind}`} onRemove={() => onRemoveIndustry(ind)} />
+      ))}
+      {selectedLocation && (
+        <FilterChip label={`Location: ${selectedLocation}`} onRemove={onClearLocation} />
+      )}
+      {remote && (
+        <FilterChip label="Remote" onRemove={onClearRemote} />
+      )}
+    </div>
+  );
+}
+
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] bg-bg-elevated text-cadre-secondary border border-cadre-border">
+      {label}
+      <button
+        onClick={onRemove}
+        className="ml-0.5 text-cadre-muted hover:text-white cursor-pointer transition-colors"
+        aria-label={`Remove ${label}`}
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 2L8 8M8 2L2 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </button>
+    </span>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Tab views: Companies & Investors (with working links)
 // ═══════════════════════════════════════════════════════════════════════
 
-function CompaniesTab({
+funfunction CompaniesTab({
   companies,
   companyDomains,
   companyLogos,
@@ -464,31 +618,46 @@ function CompaniesTab({
 }
 
 function InvestorsTab({ investors }: { investors: InvestorListing[] }) {
-  const visible = investors.filter((inv) => inv.portfolioCount > 0);
+  const [showAll, setShowAll] = useState(false);
+  const withPortfolio = investors.filter((inv) => inv.portfolioCount > 0);
+  const visible = showAll ? withPortfolio : withPortfolio.slice(0, 20);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 py-4">
-      {visible.map((inv) => {
-        const domain = getDomain(inv.website);
-        return (
-          <Link
-            key={inv.id}
-            href={`/investors/${inv.slug}`}
-            className="flex items-center gap-3 p-4 bg-bg-surface border border-cadre-border rounded-lg hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)] hover:border-brand-green transition-all duration-200 cursor-pointer"
+    <div className="py-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {visible.map((inv) => {
+          const domain = getDomain(inv.website);
+          const logoSrc = inv.logoUrl || undefined;
+          return (
+            <Link
+              key={inv.id}
+              href={`/investors/${inv.slug}`}
+              className="flex items-center gap-3 p-4 bg-bg-surface border border-cadre-border rounded-lg hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)] hover:border-brand-green transition-all duration-200 cursor-pointer"
+            >
+              <CompanyLogo name={inv.name} logoUrl={logoSrc} domain={domain} />
+              <div className="flex-1 min-w-0">
+                <span className="font-semibold text-sm text-white">{inv.name}</span>
+                {inv.type && (
+                  <div className="text-xs text-cadre-secondary mt-0.5">{inv.type}</div>
+                )}
+              </div>
+              <div className="text-xs text-cadre-secondary text-right whitespace-nowrap">
+                {inv.portfolioCount} {inv.portfolioCount === 1 ? "company" : "companies"}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+      {!showAll && withPortfolio.length > 20 && (
+        <div className="pt-4 text-center">
+          <button
+            onClick={() => setShowAll(true)}
+            className="text-sm text-brand-green hover:brightness-110 transition-all duration-150 cursor-pointer"
           >
-            <CompanyLogo name={inv.name} logoUrl={inv.logoUrl || undefined} domain={domain} />
-            <div className="flex-1 min-w-0">
-              <span className="font-semibold text-sm text-white">{inv.name}</span>
-              {inv.type && (
-                <div className="text-xs text-cadre-secondary mt-0.5">{inv.type}</div>
-              )}
-            </div>
-            <div className="text-xs text-cadre-secondary text-right whitespace-nowrap">
-              {inv.portfolioCount} {inv.portfolioCount === 1 ? "company" : "companies"}
-            </div>
-          </Link>
-        );
-      })}
+            Show all {withPortfolio.length} investors &rarr;
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -530,7 +699,7 @@ export default function JobBoard({
   });
   const [selectedLocation, setSelectedLocation] = useState(searchParams.get("location") || "");
   const [remote, setRemote] = useState(searchParams.get("remote") === "true");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Debounced search for URL sync
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -607,14 +776,17 @@ export default function JobBoard({
     }
 
     if (remote) {
-      result = result.filter((j) => j.isRemote);
+      result = result.filter(
+        (j) => j.isRemote || /remote|distributed|anywhere|work from home|wfh/i.test(j.location)
+      );
     }
 
     return result;
   }, [initialJobs, search, selectedFunction, selectedIndustries, selectedLocation, remote]);
 
-  const visible = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedJobs = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const hasFilters = search || selectedFunction || selectedIndustries.length > 0 || selectedLocation || remote;
 
@@ -624,7 +796,7 @@ export default function JobBoard({
     setSelectedIndustries([]);
     setSelectedLocation("");
     setRemote(false);
-    setVisibleCount(PAGE_SIZE);
+    setCurrentPage(1);
     router.replace(pathname, { scroll: false });
   }, [router, pathname]);
 
@@ -647,7 +819,7 @@ export default function JobBoard({
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearch(value);
-      setVisibleCount(PAGE_SIZE);
+      setCurrentPage(1);
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
       searchTimerRef.current = setTimeout(() => {
         syncUrlParams({ search: value });
@@ -659,7 +831,7 @@ export default function JobBoard({
   const handleFunctionChange = useCallback(
     (value: string) => {
       setSelectedFunction(value);
-      setVisibleCount(PAGE_SIZE);
+      setCurrentPage(1);
       syncUrlParams({ function: value });
     },
     [syncUrlParams]
@@ -668,7 +840,7 @@ export default function JobBoard({
   const handleIndustriesChange = useCallback(
     (values: string[]) => {
       setSelectedIndustries(values);
-      setVisibleCount(PAGE_SIZE);
+      setCurrentPage(1);
       syncUrlParams({ industry: values });
     },
     [syncUrlParams]
@@ -678,7 +850,7 @@ export default function JobBoard({
     (industry: string) => {
       const next = selectedIndustries.filter((i) => i !== industry);
       setSelectedIndustries(next);
-      setVisibleCount(PAGE_SIZE);
+      setCurrentPage(1);
       syncUrlParams({ industry: next });
     },
     [selectedIndustries, syncUrlParams]
@@ -687,7 +859,7 @@ export default function JobBoard({
   const handleLocationChange = useCallback(
     (value: string) => {
       setSelectedLocation(value);
-      setVisibleCount(PAGE_SIZE);
+      setCurrentPage(1);
       syncUrlParams({ location: value });
     },
     [syncUrlParams]
@@ -696,7 +868,7 @@ export default function JobBoard({
   const handleRemoteToggle = useCallback(() => {
     const next = !remote;
     setRemote(next);
-    setVisibleCount(PAGE_SIZE);
+    setCurrentPage(1);
     syncUrlParams({ remote: next ? "true" : "" });
   }, [remote, syncUrlParams]);
 
@@ -710,10 +882,10 @@ export default function JobBoard({
         </h2>
       </header>
 
-      {/* FILTER BAR — single row */}
+      {/* FILTER BAR — single row, wraps on mobile */}
       <div className="flex flex-wrap items-center gap-2 py-4">
-        {/* Search input — flexible width */}
-        <div className="flex-1 min-w-[200px]">
+        {/* Search input — full width on mobile, flexible on desktop */}
+        <div className="w-full sm:w-auto sm:flex-1 sm:min-w-[200px]">
           <input
             type="text"
             placeholder="Search roles, companies..."
@@ -784,6 +956,16 @@ export default function JobBoard({
         onClearRemote={handleRemoteToggle}
       />
 
+      {/* LIVE JOB COUNT */}
+      <div className="pb-3">
+        <span className="text-sm font-semibold text-white">
+          Jobs
+        </span>{" "}
+        <span className="text-sm text-cadre-muted">
+          ({filtered.length.toLocaleString()})
+        </span>
+      </div>
+
       {/* TABS — animated green underline */}
       <div className="flex gap-6 border-b border-cadre-border">
         {tabs.map((tab) => (
@@ -810,7 +992,7 @@ export default function JobBoard({
         <>
           {/* JOB LIST — card style */}
           <div className="flex flex-col gap-2 pt-4">
-            {visible.map((job) => {
+            {paginatedJobs.map((job) => {
               const { logoUrl, domain } = getJobLogo(job);
               const isNew = isNewRole(job.postedDate);
               return (
@@ -819,72 +1001,85 @@ export default function JobBoard({
                   href={job.jobUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="grid items-center gap-x-4 bg-bg-surface border border-cadre-border rounded-lg py-3 px-4 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)] hover:border-brand-green transition-all duration-200 cursor-pointer"
-                  style={{
-                    gridTemplateColumns: "32px minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.5fr) auto",
-                  }}
+                  className="block bg-bg-surface border border-cadre-border rounded-lg py-3 px-4 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(0,0,0,0.4)] hover:border-brand-green transition-all duration-200 cursor-pointer"
                 >
-                  {/* Col 1: Logo */}
-                  <CompanyLogo name={job.company} logoUrl={logoUrl} domain={domain} />
+                  {/* Desktop: 5-col grid */}
+                  <div
+                    className="hidden sm:grid items-center gap-x-4"
+                    style={{
+                      gridTemplateColumns: "32px minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.5fr) auto",
+                    }}
+                  >
+                    <CompanyLogo name={job.company} logoUrl={logoUrl} domain={domain} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-white truncate">{job.title}</span>
+                        {isNew && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-brand-green text-black whitespace-nowrap leading-tight">New</span>
+                        )}
+                      </div>
+                      <Link href={`/companies/${job.companySlug}`} onClick={(e) => e.stopPropagation()} className="text-xs text-cadre-secondary hover:text-brand-green transition-colors truncate block">{job.company}</Link>
+                    </div>
+                    <div className="min-w-0 flex flex-col items-start gap-1">
+                      {job.location && <span className="text-xs text-cadre-muted truncate max-w-full">{job.location}</span>}
+                      <FunctionBadge func={job.function} />
+                    </div>
+                    <div className="min-w-0"><InvestorChips investors={job.investors} /></div>
+                    <div className="text-xs text-cadre-muted whitespace-nowrap text-right">{timeAgo(job.postedDate)}</div>
+                  </div>
 
-                  {/* Col 2: Title + Company (linked) */}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-white truncate">
-                        {job.title}
-                      </span>
-                      {isNew && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-brand-green text-black whitespace-nowrap leading-tight">
-                          New
-                        </span>
+                  {/* Mobile: stacked layout */}
+                  <div className="flex sm:hidden gap-3">
+                    <CompanyLogo name={job.company} logoUrl={logoUrl} domain={domain} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-white break-words">{job.title}</span>
+                        {isNew && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-brand-green text-black whitespace-nowrap leading-tight shrink-0">New</span>
+                        )}
+                      </div>
+                      <Link href={`/companies/${job.companySlug}`} onClick={(e) => e.stopPropagation()} className="text-xs text-cadre-secondary hover:text-brand-green transition-colors block mt-0.5">{job.company}</Link>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-xs text-cadre-muted">
+                        {job.location && <span>{job.location}</span>}
+                        {job.function && <FunctionBadge func={job.function} />}
+                        <span>{timeAgo(job.postedDate)}</span>
+                      </div>
+                      {job.investors.length > 0 && (
+                        <div className="mt-2"><InvestorChips investors={job.investors} /></div>
                       )}
                     </div>
-                    <Link
-                      href={`/companies/${job.companySlug}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-xs text-cadre-secondary hover:text-brand-green transition-colors truncate block"
-                    >
-                      {job.company}
-                    </Link>
-                  </div>
-
-                  {/* Col 3: Location + Function */}
-                  <div className="min-w-0 flex flex-col items-start gap-1">
-                    {job.location && (
-                      <span className="text-xs text-cadre-muted truncate max-w-full">
-                        {job.location}
-                      </span>
-                    )}
-                    <FunctionBadge func={job.function} />
-                  </div>
-
-                  {/* Col 4: Investor chips */}
-                  <div className="min-w-0">
-                    <InvestorChips investors={job.investors} />
-                  </div>
-
-                  {/* Col 5: Date */}
-                  <div className="text-xs text-cadre-muted whitespace-nowrap text-right">
-                    {timeAgo(job.postedDate)}
                   </div>
                 </a>
               );
             })}
           </div>
 
-          {/* FOOTER OF LIST */}
-          <div className="py-6 text-center">
-            <p className="text-xs text-cadre-secondary mb-2">
-              Showing {visible.length} of {filtered.length} roles
+          {/* PAGINATION */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 py-6">
+            <p className="text-xs text-cadre-secondary">
+              Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} roles
               {hasFilters && filtered.length !== totalJobs && ` (${totalJobs.toLocaleString()} total)`}
             </p>
-            {hasMore && (
-              <button
-                onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                className="text-sm text-brand-green hover:brightness-110 transition-all duration-150 cursor-pointer underline"
-              >
-                Load more
-              </button>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage <= 1}
+                  className="px-3 py-1.5 text-xs rounded-md border border-cadre-border text-cadre-secondary hover:text-white hover:border-brand-green disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all duration-150"
+                >
+                  Prev
+                </button>
+                <span className="text-xs text-cadre-secondary">
+                  Page {safePage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage >= totalPages}
+                  className="px-3 py-1.5 text-xs rounded-md border border-cadre-border text-cadre-secondary hover:text-white hover:border-brand-green disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all duration-150"
+                >
+                  Next
+                </button>
+              </div>
             )}
           </div>
         </>
