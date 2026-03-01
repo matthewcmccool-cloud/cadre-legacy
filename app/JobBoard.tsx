@@ -236,94 +236,6 @@ function SingleSelectDropdown({
   );
 }
 
-
-function SingleSelectDropdown({
-  label,
-  options,
-  selected,
-  onChange,
-}: {
-  label: string;
-  options: string[];
-  selected: string;
-  onChange: (value: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    if (open) {
-      document.addEventListener("mousedown", handleClick);
-      return () => document.removeEventListener("mousedown", handleClick);
-    }
-  }, [open]);
-
-  const hasSelection = Boolean(selected);
-  const displayLabel = hasSelection ? selected : label;
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1.5 px-3 py-2 text-xs rounded-md border cursor-pointer outline-none transition-all duration-200 ${
-          hasSelection
-            ? "bg-brand-green-dim border-brand-green text-brand-green"
-            : "bg-bg-surface border-cadre-border text-cadre-secondary hover:border-brand-green hover:text-white"
-        }`}
-        style={{ minWidth: 110 }}
-      >
-        <span className="truncate">{displayLabel}</span>
-        <svg
-          width="10"
-          height="6"
-          viewBox="0 0 10 6"
-          fill="none"
-          className={`shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        >
-          <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
-      {open && (
-        <div
-          className="absolute top-full left-0 mt-1 bg-bg-elevated border border-cadre-border shadow-lg z-50 rounded-lg"
-          style={{ minWidth: 220, maxHeight: 320 }}
-        >
-          {hasSelection && (
-            <button
-              onClick={() => { onChange(""); setOpen(false); }}
-              className="w-full text-left px-3 py-1.5 text-[11px] text-brand-green hover:bg-bg-hover cursor-pointer border-b border-cadre-border"
-            >
-              Clear
-            </button>
-          )}
-          <div className="overflow-y-auto" style={{ maxHeight: 288 }}>
-            {options.map((opt) => {
-              const isActive = selected === opt;
-              return (
-                <div
-                  key={opt}
-                  onClick={() => { onChange(opt); setOpen(false); }}
-                  className={`flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-bg-hover cursor-pointer transition-colors duration-150 ${
-                    isActive ? "text-brand-green" : "text-cadre-text"
-                  }`}
-                >
-                  <span className="truncate">{opt}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ═══════════════════════════════════════════════════════════════════════
 // Multi-select filter dropdown — checkboxes, green accents
 // ═══════════════════════════════════════════════════════════════════════
@@ -504,76 +416,11 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
   );
 }
 
-
-function ActiveFilterChips({
-  search,
-  selectedFunction,
-  selectedIndustries,
-  selectedLocation,
-  remote,
-  onClearSearch,
-  onClearFunction,
-  onRemoveIndustry,
-  onClearLocation,
-  onClearRemote,
-}: {
-  search: string;
-  selectedFunction: string;
-  selectedIndustries: string[];
-  selectedLocation: string;
-  remote: boolean;
-  onClearSearch: () => void;
-  onClearFunction: () => void;
-  onRemoveIndustry: (industry: string) => void;
-  onClearLocation: () => void;
-  onClearRemote: () => void;
-}) {
-  const hasAny = search || selectedFunction || selectedIndustries.length > 0 || selectedLocation || remote;
-  if (!hasAny) return null;
-
-  return (
-    <div className="flex flex-wrap items-center gap-1.5 pb-3">
-      {search && (
-        <FilterChip label={`Search: "${search}"`} onRemove={onClearSearch} />
-      )}
-      {selectedFunction && (
-        <FilterChip label={`Function: ${selectedFunction}`} onRemove={onClearFunction} />
-      )}
-      {selectedIndustries.map((ind) => (
-        <FilterChip key={ind} label={`Industry: ${ind}`} onRemove={() => onRemoveIndustry(ind)} />
-      ))}
-      {selectedLocation && (
-        <FilterChip label={`Location: ${selectedLocation}`} onRemove={onClearLocation} />
-      )}
-      {remote && (
-        <FilterChip label="Remote" onRemove={onClearRemote} />
-      )}
-    </div>
-  );
-}
-
-function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] bg-bg-elevated text-cadre-secondary border border-cadre-border">
-      {label}
-      <button
-        onClick={onRemove}
-        className="ml-0.5 text-cadre-muted hover:text-white cursor-pointer transition-colors"
-        aria-label={`Remove ${label}`}
-      >
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M2 2L8 8M8 2L2 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </button>
-    </span>
-  );
-}
-
 // ═══════════════════════════════════════════════════════════════════════
 // Tab views: Companies & Investors (with working links)
 // ═══════════════════════════════════════════════════════════════════════
 
-funfunction CompaniesTab({
+function CompaniesTab({
   companies,
   companyDomains,
   companyLogos,
