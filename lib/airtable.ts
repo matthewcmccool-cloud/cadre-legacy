@@ -123,7 +123,45 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
     };
   });
 
-  return { jobs, total: jobs.length };
+  // Interleave: spread jobs from different companies apart so the homepage
+  // never shows a "big dump" of the same company. Jobs arrive sorted by
+  // created_at DESC (most recent first). We group by company, then round-robin
+  // pick one job from each company in order of when each company first appears.
+  const interleaved = interleaveByCompany(jobs);
+
+  return { jobs: interleaved, total: interleaved.length };
+}
+
+/** Round-robin interleave so no two consecutive jobs share the same company. */
+function interleaveByCompany(jobs: JobListing[]): JobListing[] {
+  if (jobs.length === 0) return jobs;
+
+  // Build per-company queues, preserving the input (recency) order.
+  const queues = new Map<string, JobListing[]>();
+  const order: string[] = []; // first-seen order of companies
+  for (const job of jobs) {
+    const key = job.company || job.id; // fallback to id if company is empty
+    if (!queues.has(key)) {
+      queues.set(key, []);
+      order.push(key);
+    }
+    queues.get(key)!.push(job);
+  }
+
+  // Round-robin: cycle through companies, taking one job from each per pass.
+  const result: JobListing[] = [];
+  let remaining = jobs.length;
+  while (remaining > 0) {
+    for (const key of order) {
+      const q = queues.get(key)!;
+      if (q.length > 0) {
+        result.push(q.shift()!);
+        remaining--;
+      }
+    }
+  }
+
+  return result;
 }
 
 export async function fetchFilteredJobs(filters: JobFilters): Promise<{ jobs: JobListing[]; total: number }> {
