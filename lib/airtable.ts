@@ -68,7 +68,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
   const { data, error } = await supabase
     .from('jobs')
     .select(`
-      id, title, location, function, ats_url, posted_at, first_seen_at, is_active, is_remote,
+      id, title, location, function, ats_url, posted_at, first_seen_at, created_at, is_active, is_remote,
       companies (
         name, slug, website, logo_url, stage,
         company_industries ( industries ( name ) ),
@@ -76,7 +76,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
       )
     `)
     .eq('is_active', true)
-    .order('first_seen_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
     .limit(2000);
 
   if (error) {
@@ -84,7 +84,27 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
     return { jobs: [], total: 0 };
   }
 
-  const jobs: JobListing[] = (data || []).map((job: any) => {
+  // Supabase returns max 1000 rows by default. Fetch in pages to get all results.
+  let allData = data || [];
+  if (allData.length === 1000) {
+    // There may be more rows — fetch next page
+    const { data: page2 } = await supabase
+      .from('jobs')
+      .select(`
+        id, title, location, function, ats_url, posted_at, first_seen_at, created_at, is_active, is_remote,
+        companies (
+          name, slug, website, logo_url, stage,
+          company_industries ( industries ( name ) ),
+          company_investors ( investors ( name ) )
+        )
+      `)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .range(1000, 1999);
+    if (page2) allData = [...allData, ...page2];
+  }
+
+  const jobs: JobListing[] = allData.map((job: any) => {
     const loc = job.location || '';
     return {
       id: job.id,
@@ -96,7 +116,7 @@ export async function fetchJobs(): Promise<{ jobs: JobListing[]; total: number }
       location: loc,
       function: job.function || '',
       industry: job.companies?.company_industries?.[0]?.industries?.name || '',
-      postedDate: job.posted_at || job.first_seen_at || '',
+      postedDate: job.posted_at || job.first_seen_at || job.created_at || '',
       jobUrl: job.ats_url || '',
       investors: job.companies?.company_investors?.map((ci: any) => ci.investors?.name).filter(Boolean) || [],
       isRemote: job.is_remote === true || loc.toLowerCase().includes('remote'),
